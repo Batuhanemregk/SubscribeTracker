@@ -1,0 +1,613 @@
+openapi: 3.1.0
+info:
+  title: SubscribeTracker API
+  description: Privacy-first subscription tracking from Gmail
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:5000/api/v1
+    description: Local development
+
+tags:
+  - name: Auth
+    description: Authentication & account management
+  - name: Sync
+    description: Email sync operations
+  - name: Subscriptions
+    description: Subscription CRUD
+  - name: Review
+    description: Review queue for pending items
+  - name: Dashboard
+    description: Budget and upcoming payments
+
+paths:
+  # ============ Auth ============
+  /auth/connect:
+    post:
+      operationId: connectGmail
+      tags: [Auth]
+      summary: Connect Gmail account via OAuth PKCE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectRequest"
+      responses:
+        "200":
+          description: Successfully connected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /auth/disconnect:
+    post:
+      operationId: disconnectGmail
+      tags: [Auth]
+      summary: Disconnect Gmail - revokes access and removes tokens
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Successfully disconnected
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /auth/account:
+    delete:
+      operationId: deleteAccount
+      tags: [Auth]
+      summary: Delete account - removes all user data
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Account deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ============ Sync ============
+  /sync/trigger:
+    post:
+      operationId: triggerSync
+      tags: [Sync]
+      summary: Trigger manual email sync
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncRequest"
+      responses:
+        "202":
+          description: Sync job queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncJob"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+
+  /sync/status:
+    get:
+      operationId: getSyncStatus
+      tags: [Sync]
+      summary: Get current sync job status
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncStatus"
+
+  # ============ Subscriptions ============
+  /subscriptions:
+    get:
+      operationId: listSubscriptions
+      tags: [Subscriptions]
+      summary: List all subscriptions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, cancelled, paused, pending_review]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscription"
+    post:
+      operationId: createSubscription
+      tags: [Subscriptions]
+      summary: Manually add a subscription
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSubscriptionRequest"
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /subscriptions/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+          format: uuid
+    get:
+      operationId: getSubscription
+      tags: [Subscriptions]
+      summary: Get subscription details
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SubscriptionDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      operationId: updateSubscription
+      tags: [Subscriptions]
+      summary: Update subscription
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSubscriptionRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+    delete:
+      operationId: deleteSubscription
+      tags: [Subscriptions]
+      summary: Delete subscription
+      security:
+        - bearerAuth: []
+      responses:
+        "204":
+          description: Deleted
+
+  # ============ Review Queue ============
+  /review:
+    get:
+      operationId: getReviewQueue
+      tags: [Review]
+      summary: Get pending items for review
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ReviewItem"
+
+  /review/{id}/approve:
+    post:
+      operationId: approveReviewItem
+      tags: [Review]
+      summary: Approve item and add to subscriptions
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /review/{id}/reject:
+    post:
+      operationId: rejectReviewItem
+      tags: [Review]
+      summary: Reject item - will not be added
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: Rejected
+
+  /review/{id}/edit:
+    put:
+      operationId: editAndApproveReviewItem
+      tags: [Review]
+      summary: Edit item and approve
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSubscriptionRequest"
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  # ============ Dashboard ============
+  /dashboard/upcoming:
+    get:
+      operationId: getUpcomingPayments
+      tags: [Dashboard]
+      summary: Get upcoming payments for next 30 days
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 30
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UpcomingPayment"
+
+  /dashboard/summary:
+    get:
+      operationId: getBudgetSummary
+      tags: [Dashboard]
+      summary: Get budget summary
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [monthly, yearly]
+            default: monthly
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetSummary"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Unauthorized:
+      description: Not authenticated
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    RateLimited:
+      description: Rate limit exceeded
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+
+  schemas:
+    # ---- Auth ----
+    ConnectRequest:
+      type: object
+      required: [code, codeVerifier, redirectUri]
+      properties:
+        code:
+          type: string
+          description: OAuth authorization code
+        codeVerifier:
+          type: string
+          description: PKCE code verifier
+        redirectUri:
+          type: string
+          description: Redirect URI used in authorization
+
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          description: JWT access token
+        expiresIn:
+          type: integer
+          description: Token expiry in seconds
+        userId:
+          type: string
+          format: uuid
+
+    # ---- Sync ----
+    SyncRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [backfill, incremental]
+          default: incremental
+
+    SyncJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [backfill, incremental, catchup]
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        createdAt:
+          type: string
+          format: date-time
+
+    SyncStatus:
+      type: object
+      properties:
+        currentJob:
+          $ref: "#/components/schemas/SyncJob"
+        lastSync:
+          type: string
+          format: date-time
+          nullable: true
+        emailsScanned:
+          type: integer
+        eventsExtracted:
+          type: integer
+
+    # ---- Subscription ----
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        merchantName:
+          type: string
+        merchantDomain:
+          type: string
+          nullable: true
+        amount:
+          type: number
+          nullable: true
+        currency:
+          type: string
+          default: USD
+        cadence:
+          type: string
+          enum: [weekly, monthly, quarterly, yearly, unknown]
+        nextBillingDate:
+          type: string
+          format: date
+          nullable: true
+        lastBillingDate:
+          type: string
+          format: date
+          nullable: true
+        status:
+          type: string
+          enum: [active, cancelled, paused, pending_review]
+        confidenceScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        extractionMethod:
+          type: string
+          enum: [rule, llm, manual]
+        reasonSummary:
+          type: string
+          description: Explainable AI - why we inferred this (no PII)
+
+    SubscriptionDetail:
+      allOf:
+        - $ref: "#/components/schemas/Subscription"
+        - type: object
+          properties:
+            events:
+              type: array
+              items:
+                $ref: "#/components/schemas/SubscriptionEvent"
+
+    SubscriptionEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventType:
+          type: string
+          enum:
+            [
+              charge,
+              renewal,
+              cancellation,
+              trial_start,
+              trial_end,
+              price_change,
+            ]
+        emailDate:
+          type: string
+          format: date-time
+        amount:
+          type: number
+          nullable: true
+        currency:
+          type: string
+          nullable: true
+        reasonCode:
+          type: string
+
+    CreateSubscriptionRequest:
+      type: object
+      required: [merchantName, cadence]
+      properties:
+        merchantName:
+          type: string
+        merchantDomain:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          default: USD
+        cadence:
+          type: string
+          enum: [weekly, monthly, quarterly, yearly]
+        nextBillingDate:
+          type: string
+          format: date
+
+    UpdateSubscriptionRequest:
+      type: object
+      properties:
+        merchantName:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        cadence:
+          type: string
+          enum: [weekly, monthly, quarterly, yearly, unknown]
+        nextBillingDate:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [active, cancelled, paused]
+
+    # ---- Review ----
+    ReviewItem:
+      allOf:
+        - $ref: "#/components/schemas/Subscription"
+        - type: object
+          properties:
+            reasonSummary:
+              type: string
+              description: Why we think this is a subscription
+
+    # ---- Dashboard ----
+    UpcomingPayment:
+      type: object
+      properties:
+        subscriptionId:
+          type: string
+          format: uuid
+        merchantName:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        dueDate:
+          type: string
+          format: date
+        daysUntilDue:
+          type: integer
+
+    BudgetSummary:
+      type: object
+      properties:
+        period:
+          type: string
+          enum: [monthly, yearly]
+        totalAmount:
+          type: number
+        currency:
+          type: string
+        subscriptionCount:
+          type: integer
+        byCategory:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+              amount:
+                type: number
+              count:
+                type: integer
+
+    # ---- Common ----
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string

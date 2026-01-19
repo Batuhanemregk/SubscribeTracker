@@ -1,0 +1,78 @@
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: subscribetracker-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-subscribetracker}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-devpassword}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./services/api/src/Infrastructure/Migrations/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: subscribetracker-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # .NET 8 Backend API
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    container_name: subscribetracker-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=${POSTGRES_DB:-subscribetracker};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:-devpassword}
+      - Redis__ConnectionString=redis:6379
+      - Google__ClientId=${GOOGLE_CLIENT_ID}
+      - Google__ClientSecret=${GOOGLE_CLIENT_SECRET}
+      - Security__TokenEncryptionKey=${TOKEN_ENCRYPTION_KEY}
+      - Security__JwtSecret=${JWT_SECRET}
+    ports:
+      - "5000:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # Python Worker Service
+  worker:
+    build:
+      context: ./services/worker
+      dockerfile: Dockerfile
+    container_name: subscribetracker-worker
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-devpassword}@postgres:5432/${POSTGRES_DB:-subscribetracker}
+      - REDIS_URL=redis://redis:6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - LLM_DAILY_USER_LIMIT=${LLM_DAILY_USER_LIMIT:-100}
+      - LLM_DAILY_GLOBAL_LIMIT=${LLM_DAILY_GLOBAL_LIMIT:-10000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

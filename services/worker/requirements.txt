@@ -1,0 +1,37 @@
+# Core
+fastapi>=0.109.0
+uvicorn>=0.27.0
+
+# Database
+sqlalchemy>=2.0.25
+asyncpg>=0.29.0
+
+# Cache
+redis>=5.0.1
+
+# Validation
+pydantic>=2.6.0
+pydantic-settings>=2.1.0
+
+# Google APIs
+google-auth>=2.27.0
+google-auth-oauthlib>=1.2.0
+google-api-python-client>=2.116.0
+
+# OpenAI
+openai>=1.12.0
+
+# YAML rules
+pyyaml>=6.0.1
+
+# Auth
+python-jose>=3.3.0
+
+# HTTP
+httpx>=0.26.0
+
+# Logging
+structlog>=24.1.0
+
+# Retry
+tenacity>=8.2.3

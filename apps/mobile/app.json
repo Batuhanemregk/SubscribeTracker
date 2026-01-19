@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "SubscribeTracker",
+    "slug": "subscribetracker",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "scheme": "subscribetracker",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F0F23"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.subscribetracker.app",
+      "infoPlist": {
+        "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F0F23"
+      },
+      "package": "com.subscribetracker.app",
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-notifications",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-7540196282258726~7515719785",
+          "iosAppId": "ca-app-pub-7540196282258726~6259490193"
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "This identifier will be used to deliver personalized ads to you."
+        }
+      ],
+      "expo-web-browser"
+    ]
+  }
+}

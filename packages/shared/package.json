@@ -1,0 +1,14 @@
+{
+  "name": "@subscribetracker/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared types and OpenAPI specifications",
+  "scripts": {
+    "generate:types": "npx openapi-typescript openapi/api.yaml -o types/api.ts",
+    "lint:openapi": "npx @redocly/cli lint openapi/api.yaml"
+  },
+  "devDependencies": {
+    "@redocly/cli": "^1.0.0",
+    "openapi-typescript": "^7.0.0"
+  }
+}

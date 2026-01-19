@@ -1,0 +1,34 @@
+# Example YAML rules for Apple
+version: "1"
+merchant:
+  name: "Apple"
+  domain: "apple.com"
+
+patterns:
+  - type: charge
+    from_domain: "apple.com"
+    subject_patterns:
+      - "Your receipt from Apple"
+      - "Apple.*receipt"
+      - "App Store.*receipt"
+      - "iTunes.*receipt"
+    amount_regex: '\$(\d+\.?\d*)'
+    confidence: 0.95
+
+  - type: renewal
+    from_domain: "apple.com"
+    subject_patterns:
+      - "subscription.*renewed"
+      - "renewal.*confirmation"
+    confidence: 0.90
+
+  - type: trial_start
+    from_domain: "apple.com"
+    subject_patterns:
+      - "free trial.*started"
+      - "trial.*begins"
+    confidence: 0.90
+
+defaults:
+  cadence: monthly
+  currency: USD

@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.pytest_cache/
+bin/
+obj/
+.vs/
+*.user
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+*.egg-info/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Secrets (never commit)
+*.pem
+*.key
+secrets/
+
+# Mobile
+apps/mobile/.expo/
+apps/mobile/ios/Pods/
+*.ipa
+*.apk
+
+# Test coverage
+coverage/
+htmlcov/
+.coverage
+
+# Docker
+docker-compose.override.yml
