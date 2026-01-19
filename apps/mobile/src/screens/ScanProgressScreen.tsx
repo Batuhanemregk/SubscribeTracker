@@ -17,6 +17,7 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg';
 import { colors, borderRadius } from '../theme';
 import { usePlanStore } from '../state';
+import { showPreScanAd } from '../services';
 
 interface ScanProgressScreenProps {
   navigation: any;
@@ -44,6 +45,11 @@ export function ScanProgressScreen({ navigation, route }: ScanProgressScreenProp
   const pulse = useSharedValue(1);
 
   useEffect(() => {
+    // Show pre-scan ad for Standard users
+    if (!isPro()) {
+      showPreScanAd();
+    }
+
     // Rotate animation
     rotation.value = withRepeat(
       withTiming(360, { duration: 3000, easing: Easing.linear }),

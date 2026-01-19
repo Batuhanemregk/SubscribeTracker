@@ -48,5 +48,9 @@
       ],
       "expo-web-browser"
     ]
+  },
+  "react-native-google-mobile-ads": {
+    "android_app_id": "ca-app-pub-7540196282258726~7515719785",
+    "ios_app_id": "ca-app-pub-7540196282258726~6259490193"
   }
 }

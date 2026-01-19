@@ -45,3 +45,12 @@ export {
   AdSizes,
   cleanupAds,
 } from './AdMobService';
+
+export {
+  initAdManager,
+  startAppOpenAdTimer,
+  cancelAppOpenAdTimer,
+  showPreScanAd,
+  showPaywallDismissAd,
+  getAdStats,
+} from './AdManager';

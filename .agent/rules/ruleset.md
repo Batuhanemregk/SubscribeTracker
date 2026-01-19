@@ -123,3 +123,11 @@ always treat this as a mobile app for both ios and android
 all flows and ui must be designed to work on both platforms
 avoid platform-specific assumptions unless explicitly handled with conditional logic
 test critical flows on both ios and android and ensure parity in features and behavior
+
+codebase-hygiene-and-no-dead-code
+when a feature is changed or replaced you must update the implementation everywhere it is used
+if an old feature or approach is no longer used you must remove the old code paths and delete unused files
+do not keep deprecated modules commented code unused components or legacy config in the repository
+every change must include a quick sweep to remove unused imports routes endpoints feature flags and assets
+keep the repository lean if something is not referenced by the current build it should not exist
+when removing code ensure tests and documentation are updated accordingly

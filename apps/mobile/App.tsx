@@ -20,6 +20,8 @@ import {
   scheduleAllReminders,
   addNotificationResponseListener,
   loadInterstitialAd,
+  initAdManager,
+  startAppOpenAdTimer,
 } from './src/services';
 import {
   HomeScreen,
@@ -110,6 +112,10 @@ export default function App() {
       
       // Preload interstitial ad for Standard users
       loadInterstitialAd();
+      
+      // Initialize AdManager and start 30-second timer for app open ad
+      await initAdManager();
+      startAppOpenAdTimer();
       
       // Small delay to ensure store is hydrated
       setTimeout(() => setIsReady(true), 100);

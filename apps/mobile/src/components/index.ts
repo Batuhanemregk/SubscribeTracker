@@ -25,7 +25,7 @@ export { CategoryBarChart, ForecastLineChart, BudgetCircularProgress } from './c
 export { FeatureGate, FeatureGateInline } from './pro';
 
 // Ads
-export { BannerAd, InterstitialAdService } from './ads';
+export { BannerAd } from './ads';
 
 // Existing components (to be migrated to proper structure)
 export { PremiumSubscriptionCard } from './PremiumSubscriptionCard';

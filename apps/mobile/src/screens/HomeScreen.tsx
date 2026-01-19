@@ -2,33 +2,41 @@
  * HomeScreen - Main dashboard
  * Uses Zustand stores and new component library
  */
-import React, { useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
-import { 
-  Screen, 
-  Header, 
-  GradientStatCard, 
-  EmptyState, 
+import React, { useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  RefreshControl,
+  TouchableOpacity,
+} from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { Ionicons } from "@expo/vector-icons";
+import {
+  Screen,
+  Header,
+  GradientStatCard,
+  EmptyState,
   FAB,
-  PremiumSubscriptionCard 
-} from '../components';
-import { colors } from '../theme';
-import { useSubscriptionStore } from '../state';
-import { SEED_SUBSCRIPTIONS } from '../data/seed';
-import type { Subscription } from '../types';
+  PremiumSubscriptionCard,
+  BannerAd,
+} from "../components";
+import { colors } from "../theme";
+import { useSubscriptionStore } from "../state";
+import { SEED_SUBSCRIPTIONS } from "../data/seed";
+import type { Subscription } from "../types";
 
 interface HomeScreenProps {
   navigation: any;
 }
 
 export function HomeScreen({ navigation }: HomeScreenProps) {
-  const { 
-    subscriptions, 
+  const {
+    subscriptions,
     setSubscriptions,
     deleteSubscription,
-    calculateMonthlyTotal, 
+    calculateMonthlyTotal,
     calculateYearlyTotal,
     getActiveSubscriptions,
   } = useSubscriptionStore();
@@ -49,7 +57,8 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   // Count upcoming (next 7 days)
   const upcomingCount = activeSubs.filter((sub) => {
     const daysUntil = Math.ceil(
-      (new Date(sub.nextBillingDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+      (new Date(sub.nextBillingDate).getTime() - Date.now()) /
+        (1000 * 60 * 60 * 24),
     );
     return daysUntil <= 7 && daysUntil >= 0;
   }).length;
@@ -62,11 +71,14 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   }, []);
 
   const handlePressSubscription = (sub: Subscription) => {
-    navigation.navigate('SubscriptionDetails', { subscriptionId: sub.id });
+    navigation.navigate("SubscriptionDetails", { subscriptionId: sub.id });
   };
 
   const handleEditSubscription = (sub: Subscription) => {
-    navigation.navigate('AddSubscription', { subscriptionId: sub.id, editMode: true });
+    navigation.navigate("AddSubscription", {
+      subscriptionId: sub.id,
+      editMode: true,
+    });
   };
 
   const handleDeleteSubscription = (sub: Subscription) => {
@@ -74,10 +86,16 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   };
 
   const handleAddSubscription = () => {
-    navigation.navigate('AddSubscription');
+    navigation.navigate("AddSubscription");
   };
 
-  const renderSubscriptionItem = ({ item, index }: { item: Subscription; index: number }) => (
+  const renderSubscriptionItem = ({
+    item,
+    index,
+  }: {
+    item: Subscription;
+    index: number;
+  }) => (
     <PremiumSubscriptionCard
       item={item}
       index={index}
@@ -140,7 +158,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
       title="No subscriptions yet"
       subtitle="Add your first subscription to start tracking your expenses"
       primaryAction={{
-        title: 'Add subscription',
+        title: "Add subscription",
         onPress: handleAddSubscription,
       }}
     />
@@ -157,7 +175,11 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
           subtitle="Manage your subscriptions"
           rightAction={
             <TouchableOpacity style={styles.notificationButton}>
-              <Ionicons name="notifications-outline" size={22} color={colors.text} />
+              <Ionicons
+                name="notifications-outline"
+                size={22}
+                color={colors.text}
+              />
             </TouchableOpacity>
           }
         />
@@ -181,6 +203,9 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         }
       />
 
+      {/* Banner Ad for Standard Users */}
+      <BannerAd />
+
       {/* FAB */}
       <FAB icon="add" onPress={handleAddSubscription} />
     </View>
@@ -201,33 +226,33 @@ const styles = StyleSheet.create({
     paddingBottom: 120,
   },
   statsRow: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginBottom: 12,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginTop: 12,
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: colors.text,
   },
   seeAll: {
     fontSize: 14,
     color: colors.primary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   notificationButton: {
     width: 40,
     height: 40,
     borderRadius: 12,
     backgroundColor: colors.bgCard,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

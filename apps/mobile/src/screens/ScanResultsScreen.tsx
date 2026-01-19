@@ -14,7 +14,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Header, PrimaryButton, SecondaryButton } from '../components';
 import { colors, borderRadius } from '../theme';
-import { useSubscriptionStore, createSubscription } from '../state';
+import { useSubscriptionStore, createSubscription, usePlanStore } from '../state';
+import { showInterstitialAd } from '../services';
 import type { DetectionCandidate, Subscription } from '../types';
 
 // Mock detected candidates

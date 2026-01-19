@@ -18,6 +18,7 @@ import Animated, {
 import { Header, PrimaryButton, SecondaryButton } from '../components';
 import { colors, borderRadius } from '../theme';
 import { usePlanStore } from '../state';
+import { showPaywallDismissAd } from '../services';
 
 interface FeatureRowProps {
   icon: string;
@@ -135,7 +136,13 @@ export function PaywallScreen({ navigation }: any) {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.closeButton}>
+        <TouchableOpacity 
+          onPress={() => {
+            showPaywallDismissAd();
+            navigation.goBack();
+          }} 
+          style={styles.closeButton}
+        >
           <Ionicons name="close" size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
