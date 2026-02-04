@@ -34,7 +34,7 @@ export function BudgetScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Save',
-          onPress: (value) => {
+          onPress: (value: string | undefined) => {
             const limit = parseFloat(value || '0');
             if (limit > 0) {
               setBudgetLimit(limit);

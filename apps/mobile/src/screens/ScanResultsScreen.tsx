@@ -72,7 +72,7 @@ const MOCK_CANDIDATES: DetectionCandidate[] = [
 
 function ConfidenceBadge({ confidence }: { confidence: number }) {
   const percentage = Math.round(confidence * 100);
-  let color = colors.emerald;
+  let color: string = colors.emerald;
   let label = 'High';
   
   if (confidence < 0.6) {

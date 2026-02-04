@@ -191,17 +191,21 @@ export type CandidateStatus = 'pending' | 'confirmed' | 'dismissed';
 
 export interface DetectionCandidate {
   id: string;
-  scanJobId: string;
-  name: string;
-  suggestedAmount: number | null;   // Pro only
-  suggestedCurrency: string | null;
-  suggestedCycle: BillingCycle | null;
-  suggestedNextDate: string | null;
+  scanJobId?: string;
+  merchantName: string;
+  merchantDomain: string;
+  detectedAmount: number;
+  detectedCurrency: string;
+  detectedCycle: BillingCycle;
+  suggestedNextDate?: string | null;
   confidence: number;
-  senderDomain: string;
-  senderName: string;
-  matchedRuleName: string | null;
-  cancelUrl: string | null;         // Pro only
+  evidenceSnippet?: string;
+  sourceEmailId?: string;
+  suggestedIcon: string;
+  suggestedColor: string;
+  suggestedCategory: string;
+  matchedRuleName?: string | null;
+  cancelUrl?: string | null;
   status: CandidateStatus;
   createdAt: string;
 }
@@ -253,7 +257,38 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
 
 export interface CategoryData {
   name: string;
+  category?: string;
   amount: number;
   color: string;
   percentage: number;
+}
+
+// Alias for backward compatibility
+export type CategoryTotal = CategoryData;
+
+export interface MonthlyForecast {
+  month: string;
+  amount: number;
+}
+
+export interface CalendarDay {
+  date: string;
+  subscriptions: Subscription[];
+  total: number;
+}
+
+export interface BillingBreakdown {
+  monthly: { count: number; total: number };
+  yearly: { count: number; total: number };
+}
+
+export interface AnalyticsData {
+  monthlyTotal: number;
+  yearlyTotal: number;
+  categoryTotals: CategoryTotal[];
+  forecast: MonthlyForecast[];
+  potentialSavings: number;
+  billingBreakdown: BillingBreakdown;
+  activeCount: number;
+  avgPerSubscription: number;
 }
