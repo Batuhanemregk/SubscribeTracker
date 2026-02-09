@@ -3,32 +3,26 @@
  * Uses Zustand stores and new component library
  */
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components';
-import { colors, borderRadius } from '../theme';
+import { borderRadius, useTheme, type ThemeColors } from '../theme';
 import { useSettingsStore, usePlanStore, useSubscriptionStore, useAccountStore } from '../state';
-import { sendTestNotification, scheduleAllReminders } from '../services';
+import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signOut as authSignOut } from '../services';
+import { t } from '../i18n';
 
-type SettingsRowProps = {
-  icon: string;
-  iconColor: string;
-  title: string;
-  subtitle?: string;
-  onPress?: () => void;
-  rightElement?: React.ReactNode;
-  destructive?: boolean;
-};
 
-function SettingsRow({ icon, iconColor, title, subtitle, onPress, rightElement, destructive }: SettingsRowProps) {
-  return (
-    <TouchableOpacity 
-      style={styles.row} 
-      onPress={onPress}
-      disabled={!onPress}
-      activeOpacity={0.7}
-    >
-      <View style={[styles.rowIcon, { backgroundColor: `${iconColor}20` }]}>
+export function SettingsScreen({ navigation }: any) {
+  const { colors, canUseLight, isDark } = useTheme();
+  const styles = createStyles(colors);
+
+  // --- Sub-components with access to dynamic styles/colors ---
+  const SettingsRow = ({ icon, iconColor, title, subtitle, onPress, rightElement, destructive }: {
+    icon: string; iconColor: string; title: string; subtitle?: string;
+    onPress?: () => void; rightElement?: React.ReactNode; destructive?: boolean;
+  }) => (
+    <TouchableOpacity style={styles.row} onPress={onPress} disabled={!onPress} activeOpacity={0.7}>
+      <View style={[styles.rowIcon, { backgroundColor: `${colors.text}08` }]}>
         <Ionicons name={icon as any} size={20} color={iconColor} />
       </View>
       <View style={styles.rowContent}>
@@ -40,24 +34,36 @@ function SettingsRow({ icon, iconColor, title, subtitle, onPress, rightElement, 
       )}
     </TouchableOpacity>
   );
-}
 
-function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <TouchableOpacity 
-      style={[styles.toggle, value && styles.toggleActive]}
-      onPress={() => onChange(!value)}
-    >
+  const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+    <TouchableOpacity style={[styles.toggle, value && styles.toggleActive]} onPress={() => onChange(!value)}>
       <View style={[styles.toggleDot, value && styles.toggleDotActive]} />
     </TouchableOpacity>
   );
-}
 
-export function SettingsScreen({ navigation }: any) {
-  const { app, setNotifications, setBiometricLock, resetToDefaults } = useSettingsStore();
+  const { app, setNotifications, setBiometricLock, resetToDefaults, setCurrency, setTheme, setLanguage } = useSettingsStore();
   const { plan, isPro, downgradeToStandard } = usePlanStore();
-  const { accounts, getAccountCount } = useAccountStore();
+  const { account, isSignedIn } = useAccountStore();
   const subscriptionStore = useSubscriptionStore();
+
+  const [isSigningIn, setIsSigningIn] = React.useState(false);
+
+  const [themeModalVisible, setThemeModalVisible] = React.useState(false);
+  const [languageModalVisible, setLanguageModalVisible] = React.useState(false);
+  const themeOptions = ['dark', 'light', 'system'] as const;
+  const themeLabels = { dark: 'Dark', light: 'Light', system: 'System' };
+
+  const languageOptions = ['system', 'en', 'tr'] as const;
+  const languageLabels: Record<string, string> = {
+    system: t('languageSelector.system'),
+    en: t('languageSelector.english'),
+    tr: t('languageSelector.turkish'),
+  };
+  const languageIcons: Record<string, string> = {
+    system: 'phone-portrait',
+    en: 'language',
+    tr: 'language',
+  };
 
   const handleClearData = () => {
     Alert.alert(
@@ -81,7 +87,7 @@ export function SettingsScreen({ navigation }: any) {
   const handleDisconnectAccount = () => {
     Alert.alert(
       'Disconnect Account',
-      'This will revoke access to your email account. Detected subscriptions will remain.',
+      'This will sign out your account and remove sync data. Your local subscriptions will remain.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -98,20 +104,53 @@ export function SettingsScreen({ navigation }: any) {
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account & Data',
-      'This will permanently delete your account and all associated data. This action cannot be undone.',
+      'This will permanently delete ALL your data including subscriptions, account connections, and settings. This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Delete',
+          text: 'Delete Everything',
           style: 'destructive',
-          onPress: () => {
+          onPress: async () => {
+            // Clear all stores
             subscriptionStore.setSubscriptions([]);
             resetToDefaults();
-            // TODO: Clear all stores
-            Alert.alert('Success', 'Your account has been deleted');
+            // Clear auth account if signed in
+            if (account) {
+              useAccountStore.getState().clearAccount();
+            }
+            Alert.alert('Account Deleted', 'All your data has been removed from this device.');
           },
         },
       ]
+    );
+  };
+
+  const [currencyModalVisible, setCurrencyModalVisible] = React.useState(false);
+  const currencies = ['USD', 'EUR', 'TRY', 'GBP', 'JPY', 'CAD', 'AUD'];
+
+  const handleCurrencySelect = (currency: string) => {
+    setCurrency(currency);
+    setCurrencyModalVisible(false);
+  };
+
+  const handleThemeSelect = (theme: 'dark' | 'light' | 'system') => {
+    setTheme(theme);
+    setThemeModalVisible(false);
+  };
+
+  const handleOpenPolicy = () => {
+    Alert.alert(
+      'Privacy Policy',
+      'Finify respects your privacy.\n\n• We do not store raw document content\n• Only subscription metadata is saved locally\n• No data is sent to external servers\n• You can delete all data anytime\n\nFor full policy, visit our website.',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleOpenTerms = () => {
+    Alert.alert(
+      'Terms of Service',
+      'By using SubscribeTracker you agree to:\n\n• Use the app for personal purposes\n• Not reverse engineer the app\n• Accept that Pro features require payment\n• Understand we are not liable for missed payments\n\nFor full terms, visit our website.',
+      [{ text: 'OK' }]
     );
   };
 
@@ -138,8 +177,8 @@ export function SettingsScreen({ navigation }: any) {
         <Header
           icon="settings"
           iconColor={colors.primary}
-          title="Settings"
-          subtitle="Manage your preferences"
+          title={t('settings.title')}
+          subtitle={t('settings.subtitle')}
         />
       </View>
 
@@ -149,26 +188,26 @@ export function SettingsScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
       >
         {/* Plan Section */}
-        <Text style={styles.sectionTitle}>Plan</Text>
+        <Text style={styles.sectionTitle}>{t('settings.plan')}</Text>
         <View style={styles.card}>
           <View style={styles.planCard}>
             <View style={styles.planBadge}>
-              <Text style={styles.planBadgeText}>{isPro() ? 'PRO' : 'STANDARD'}</Text>
+              <Text style={styles.planBadgeText}>{isPro() ? t('common.pro') : t('common.standard')}</Text>
             </View>
             <Text style={styles.planTitle}>
-              {isPro() ? 'Pro Member' : 'Free Plan'}
+              {isPro() ? t('settings.proMember') : t('settings.freePlan')}
             </Text>
             <Text style={styles.planDescription}>
               {isPro() 
-                ? 'Enjoy unlimited scans, no ads, and all premium features'
-                : 'Connect 1 email, basic scanning, with ads'}
+                ? t('settings.proDescription')
+                : t('settings.freeDescription')}
             </Text>
             {!isPro() && (
               <TouchableOpacity 
                 style={styles.upgradeButton}
                 onPress={() => navigation.navigate('Paywall')}
               >
-                <Text style={styles.upgradeText}>Upgrade to Pro</Text>
+                <Text style={styles.upgradeText}>{t('settings.upgradeToPro')}</Text>
               </TouchableOpacity>
             )}
             {isPro() && (
@@ -176,36 +215,193 @@ export function SettingsScreen({ navigation }: any) {
                 style={styles.debugButton}
                 onPress={handleResetPlan}
               >
-                <Text style={styles.debugText}>Reset to Standard (Debug)</Text>
+                <Text style={styles.debugText}>{t('settings.resetPlan')}</Text>
               </TouchableOpacity>
             )}
           </View>
         </View>
 
-        {/* Email Accounts Section */}
-        <Text style={styles.sectionTitle}>Email Accounts</Text>
+
+
+        {/* Cloud Sync Section */}
+        <Text style={styles.sectionTitle}>{t('settings.cloudSync')}</Text>
+        <View style={styles.card}>
+          {/* Google Account Sign-In/Sign-Out */}
+          <SettingsRow
+            icon={isSignedIn() ? 'person-circle' : 'logo-google'}
+            iconColor={isSignedIn() ? colors.emerald : colors.primary}
+            title={isSignedIn() ? (account?.displayName || account?.email || t('settings.signedIn')) : t('settings.signInGoogle')}
+            subtitle={isSignedIn() ? account?.email : t('settings.signInSubtitle')}
+            rightElement={
+              isSignedIn() ? (
+                <TouchableOpacity
+                  onPress={async () => {
+                    await authSignOut();
+                    useAccountStore.getState().clearAccount();
+                  }}
+                  style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: `${colors.red}15` }}
+                >
+                  <Text style={{ color: colors.red, fontSize: 13, fontWeight: '500' }}>{t('common.signOut')}</Text>
+                </TouchableOpacity>
+              ) : isSigningIn ? (
+                <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('common.signingIn')}</Text>
+              ) : undefined
+            }
+            onPress={isSignedIn() ? undefined : async () => {
+              setIsSigningIn(true);
+              try {
+                const result = await signInWithGoogle();
+                if (result.success && result.user) {
+                  useAccountStore.getState().setAccount({
+                    id: result.user.id,
+                    email: result.user.email,
+                    displayName: result.user.displayName,
+                    avatarUrl: result.user.avatarUrl,
+                    connectedAt: new Date().toISOString(),
+                  });
+                  Alert.alert(t('settings.signedIn'), t('settings.welcome', { name: result.user.displayName || result.user.email }));
+                } else if (result.error && result.error !== 'User cancelled') {
+                  Alert.alert('Sign-In Failed', result.error);
+                }
+              } finally {
+                setIsSigningIn(false);
+              }
+            }}
+          />
+          <SettingsRow
+            icon="cloud-upload"
+            iconColor={colors.primary}
+            title={t('settings.syncToCloud')}
+            subtitle={
+              isPro() 
+                ? (subscriptionStore.lastSyncedAt 
+                    ? t('settings.lastSynced', { date: new Date(subscriptionStore.lastSyncedAt).toLocaleString() })
+                    : t('settings.tapToSync'))
+                : t('settings.upgradeForSync')
+            }
+            rightElement={
+              !isPro() ? (
+                <View style={styles.proBadge}>
+                  <Text style={styles.proBadgeText}>PRO</Text>
+                </View>
+              ) : subscriptionStore.isSyncing ? (
+                <Text style={{ color: colors.textSecondary }}>{t('common.syncing')}</Text>
+              ) : undefined
+            }
+            onPress={async () => {
+              if (isPro()) {
+                const success = await subscriptionStore.performFullSync();
+                if (success) {
+                  Alert.alert(t('settings.synced'), t('settings.syncedMessage'));
+                } else {
+                  Alert.alert(t('settings.syncFailed'), subscriptionStore.syncError || 'Unknown error');
+                }
+              } else {
+                navigation.navigate('Paywall');
+              }
+            }}
+          />
+        </View>
+
+        {/* Bank Statement Scan Section - PRO ONLY */}
+        <Text style={styles.sectionTitle}>{t('settings.bankStatement')}</Text>
         <View style={styles.card}>
           <SettingsRow
-            icon="mail"
-            iconColor={colors.cyan}
-            title="Connected Accounts"
-            subtitle={`${getAccountCount()}/${isPro() ? 5 : 1} accounts`}
-            onPress={() => navigation.navigate('EmailAccounts')}
+            icon="document-text"
+            iconColor={colors.amber}
+            title={t('settings.scanBankStatement')}
+            subtitle={isPro() ? t('settings.scanBankSubtitle') : t('settings.upgradeToScan')}
+            rightElement={
+              !isPro() ? (
+                <View style={styles.proBadge}>
+                  <Text style={styles.proBadgeText}>PRO</Text>
+                </View>
+              ) : undefined
+            }
+            onPress={() => {
+              if (isPro()) {
+                navigation.navigate('BankStatementScan');
+              } else {
+                navigation.navigate('Paywall');
+              }
+            }}
+          />
+        </View>
+
+        {/* Data Export Section - PRO ONLY */}
+        <Text style={styles.sectionTitle}>{t('settings.dataExport')}</Text>
+        <View style={styles.card}>
+          <SettingsRow
+            icon="download"
+            iconColor={colors.emerald}
+            title={t('settings.exportCSV')}
+            subtitle={isPro() ? t('settings.exportCSVSubtitle') : t('settings.upgradeToExport')}
+            rightElement={
+              !isPro() ? (
+                <View style={styles.proBadge}>
+                  <Text style={styles.proBadgeText}>PRO</Text>
+                </View>
+              ) : undefined
+            }
+            onPress={async () => {
+              if (isPro()) {
+                const { exportToCSV } = require('../services/ExportService');
+                const result = await exportToCSV(subscriptionStore.subscriptions);
+                if (!result.success) {
+                  Alert.alert(t('settings.exportFailed'), result.error || 'Unknown error');
+                }
+              } else {
+                navigation.navigate('Paywall');
+              }
+            }}
+          />
+          <SettingsRow
+            icon="document"
+            iconColor={colors.primary}
+            title={t('settings.exportPDF')}
+            subtitle={isPro() ? t('settings.exportPDFSubtitle') : t('settings.upgradeToExport')}
+            rightElement={
+              !isPro() ? (
+                <View style={styles.proBadge}>
+                  <Text style={styles.proBadgeText}>PRO</Text>
+                </View>
+              ) : undefined
+            }
+            onPress={async () => {
+              if (isPro()) {
+                const { exportToPDF } = require('../services/ExportService');
+                const result = await exportToPDF(subscriptionStore.subscriptions);
+                if (!result.success) {
+                  Alert.alert(t('settings.exportFailed'), result.error || 'Unknown error');
+                }
+              } else {
+                navigation.navigate('Paywall');
+              }
+            }}
           />
         </View>
 
         {/* Preferences Section */}
-        <Text style={styles.sectionTitle}>Preferences</Text>
+        <Text style={styles.sectionTitle}>{t('settings.preferences')}</Text>
         <View style={styles.card}>
           <SettingsRow
             icon="notifications"
             iconColor={colors.amber}
-            title="Push Notifications"
-            subtitle="Get reminders before billing"
+            title={t('settings.pushNotifications')}
+            subtitle={t('settings.pushNotifSubtitle')}
             rightElement={
               <Toggle 
                 value={app.notificationsEnabled} 
-                onChange={setNotifications} 
+                onChange={async (enabled) => {
+                  setNotifications(enabled);
+                  if (enabled) {
+                    const subs = subscriptionStore.getActiveSubscriptions();
+                    await scheduleAllReminders(subs, undefined, app.currency);
+                  } else {
+                    const { cancelAllReminders } = await import('../services/NotificationService');
+                    await cancelAllReminders();
+                  }
+                }} 
               />
             }
           />
@@ -213,8 +409,8 @@ export function SettingsScreen({ navigation }: any) {
           <SettingsRow
             icon="send"
             iconColor={colors.emerald}
-            title="Test Notification"
-            subtitle="Send a test push notification"
+            title={t('settings.testNotification')}
+            subtitle={t('settings.testNotifSubtitle')}
             onPress={() => {
               sendTestNotification();
               Alert.alert('Sent!', 'Check your notifications');
@@ -224,12 +420,34 @@ export function SettingsScreen({ navigation }: any) {
           <SettingsRow
             icon="finger-print"
             iconColor={colors.pink}
-            title="Biometric Lock"
-            subtitle="Secure app with Face ID/Touch ID"
+            title={t('settings.biometricLock')}
+            subtitle={`Secure app with Face ID/Touch ID${!isPro() ? ' (Pro)' : ''}`}
             rightElement={
               <Toggle 
                 value={app.biometricLockEnabled} 
-                onChange={setBiometricLock} 
+                onChange={async (value) => {
+                  if (value) {
+                    // Check Pro status first
+                    if (!isPro()) {
+                      Alert.alert(
+                        'Pro Feature',
+                        'Biometric lock is a Pro feature. Upgrade to unlock!',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Upgrade', onPress: () => navigation.navigate('Paywall') },
+                        ]
+                      );
+                      return;
+                    }
+                    // Verify biometrics before enabling
+                    const success = await requestBiometricEnrollment();
+                    if (success) {
+                      setBiometricLock(true);
+                    }
+                  } else {
+                    setBiometricLock(false);
+                  }
+                }} 
               />
             }
           />
@@ -237,43 +455,51 @@ export function SettingsScreen({ navigation }: any) {
           <SettingsRow
             icon="moon"
             iconColor={colors.primary}
-            title="Appearance"
-            subtitle={app.theme === 'dark' ? 'Dark Mode' : 'Light Mode'}
-            onPress={() => {/* TODO: Theme picker */}}
+            title={t('settings.appearance')}
+            subtitle={`${themeLabels[app.theme as keyof typeof themeLabels] || 'Dark'} Mode${!canUseLight && app.theme !== 'dark' ? ' (Pro)' : ''}`}
+            onPress={() => setThemeModalVisible(true)}
           />
           <View style={styles.divider} />
           <SettingsRow
             icon="cash"
             iconColor={colors.emerald}
-            title="Currency"
+            title={t('settings.currency')}
             subtitle={app.currency}
-            onPress={() => {/* TODO: Currency picker */}}
+            onPress={() => setCurrencyModalVisible(true)}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="language"
+            iconColor={colors.amber}
+            title={t('languageSelector.title')}
+            subtitle={languageLabels[app.language] || languageLabels.system}
+            onPress={() => setLanguageModalVisible(true)}
           />
         </View>
 
         {/* Data Section */}
-        <Text style={styles.sectionTitle}>Data & Privacy</Text>
+        <Text style={styles.sectionTitle}>{t('settings.data')}</Text>
         <View style={styles.card}>
           <SettingsRow
             icon="download"
             iconColor={colors.cyan}
-            title="Export Data"
-            subtitle="Download your subscription data"
+            title={t('settings.exportData')}
+            subtitle={t('settings.exportDataSubtitle')}
             onPress={() => {/* TODO: Export */}}
           />
           <View style={styles.divider} />
           <SettingsRow
             icon="unlink"
             iconColor={colors.amber}
-            title="Disconnect Account"
-            subtitle="Revoke email access"
+            title={t('settings.disconnectAccount')}
+            subtitle={t('settings.disconnectSubtitle')}
             onPress={handleDisconnectAccount}
           />
           <View style={styles.divider} />
           <SettingsRow
             icon="trash"
             iconColor={colors.red}
-            title="Clear All Data"
+            title={t('settings.clearAllData')}
             destructive
             onPress={handleClearData}
           />
@@ -281,39 +507,172 @@ export function SettingsScreen({ navigation }: any) {
           <SettingsRow
             icon="person-remove"
             iconColor={colors.red}
-            title="Delete Account"
-            subtitle="Permanently delete your account"
+            title={t('settings.deleteAccount')}
+            subtitle={t('settings.deleteAccountSubtitle')}
             destructive
             onPress={handleDeleteAccount}
           />
         </View>
 
         {/* Legal Section */}
-        <Text style={styles.sectionTitle}>Legal</Text>
+        <Text style={styles.sectionTitle}>{t('settings.legal')}</Text>
         <View style={styles.card}>
           <SettingsRow
             icon="document-text"
             iconColor={colors.textMuted}
-            title="Privacy Policy"
-            onPress={() => {/* TODO: Open privacy policy */}}
+            title={t('settings.privacyPolicy')}
+            onPress={() => navigation.navigate('PrivacyPolicy')}
           />
           <View style={styles.divider} />
           <SettingsRow
             icon="document"
             iconColor={colors.textMuted}
-            title="Terms of Service"
-            onPress={() => {/* TODO: Open terms */}}
+            title={t('settings.termsOfService')}
+            onPress={() => navigation.navigate('TermsOfService')}
           />
         </View>
 
         {/* Version */}
-        <Text style={styles.version}>SubscribeTracker v1.0.0</Text>
+        <Text style={styles.version}>Finify v1.0.0</Text>
       </ScrollView>
+
+      {/* Currency Picker Modal */}
+      <Modal
+        visible={currencyModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setCurrencyModalVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setCurrencyModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('settings.currency')}</Text>
+            {currencies.map((currency) => (
+              <TouchableOpacity
+                key={currency}
+                style={[
+                  styles.currencyOption,
+                  app.currency === currency && styles.currencyOptionActive
+                ]}
+                onPress={() => handleCurrencySelect(currency)}
+              >
+                <Text style={[
+                  styles.currencyText,
+                  app.currency === currency && styles.currencyTextActive
+                ]}>
+                  {currency}
+                </Text>
+                {app.currency === currency && (
+                  <Ionicons name="checkmark" size={20} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Theme Picker Modal */}
+      <Modal
+        visible={themeModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setThemeModalVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setThemeModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Select Theme</Text>
+            {themeOptions.map((theme) => (
+              <TouchableOpacity
+                key={theme}
+                style={[
+                  styles.currencyOption,
+                  app.theme === theme && styles.currencyOptionActive
+                ]}
+                onPress={() => handleThemeSelect(theme)}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Ionicons 
+                    name={theme === 'dark' ? 'moon' : theme === 'light' ? 'sunny' : 'phone-portrait'} 
+                    size={18} 
+                    color={app.theme === theme ? colors.primary : colors.textMuted} 
+                  />
+                  <Text style={[
+                    styles.currencyText,
+                    app.theme === theme && styles.currencyTextActive
+                  ]}>
+                    {themeLabels[theme]}
+                  </Text>
+                  {(theme === 'light' || theme === 'system') && !canUseLight && (
+                    <View style={styles.proBadge}>
+                      <Text style={styles.proBadgeText}>PRO</Text>
+                    </View>
+                  )}
+                </View>
+                {app.theme === theme && (
+                  <Ionicons name="checkmark" size={20} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Language Picker Modal */}
+      <Modal
+        visible={languageModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setLanguageModalVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setLanguageModalVisible(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>{t('languageSelector.title')}</Text>
+            {languageOptions.map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={[
+                  styles.currencyOption,
+                  app.language === lang && styles.currencyOptionActive
+                ]}
+                onPress={() => {
+                  setLanguage(lang);
+                  setLanguageModalVisible(false);
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Ionicons 
+                    name={languageIcons[lang] as any} 
+                    size={18} 
+                    color={app.language === lang ? colors.primary : colors.textMuted} 
+                  />
+                  <Text style={[
+                    styles.currencyText,
+                    app.language === lang && styles.currencyTextActive
+                  ]}>
+                    {languageLabels[lang]}
+                  </Text>
+                </View>
+                {app.language === lang && (
+                  <Ionicons name="checkmark" size={20} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
@@ -327,7 +686,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 140,
   },
   sectionTitle: {
     fontSize: 14,
@@ -395,7 +754,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.text,
+    backgroundColor: '#FFFFFF',
   },
   toggleDotActive: {
     alignSelf: 'flex-end',
@@ -414,7 +773,7 @@ const styles = StyleSheet.create({
   planBadgeText: {
     fontSize: 12,
     fontWeight: '700',
-    color: colors.text,
+    color: '#FFFFFF',
     letterSpacing: 1,
   },
   planTitle: {
@@ -439,7 +798,7 @@ const styles = StyleSheet.create({
   upgradeText: {
     fontSize: 15,
     fontWeight: '600',
-    color: colors.text,
+    color: '#FFFFFF',
   },
   debugButton: {
     marginTop: 12,
@@ -458,4 +817,59 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 16,
   },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.bgCard,
+    borderRadius: borderRadius.xl,
+    padding: 20,
+    width: '80%',
+    maxWidth: 300,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  currencyOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: borderRadius.lg,
+    marginBottom: 4,
+  },
+  currencyOptionActive: {
+    backgroundColor: `${colors.primary}20`,
+  },
+  currencyText: {
+    fontSize: 16,
+    color: colors.text,
+  },
+  currencyTextActive: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  proBadge: {
+    backgroundColor: colors.amber,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  proBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 });
+

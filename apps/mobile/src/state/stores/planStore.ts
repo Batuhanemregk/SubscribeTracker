@@ -13,11 +13,10 @@ interface PlanState {
   // Getters
   isPro: () => boolean;
   isTrialActive: () => boolean;
-  canAddEmailAccount: (currentCount: number) => boolean;
-  canUseDailyScan: () => boolean;
-  canUseBodyParsing: () => boolean;
-  canUseAutoFill: () => boolean;
-  canUsePriceAlerts: () => boolean;
+  canUseBankStatementScan: () => boolean;
+  canUseCloudSync: () => boolean;
+  canUseDataExport: () => boolean;
+  canUseBiometricLock: () => boolean;
   shouldShowAds: () => boolean;
   
   // Actions
@@ -45,15 +44,10 @@ export const usePlanStore = create<PlanState>()(
         return new Date(trialEndsAt) > new Date();
       },
 
-      canAddEmailAccount: (currentCount) => {
-        const { entitlements } = get().plan;
-        return currentCount < entitlements.maxEmailAccounts;
-      },
-
-      canUseDailyScan: () => get().plan.entitlements.dailyScan,
-      canUseBodyParsing: () => get().plan.entitlements.bodyParsing,
-      canUseAutoFill: () => get().plan.entitlements.autoFillPricing,
-      canUsePriceAlerts: () => get().plan.entitlements.priceAlerts,
+      canUseBankStatementScan: () => get().plan.entitlements.bankStatementScan,
+      canUseCloudSync: () => get().plan.entitlements.cloudSync,
+      canUseDataExport: () => get().plan.entitlements.dataExport,
+      canUseBiometricLock: () => get().plan.entitlements.biometricLock,
       shouldShowAds: () => !get().plan.entitlements.noAds,
 
       // Actions

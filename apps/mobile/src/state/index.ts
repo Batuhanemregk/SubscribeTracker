@@ -5,3 +5,4 @@ export { useSubscriptionStore, generateId, createSubscription } from './stores/s
 export { useSettingsStore } from './stores/settingsStore';
 export { usePlanStore } from './stores/planStore';
 export { useAccountStore } from './stores/accountStore';
+export { useCurrencyStore } from './stores/currencyStore';

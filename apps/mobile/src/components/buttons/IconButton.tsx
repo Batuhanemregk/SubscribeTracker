@@ -4,7 +4,7 @@
 import React from 'react';
 import { TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../theme';
+import { useTheme } from '../../theme';
 
 interface IconButtonProps {
   icon: string;
@@ -26,11 +26,14 @@ export function IconButton({
   icon, 
   onPress, 
   size = 'md',
-  color = colors.text,
-  backgroundColor = colors.bgCard,
+  color,
+  backgroundColor,
   disabled = false,
   style 
 }: IconButtonProps) {
+  const { colors } = useTheme();
+  const resolvedColor = color || colors.text;
+  const resolvedBg = backgroundColor || colors.bgCard;
   const config = sizeConfig[size];
 
   return (
@@ -43,7 +46,7 @@ export function IconButton({
         {
           width: config.container,
           height: config.container,
-          backgroundColor,
+          backgroundColor: resolvedBg,
         },
         disabled && styles.disabled,
         style,
@@ -52,7 +55,7 @@ export function IconButton({
       <Ionicons 
         name={icon as any} 
         size={config.icon} 
-        color={disabled ? colors.textDisabled : color} 
+        color={disabled ? colors.textDisabled : resolvedColor} 
       />
     </TouchableOpacity>
   );

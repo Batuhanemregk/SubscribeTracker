@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius, shadows } from '../../theme';
+import { useTheme, borderRadius } from '../../theme';
 
 interface GradientStatCardProps {
   icon: string;
@@ -25,20 +25,27 @@ interface GradientStatCardProps {
 
 export function GradientStatCard({ 
   icon, 
-  iconColor = colors.primary,
+  iconColor,
   label, 
   value, 
   subtitle,
   delay = 0,
   style 
 }: GradientStatCardProps) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
+  const { colors } = useTheme();
+  const resolvedIconColor = iconColor || colors.primary;
+  
+  // Only animate on HomeScreen (when delay > 0)
+  const shouldAnimate = delay > 0;
+  const opacity = useSharedValue(shouldAnimate ? 0 : 1);
+  const translateY = useSharedValue(shouldAnimate ? 20 : 0);
 
   useEffect(() => {
-    opacity.value = withDelay(delay, withSpring(1));
-    translateY.value = withDelay(delay, withSpring(0, { damping: 15 }));
-  }, [delay]);
+    if (shouldAnimate) {
+      opacity.value = withDelay(delay, withSpring(1));
+      translateY.value = withDelay(delay, withSpring(0, { damping: 15 }));
+    }
+  }, [delay, shouldAnimate]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
@@ -46,19 +53,19 @@ export function GradientStatCard({
   }));
 
   return (
-    <Animated.View style={[styles.container, animatedStyle, style]}>
+    <Animated.View style={[styles.container, { borderColor: colors.border }, animatedStyle, style]}>
       <LinearGradient
-        colors={[`${iconColor}25`, `${iconColor}08`]}
+        colors={[`${resolvedIconColor}25`, `${resolvedIconColor}08`]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
-        <View style={[styles.iconContainer, { backgroundColor: `${iconColor}20` }]}>
-          <Ionicons name={icon as any} size={18} color={iconColor} />
+        <View style={[styles.iconContainer, { backgroundColor: `${resolvedIconColor}20` }]}>
+          <Ionicons name={icon as any} size={18} color={resolvedIconColor} />
         </View>
-        <Text style={[styles.label, { color: iconColor }]}>{label}</Text>
-        <Text style={styles.value}>{value}</Text>
-        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        <Text style={[styles.label, { color: resolvedIconColor }]}>{label}</Text>
+        <Text style={[styles.value, { color: colors.text }]}>{value}</Text>
+        {subtitle && <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>}
       </LinearGradient>
     </Animated.View>
   );
@@ -70,7 +77,6 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.xl,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: colors.border,
   },
   gradient: {
     padding: 16,
@@ -92,11 +98,10 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.text,
   },
   subtitle: {
     fontSize: 12,
-    color: colors.textMuted,
     marginTop: 4,
   },
 });
+

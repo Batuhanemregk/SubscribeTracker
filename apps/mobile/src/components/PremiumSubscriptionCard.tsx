@@ -7,8 +7,8 @@
  * - iOS/Android proper shadows
  * - Swipe to reveal actions (fixed gesture handling)
  */
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Platform } from 'react-native';
+import React, { useRef, useCallback, useState } from 'react';
+import { StyleSheet, View, Text, TouchableOpacity, Pressable, Platform, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -19,8 +19,11 @@ import Animated, {
 import { Swipeable } from 'react-native-gesture-handler';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme';
+import { useTheme } from '../theme';
+import { useSettingsStore, useCurrencyStore } from '../state';
+import { formatCurrency, advanceToNextBillingDate } from '../utils';
 import type { Subscription } from '../types';
+import { t, getLocale } from '../i18n';
 
 interface PremiumSubscriptionCardProps {
   item: Subscription;
@@ -28,6 +31,8 @@ interface PremiumSubscriptionCardProps {
   onPress: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onSwipeOpen?: () => void;
+  swipeableRef?: (ref: Swipeable | null) => void;
 }
 
 export function PremiumSubscriptionCard({ 
@@ -35,59 +40,50 @@ export function PremiumSubscriptionCard({
   index, 
   onPress, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onSwipeOpen,
+  swipeableRef: registerRef
 }: PremiumSubscriptionCardProps) {
   const swipeableRef = useRef<Swipeable>(null);
-  
-  // Animation shared values
-  const pressed = useSharedValue(0);
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(30);
-  const scale = useSharedValue(0.95);
+  const [logoError, setLogoError] = useState(false);
+  const isSwiping = useRef(false);
+  const { colors, isDark } = useTheme();
+  const { app } = useSettingsStore();
+  const { convert } = useCurrencyStore();
+  const displayCurrency = app.currency;
 
-  // Calculate days until billing
+  // Convert amount from subscription's original currency to user's display currency
+  const displayAmount = convert(item.amount, item.currency, displayCurrency);
+  const formattedPrice = formatCurrency(displayAmount, displayCurrency);
+
+  // Stagger entry animation
+  const entryOpacity = useSharedValue(0);
+  const entryTranslateY = useSharedValue(12);
+
+  React.useEffect(() => {
+    const delay = Math.min(index * 80, 400); // cap at 400ms
+    entryOpacity.value = withDelay(delay, withSpring(1, { damping: 20, stiffness: 100 }));
+    entryTranslateY.value = withDelay(delay, withSpring(0, { damping: 20, stiffness: 100 }));
+  }, []);
+
+  const entryStyle = useAnimatedStyle(() => ({
+    opacity: entryOpacity.value,
+    transform: [{ translateY: entryTranslateY.value }],
+  }));
+  
+  // Calculate days until billing (auto-advance past dates)
+  const advancedDate = advanceToNextBillingDate(item.nextBillingDate, item.cycle);
   const daysUntil = Math.ceil(
-    (new Date(item.nextBillingDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+    (advancedDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
   );
   const isUrgent = daysUntil <= 7;
-  const formattedDate = new Date(item.nextBillingDate).toLocaleDateString('en-US', {
+  const isOverdue = daysUntil < 0;
+  const daySuffix = getLocale() === 'tr' ? 'g' : 'd';
+  const dateLocale = getLocale() === 'tr' ? 'tr-TR' : 'en-US';
+  const formattedDate = advancedDate.toLocaleDateString(dateLocale, {
     month: 'short',
     day: 'numeric',
   });
-
-  // Stagger entrance animation
-  useEffect(() => {
-    const delay = index * 100;
-    opacity.value = withDelay(delay, withSpring(1));
-    translateY.value = withDelay(delay, withSpring(0, { damping: 15 }));
-    scale.value = withDelay(delay, withSpring(1, { damping: 12 }));
-  }, []);
-
-  // Card entrance animation style
-  const entranceStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [
-      { translateY: translateY.value },
-      { scale: scale.value },
-    ],
-  }));
-
-  // Card press animation style
-  const cardStyle = useAnimatedStyle(() => {
-    const cardScale = interpolate(pressed.value, [0, 1], [1, 0.97]);
-    return {
-      transform: [{ scale: cardScale }],
-    };
-  });
-
-  // Press handlers
-  const handlePressIn = () => {
-    pressed.value = withSpring(1, { damping: 15 });
-  };
-
-  const handlePressOut = () => {
-    pressed.value = withSpring(0);
-  };
 
   // Swipe action buttons
   const renderRightActions = () => (
@@ -100,7 +96,7 @@ export function PremiumSubscriptionCard({
         }}
       >
         <Ionicons name="pencil" size={20} color="#FFF" />
-        <Text style={styles.actionText}>Edit</Text>
+        <Text style={styles.actionText}>{t('common.edit')}</Text>
       </TouchableOpacity>
       <TouchableOpacity 
         style={[styles.actionButton, styles.deleteButton]} 
@@ -110,53 +106,54 @@ export function PremiumSubscriptionCard({
         }}
       >
         <Ionicons name="trash" size={20} color="#FFF" />
-        <Text style={styles.actionText}>Delete</Text>
+        <Text style={styles.actionText}>{t('common.delete')}</Text>
       </TouchableOpacity>
     </View>
   );
 
-  // Brighter gradient colors based on item color
-  const gradientColors = [
-    `${item.colorKey}50`,  // 50% opacity - brighter
-    `${item.colorKey}25`,  // 25% opacity
-    '#1E1E28',             // Dark but not too dark
-  ] as const;
+  // Combined ref callback - register with parent + internal ref
+  const handleRef = useCallback((ref: Swipeable | null) => {
+    (swipeableRef as any).current = ref;
+    registerRef?.(ref);
+  }, [registerRef]);
 
   return (
-    <Animated.View style={[styles.container, entranceStyle]}>
+    <Animated.View style={[styles.container, entryStyle]}>
       <Swipeable
-        ref={swipeableRef}
+        ref={handleRef}
         renderRightActions={renderRightActions}
         overshootRight={false}
         friction={2}
+        onSwipeableOpen={onSwipeOpen}
+        activeOffsetX={[-20, 20]}
+        failOffsetY={[-15, 15]}
+        onSwipeableWillOpen={() => { isSwiping.current = true; }}
+        onSwipeableClose={() => { setTimeout(() => { isSwiping.current = false; }, 100); }}
       >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={onPress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
+        <Pressable
+          onPress={() => { if (!isSwiping.current) onPress(); }}
+          style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }]}
         >
-          <Animated.View 
+          <View 
             style={[
               styles.card, 
-              cardStyle,
-              // iOS shadow with item color
+              { backgroundColor: colors.bgCard, borderColor: colors.border },
+              // iOS shadow with item color as glow
               Platform.OS === 'ios' && {
                 shadowColor: item.colorKey,
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.4,
-                shadowRadius: 16,
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 12,
+              },
+              // Android elevation with tint
+              Platform.OS === 'android' && {
+                elevation: 4,
               },
             ]}
           >
-            {/* Bright gradient background */}
-            <LinearGradient
-              colors={gradientColors}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.gradientBg}
-            >
-              {/* Colored accent border */}
+            {/* Simple dark background - no gradient */}
+            <View style={styles.cardInner}>
+              {/* Subtle colored accent line on left */}
               <View style={[styles.accentBorder, { backgroundColor: item.colorKey }]} />
 
               {/* Content */}
@@ -164,26 +161,34 @@ export function PremiumSubscriptionCard({
                 {/* Header Row */}
                 <View style={styles.header}>
                   {/* Icon with brighter background */}
-                  <View style={[styles.iconContainer, { backgroundColor: `${item.colorKey}40` }]}>
-                    <Text style={styles.iconEmoji}>{item.iconKey}</Text>
+                  <View style={styles.iconContainer}>
+                    {item.logoUrl && !logoError ? (
+                      <Image
+                        source={{ uri: item.logoUrl }}
+                        style={styles.logoImage}
+                        onError={() => setLogoError(true)}
+                      />
+                    ) : (
+                      <Text style={styles.iconEmoji}>{item.iconKey}</Text>
+                    )}
                   </View>
 
                   {/* Name & Category */}
                   <View style={styles.info}>
-                    <Text style={styles.name}>{item.name}</Text>
-                    <Text style={styles.category}>{item.category.toUpperCase()}</Text>
+                    <Text style={[styles.name, { color: colors.text }]}>{item.name}</Text>
+                    <Text style={[styles.category, { color: colors.textMuted }]}>{t(`categories.${item.category}`, { defaultValue: item.category }).toUpperCase()}</Text>
                   </View>
 
                   {/* Days Badge */}
                   <View style={[
                     styles.daysBadge, 
-                    { backgroundColor: isUrgent ? `${colors.amber}30` : `${colors.emerald}30` }
+                    { backgroundColor: isOverdue ? `${colors.red}30` : isUrgent ? `${colors.amber}30` : `${colors.emerald}30` }
                   ]}>
                     <Text style={[
                       styles.daysText, 
-                      { color: isUrgent ? colors.amber : colors.emerald }
+                      { color: isOverdue ? colors.red : isUrgent ? colors.amber : colors.emerald }
                     ]}>
-                      {daysUntil}d
+                      {isOverdue ? t('common.overdue') : `${daysUntil}${daySuffix}`}
                     </Text>
                   </View>
                 </View>
@@ -191,21 +196,20 @@ export function PremiumSubscriptionCard({
                 {/* Price Row */}
                 <View style={styles.priceRow}>
                   <View style={styles.priceContainer}>
-                    <Text style={[styles.currency, { color: item.colorKey }]}>$</Text>
-                    <Text style={styles.price}>{item.amount.toFixed(2)}</Text>
-                    <Text style={styles.period}>/{item.cycle === 'monthly' ? 'mo' : 'yr'}</Text>
+                    <Text style={[styles.price, { color: colors.text }]}>{formattedPrice}</Text>
+                    <Text style={[styles.period, { color: colors.textMuted }]}>{item.cycle === 'monthly' ? t('common.perMonth') : t('common.perYear')}</Text>
                   </View>
 
                   {/* Next billing date */}
-                  <View style={[styles.dateContainer, { borderColor: `${item.colorKey}30` }]}>
+                  <View style={[styles.dateContainer, { borderColor: `${item.colorKey}30`, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' }]}>
                     <Ionicons name="calendar-outline" size={14} color={item.colorKey} />
-                    <Text style={styles.dateText}>{formattedDate}</Text>
+                    <Text style={[styles.dateText, { color: colors.textMuted }]}>{formattedDate}</Text>
                   </View>
                 </View>
               </View>
-            </LinearGradient>
-          </Animated.View>
-        </TouchableOpacity>
+            </View>
+          </View>
+        </Pressable>
       </Swipeable>
     </Animated.View>
   );
@@ -228,10 +232,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   editButton: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#8B5CF6', // primary - same in both themes
   },
   deleteButton: {
-    backgroundColor: colors.red,
+    backgroundColor: '#EF4444', // red - same in both themes
     borderTopRightRadius: 20,
     borderBottomRightRadius: 20,
   },
@@ -246,7 +250,8 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 20,
     overflow: 'hidden',
-    backgroundColor: '#1E1E28',
+    borderWidth: 1,
+    // borderColor and backgroundColor set dynamically via inline style
     // Android elevation
     ...Platform.select({
       android: {
@@ -254,7 +259,7 @@ const styles = StyleSheet.create({
       },
     }),
   },
-  gradientBg: {
+  cardInner: {
     flexDirection: 'row',
   },
 
@@ -285,6 +290,11 @@ const styles = StyleSheet.create({
   iconEmoji: {
     fontSize: 26,
   },
+  logoImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 6,
+  },
   info: {
     flex: 1,
     marginLeft: 14,
@@ -292,11 +302,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    // color set dynamically via inline style
   },
   category: {
     fontSize: 11,
-    color: '#9CA3AF',
+    // color set dynamically via inline style
     marginTop: 4,
     letterSpacing: 1,
   },
@@ -329,11 +339,11 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#FFFFFF',
+    // color set dynamically via inline style
   },
   period: {
     fontSize: 15,
-    color: '#6B7280',
+    // color set dynamically via inline style
     marginLeft: 4,
     fontWeight: '500',
   },
@@ -341,7 +351,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    // backgroundColor set dynamically via inline style
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
@@ -349,7 +359,7 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    // color set dynamically via inline style
     fontWeight: '600',
   },
 });

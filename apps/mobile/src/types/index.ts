@@ -16,11 +16,10 @@ export interface UserPlan {
   trialEndsAt: string | null;
   isTrialActive: boolean;
   entitlements: {
-    maxEmailAccounts: number;       // 1 for standard, 5 for pro
-    dailyScan: boolean;             // false for standard
-    bodyParsing: boolean;           // false for standard
-    autoFillPricing: boolean;       // false for standard
-    priceAlerts: boolean;           // false for standard
+    bankStatementScan: boolean;     // false for standard
+    cloudSync: boolean;             // false for standard
+    dataExport: boolean;            // false for standard
+    biometricLock: boolean;         // false for standard
     noAds: boolean;                 // false for standard
   };
 }
@@ -33,11 +32,10 @@ export const DEFAULT_STANDARD_PLAN: UserPlan = {
   trialEndsAt: null,
   isTrialActive: false,
   entitlements: {
-    maxEmailAccounts: 1,
-    dailyScan: false,
-    bodyParsing: false,
-    autoFillPricing: false,
-    priceAlerts: false,
+    bankStatementScan: false,
+    cloudSync: false,
+    dataExport: false,
+    biometricLock: false,
     noAds: false,
   },
 };
@@ -49,32 +47,14 @@ export const DEFAULT_PRO_PLAN: UserPlan = {
   trialEndsAt: null,
   isTrialActive: false,
   entitlements: {
-    maxEmailAccounts: 5,
-    dailyScan: true,
-    bodyParsing: true,
-    autoFillPricing: true,
-    priceAlerts: true,
+    bankStatementScan: true,
+    cloudSync: true,
+    dataExport: true,
+    biometricLock: true,
     noAds: true,
   },
 };
 
-// =============================================================================
-// EMAIL ACCOUNT
-// =============================================================================
-
-export type EmailProvider = 'gmail' | 'outlook'; // Apple Mail not supported
-export type AccountStatus = 'active' | 'disconnected' | 'error';
-
-export interface EmailAccount {
-  id: string;
-  provider: EmailProvider;
-  email: string;
-  displayName: string;
-  avatarUrl: string | null;
-  status: AccountStatus;
-  connectedAt: string;
-  lastSyncAt: string | null;
-}
 
 // =============================================================================
 // SUBSCRIPTION
@@ -86,9 +66,7 @@ export type SubscriptionSource = 'manual' | 'detected';
 
 export interface SubscriptionDetection {
   confidence: number;               // 0-1
-  emailAccountId: string | null;
-  senderDomain: string | null;
-  lastSeenMessageId: string | null;
+  source: 'bank_statement' | 'manual';
 }
 
 export interface Subscription {
@@ -101,6 +79,7 @@ export interface Subscription {
   category: string;
   iconKey: string;                  // emoji or icon name
   colorKey: string;                 // hex color
+  logoUrl?: string;                 // Clearbit logo URL (optional)
   status: SubscriptionStatus;
   source: SubscriptionSource;
   detection: SubscriptionDetection | null;
@@ -128,32 +107,7 @@ export interface PaymentHistoryItem {
   source: PaymentSource;
 }
 
-// =============================================================================
-// SCAN JOB
-// =============================================================================
 
-export type ScanStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
-export type ScanPhase = 'fetching' | 'analyzing' | 'detecting' | 'done';
-export type ScanType = 'manual' | 'scheduled';
-
-export interface ScanProgress {
-  phase: ScanPhase;
-  emailsFetched: number;
-  emailsAnalyzed: number;
-  candidatesFound: number;
-  subscriptionsDetected: number;
-}
-
-export interface ScanJob {
-  id: string;
-  status: ScanStatus;
-  startedAt: string;
-  endedAt: string | null;
-  type: ScanType;
-  emailAccountIds: string[];
-  progress: ScanProgress;
-  error: string | null;
-}
 
 // =============================================================================
 // ALERT
@@ -191,7 +145,6 @@ export type CandidateStatus = 'pending' | 'confirmed' | 'dismissed';
 
 export interface DetectionCandidate {
   id: string;
-  scanJobId?: string;
   merchantName: string;
   merchantDomain: string;
   detectedAmount: number;
@@ -226,6 +179,7 @@ export interface BudgetSettings {
 export interface AppSettings {
   theme: ThemeMode;
   currency: string;
+  language: 'system' | 'en' | 'tr';
   notificationsEnabled: boolean;
   biometricLockEnabled: boolean;
   lastScanAt: string | null;
@@ -244,6 +198,7 @@ export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
 export const DEFAULT_APP_SETTINGS: AppSettings = {
   theme: 'dark',
   currency: 'USD',
+  language: 'system',
   notificationsEnabled: true,
   biometricLockEnabled: false,
   lastScanAt: null,

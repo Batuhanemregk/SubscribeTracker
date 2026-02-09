@@ -5,7 +5,7 @@ import React from 'react';
 import { TouchableOpacity, StyleSheet, ViewStyle, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, shadows, createGlow } from '../../theme';
+import { useTheme, shadows, createGlow } from '../../theme';
 
 interface FABProps {
   icon?: string;
@@ -14,6 +14,8 @@ interface FABProps {
 }
 
 export function FAB({ icon = 'add', onPress, style }: FABProps) {
+  const { colors } = useTheme();
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -24,7 +26,7 @@ export function FAB({ icon = 'add', onPress, style }: FABProps) {
         colors={[colors.primary, colors.primaryDark]}
         style={styles.gradient}
       >
-        <Ionicons name={icon as any} size={28} color={colors.text} />
+        <Ionicons name={icon as any} size={28} color="#FFFFFF" />
       </LinearGradient>
     </TouchableOpacity>
   );

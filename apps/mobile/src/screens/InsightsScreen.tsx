@@ -18,21 +18,29 @@ import {
   CategoryBarChart,
   ForecastLineChart,
 } from '../components';
-import { colors, borderRadius } from '../theme';
-import { useSubscriptionStore } from '../state';
+import { useTheme, borderRadius, type ThemeColors } from '../theme';
+import { useSubscriptionStore, useSettingsStore, useCurrencyStore } from '../state';
 import { 
   getSpendingByCategory, 
   getForecastData, 
   calculatePotentialSavings,
   getBillingCycleBreakdown,
+  formatCurrency,
+  getCurrencySymbol,
 } from '../utils';
+import { t } from '../i18n';
 
 export function InsightsScreen() {
-  const { subscriptions, calculateMonthlyTotal, calculateYearlyTotal, getActiveSubscriptions } = useSubscriptionStore();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const { subscriptions, calculateMonthlyTotalConverted, calculateYearlyTotalConverted, getActiveSubscriptions } = useSubscriptionStore();
+  const { app } = useSettingsStore();
+  const { convert } = useCurrencyStore();
+  const currency = app.currency;
 
   const subs = getActiveSubscriptions();
-  const monthlyTotal = calculateMonthlyTotal();
-  const yearlyTotal = calculateYearlyTotal();
+  const monthlyTotal = calculateMonthlyTotalConverted(convert, currency);
+  const yearlyTotal = calculateYearlyTotalConverted(convert, currency);
 
   // Get analytics data using utils
   const categoryData = getSpendingByCategory(subscriptions);
@@ -46,8 +54,8 @@ export function InsightsScreen() {
         <Header
           icon="trending-up"
           iconColor={colors.primary}
-          title="Analytics"
-          subtitle="Insights into your spending"
+          title={t('insights.title')}
+          subtitle={t('insights.subtitle')}
         />
       </View>
 
@@ -61,18 +69,18 @@ export function InsightsScreen() {
           <GradientStatCard
             icon="cash-outline"
             iconColor={colors.emerald}
-            label="Monthly Total"
-            value={`$${monthlyTotal.toFixed(2)}`}
-            subtitle={`Across ${subs.length} services`}
+            label={t('insights.monthlyTotal')}
+            value={formatCurrency(monthlyTotal, currency)}
+            subtitle={t('insights.acrossServices', { count: subs.length })}
             delay={0}
           />
           <GradientStatCard
             icon="calendar-outline"
             iconColor={colors.primary}
-            label="Yearly Total"
-            value={`$${yearlyTotal.toFixed(2)}`}
-            subtitle="Annual projection"
-            delay={100}
+            label={t('insights.yearlyTotal')}
+            value={formatCurrency(yearlyTotal, currency)}
+            subtitle={t('insights.annualProjection')}
+            delay={0}
           />
         </View>
 
@@ -93,33 +101,33 @@ export function InsightsScreen() {
 
         {/* Billing Cycle Breakdown */}
         <View style={styles.breakdownCard}>
-          <Text style={styles.breakdownTitle}>Billing Cycle Breakdown</Text>
+          <Text style={styles.breakdownTitle}>{t('insights.billingBreakdown')}</Text>
           
           <View style={styles.breakdownRow}>
             <View style={[styles.dot, { backgroundColor: colors.pink }]} />
-            <Text style={styles.breakdownLabel}>Monthly</Text>
+            <Text style={styles.breakdownLabel}>{t('addSubscription.monthly')}</Text>
             <View style={styles.breakdownValues}>
-              <Text style={styles.breakdownCount}>{breakdown.monthly.count} subscriptions</Text>
-              <Text style={styles.breakdownAmount}>${breakdown.monthly.total.toFixed(2)}/mo</Text>
+              <Text style={styles.breakdownCount}>{breakdown.monthly.count} {t('insights.subscriptions')}</Text>
+              <Text style={styles.breakdownAmount}>{formatCurrency(breakdown.monthly.total, currency)}{t('common.perMonth')}</Text>
             </View>
           </View>
 
           <View style={styles.breakdownRow}>
             <View style={[styles.dot, { backgroundColor: colors.primary }]} />
-            <Text style={styles.breakdownLabel}>Yearly</Text>
+            <Text style={styles.breakdownLabel}>{t('addSubscription.yearly')}</Text>
             <View style={styles.breakdownValues}>
-              <Text style={styles.breakdownCount}>{breakdown.yearly.count} subscriptions</Text>
-              <Text style={styles.breakdownAmount}>${breakdown.yearly.total.toFixed(2)}/yr</Text>
+              <Text style={styles.breakdownCount}>{breakdown.yearly.count} {t('insights.subscriptions')}</Text>
+              <Text style={styles.breakdownAmount}>{formatCurrency(breakdown.yearly.total, currency)}{t('common.perYear')}</Text>
             </View>
           </View>
 
           {breakdown.weekly.count > 0 && (
             <View style={styles.breakdownRow}>
               <View style={[styles.dot, { backgroundColor: colors.cyan }]} />
-              <Text style={styles.breakdownLabel}>Weekly</Text>
+              <Text style={styles.breakdownLabel}>{t('addSubscription.weekly')}</Text>
               <View style={styles.breakdownValues}>
-                <Text style={styles.breakdownCount}>{breakdown.weekly.count} subscriptions</Text>
-                <Text style={styles.breakdownAmount}>${breakdown.weekly.total.toFixed(2)}/wk</Text>
+                <Text style={styles.breakdownCount}>{breakdown.weekly.count} {t('insights.subscriptions')}</Text>
+                <Text style={styles.breakdownAmount}>{formatCurrency(breakdown.weekly.total, currency)}/wk</Text>
               </View>
             </View>
           )}
@@ -127,10 +135,10 @@ export function InsightsScreen() {
           {breakdown.quarterly.count > 0 && (
             <View style={styles.breakdownRow}>
               <View style={[styles.dot, { backgroundColor: colors.amber }]} />
-              <Text style={styles.breakdownLabel}>Quarterly</Text>
+              <Text style={styles.breakdownLabel}>{t('addSubscription.quarterly')}</Text>
               <View style={styles.breakdownValues}>
-                <Text style={styles.breakdownCount}>{breakdown.quarterly.count} subscriptions</Text>
-                <Text style={styles.breakdownAmount}>${breakdown.quarterly.total.toFixed(2)}/qtr</Text>
+                <Text style={styles.breakdownCount}>{breakdown.quarterly.count} {t('insights.subscriptions')}</Text>
+                <Text style={styles.breakdownAmount}>{getCurrencySymbol(currency)}{breakdown.quarterly.total.toFixed(2)}/qtr</Text>
               </View>
             </View>
           )}
@@ -140,7 +148,7 @@ export function InsightsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
@@ -154,7 +162,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 140,
   },
   statsRow: {
     flexDirection: 'row',

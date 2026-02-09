@@ -9,7 +9,7 @@ import {
   StyleSheet, 
   ViewStyle 
 } from 'react-native';
-import { colors, borderRadius } from '../../theme';
+import { useTheme, borderRadius } from '../../theme';
 
 interface AmountInputProps {
   value: string;
@@ -28,6 +28,8 @@ export function AmountInput({
   error,
   style 
 }: AmountInputProps) {
+  const { colors } = useTheme();
+
   const handleChange = (text: string) => {
     // Only allow numbers and decimal point
     const cleaned = text.replace(/[^0-9.]/g, '');
@@ -45,11 +47,11 @@ export function AmountInput({
 
   return (
     <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <View style={[styles.inputContainer, error && styles.inputError]}>
-        <Text style={styles.currency}>{currency}</Text>
+      {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
+      <View style={[styles.inputContainer, { backgroundColor: colors.bgCard, borderColor: colors.border }, error && { borderColor: colors.red }]}>
+        <Text style={[styles.currency, { color: colors.primary }]}>{currency}</Text>
         <RNTextInput
-          style={styles.input}
+          style={[styles.input, { color: colors.text }]}
           value={value}
           onChangeText={handleChange}
           keyboardType="decimal-pad"
@@ -58,7 +60,7 @@ export function AmountInput({
           selectionColor={colors.primary}
         />
       </View>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: colors.red }]}>{error}</Text>}
     </View>
   );
 }
@@ -70,37 +72,28 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
     marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.bgCard,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
     paddingHorizontal: 16,
   },
   currency: {
     fontSize: 20,
     fontWeight: '600',
-    color: colors.primary,
     marginRight: 8,
   },
   input: {
     flex: 1,
     fontSize: 24,
     fontWeight: '700',
-    color: colors.text,
     paddingVertical: 14,
-  },
-  inputError: {
-    borderColor: colors.red,
   },
   error: {
     fontSize: 12,
-    color: colors.red,
     marginTop: 6,
   },
 });

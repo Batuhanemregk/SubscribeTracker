@@ -3,26 +3,23 @@
  * Uses Zustand stores and calculation utils
  */
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withDelay,
-  withSpring,
-} from 'react-native-reanimated';
 import { Header, GradientStatCard } from '../components';
-import { colors, borderRadius } from '../theme';
-import { useSubscriptionStore } from '../state';
-import { getUpcomingPayments, getDaysUntilBilling, getMonthBillingDates } from '../utils';
+import { useTheme, borderRadius, type ThemeColors } from '../theme';
+import { useSubscriptionStore, useSettingsStore, useCurrencyStore } from '../state';
+import { getUpcomingPayments, getDaysUntilBilling, getMonthBillingDates, formatCurrency, getCurrencySymbol } from '../utils';
 import type { Subscription } from '../types';
+import { t, getLocale } from '../i18n';
 
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 
-                'July', 'August', 'September', 'October', 'November', 'December'];
-const DAY_NAMES = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+const MONTH_KEYS = ['january', 'february', 'march', 'april', 'may', 'june', 
+                'july', 'august', 'september', 'october', 'november', 'december'];
+const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
 // Calendar component
 function Calendar({ billingDates }: { billingDates: Date[] }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [viewDate, setViewDate] = useState(new Date());
   
   const year = viewDate.getFullYear();
@@ -52,23 +49,25 @@ function Calendar({ billingDates }: { billingDates: Date[] }) {
     const hasBilling = isBillingDate(day);
     const today = isToday(day);
     
+    // Determine cell style - today takes precedence but we show billing indicator
+    const cellStyles: any[] = [styles.dayCell];
+    const textStyleList: any[] = [styles.dayText];
+    
+    if (today) {
+      cellStyles.push(styles.todayCell);
+      textStyleList.push(styles.todayText);
+    } else if (hasBilling) {
+      cellStyles.push(styles.billingDayCell);
+      textStyleList.push(styles.billingDayText);
+    }
+    
     days.push(
-      <View 
-        key={day} 
-        style={[
-          styles.dayCell,
-          today && styles.todayCell,
-          hasBilling && styles.billingDayCell,
-        ]}
-      >
-        <Text style={[
-          styles.dayText,
-          today && styles.todayText,
-          hasBilling && styles.billingDayText,
-        ]}>
+      <View key={day} style={cellStyles}>
+        <Text style={textStyleList}>
           {day}
         </Text>
-        {hasBilling && <View style={styles.billingDot} />}
+        {hasBilling && !today && <View style={styles.billingDot} />}
+        {hasBilling && today && <View style={styles.billingDotToday} />}
       </View>
     );
   }
@@ -79,15 +78,15 @@ function Calendar({ billingDates }: { billingDates: Date[] }) {
         <TouchableOpacity onPress={prevMonth} style={styles.navButton}>
           <Ionicons name="chevron-back" size={20} color={colors.text} />
         </TouchableOpacity>
-        <Text style={styles.monthTitle}>{MONTHS[month]} {year}</Text>
+        <Text style={styles.monthTitle}>{t(`calendar.months.${MONTH_KEYS[month]}`)} {year}</Text>
         <TouchableOpacity onPress={nextMonth} style={styles.navButton}>
           <Ionicons name="chevron-forward" size={20} color={colors.text} />
         </TouchableOpacity>
       </View>
 
       <View style={styles.daysHeader}>
-        {DAY_NAMES.map((day, i) => (
-          <Text key={i} style={styles.dayName}>{day}</Text>
+        {DAY_KEYS.map((key, i) => (
+          <Text key={i} style={styles.dayName}>{t(`calendar.daysShort.${key}`)}</Text>
         ))}
       </View>
 
@@ -96,56 +95,59 @@ function Calendar({ billingDates }: { billingDates: Date[] }) {
   );
 }
 
-// Payment item with animation
+// Payment item - no animation (animations only on HomeScreen)
 function PaymentItem({ sub, index }: { sub: Subscription; index: number }) {
-  const opacity = useSharedValue(0);
-  const translateX = useSharedValue(-30);
-
-  React.useEffect(() => {
-    opacity.value = withDelay(index * 80 + 200, withSpring(1));
-    translateX.value = withDelay(index * 80 + 200, withSpring(0, { damping: 15 }));
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateX: translateX.value }],
-  }));
-
-  const daysUntil = getDaysUntilBilling(sub.nextBillingDate);
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const { app } = useSettingsStore();
+  const currency = app.currency;
+  const daysUntil = getDaysUntilBilling(sub.nextBillingDate, sub.cycle);
 
   return (
-    <Animated.View style={[styles.paymentItem, animatedStyle]}>
-      <View style={[styles.paymentIcon, { backgroundColor: sub.colorKey }]}>
-        <Text style={styles.paymentEmoji}>{sub.iconKey}</Text>
+    <View style={styles.paymentItem}>
+      <View style={[styles.paymentIcon, !sub.logoUrl && { backgroundColor: sub.colorKey }]}>
+        {sub.logoUrl ? (
+          <Image
+            source={{ uri: sub.logoUrl }}
+            style={styles.paymentLogo}
+          />
+        ) : (
+          <Text style={styles.paymentEmoji}>{sub.iconKey}</Text>
+        )}
       </View>
       <View style={styles.paymentInfo}>
         <Text style={styles.paymentName}>{sub.name}</Text>
         <Text style={styles.paymentDate}>
-          {new Date(sub.nextBillingDate).toLocaleDateString('en-US', {
+          {new Date(sub.nextBillingDate).toLocaleDateString(getLocale() === 'tr' ? 'tr-TR' : 'en-US', {
             month: 'short',
             day: 'numeric',
           })}
         </Text>
       </View>
       <View style={styles.paymentAmountContainer}>
-        <Text style={styles.paymentAmount}>${sub.amount.toFixed(2)}</Text>
+        <Text style={styles.paymentAmount}>{formatCurrency(sub.amount, sub.currency || 'TRY')}</Text>
         <Text style={[
           styles.paymentDays,
           daysUntil <= 3 && { color: colors.red },
           daysUntil <= 7 && daysUntil > 3 && { color: colors.amber },
         ]}>
-          {daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `${daysUntil} days`}
+          {daysUntil === 0 ? t('calendar.dueToday') : daysUntil === 1 ? t('calendar.dueIn', { days: 1 }) : t('calendar.dueIn', { days: daysUntil })}
         </Text>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
 export function CalendarScreen() {
-  const { subscriptions, getActiveSubscriptions, calculateMonthlyTotal } = useSubscriptionStore();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const { subscriptions, getActiveSubscriptions, calculateMonthlyTotalConverted } = useSubscriptionStore();
+  const { app } = useSettingsStore();
+  const { convert } = useCurrencyStore();
+  const currency = app.currency;
 
   const subs = getActiveSubscriptions();
-  const monthlyTotal = calculateMonthlyTotal();
+  const monthlyTotal = calculateMonthlyTotalConverted(convert, currency);
   
   // Get billing dates for calendar markers
   const billingDates = subs.map(s => new Date(s.nextBillingDate));
@@ -165,8 +167,8 @@ export function CalendarScreen() {
         <Header
           icon="calendar"
           iconColor={colors.primary}
-          title="Calendar"
-          subtitle="Upcoming billing dates"
+          title={t('calendar.title')}
+          subtitle={t('calendar.subtitle')}
         />
       </View>
 
@@ -180,18 +182,18 @@ export function CalendarScreen() {
           <GradientStatCard
             icon="calendar-outline"
             iconColor={colors.primary}
-            label="This Month"
-            value={`$${monthlyTotal.toFixed(2)}`}
-            subtitle={`${thisMonthPayments.length} payments`}
+            label={t('calendar.totalThisMonth')}
+            value={formatCurrency(monthlyTotal, currency)}
+            subtitle={`${thisMonthPayments.length} ${t('subscription.payments')}`}
             delay={0}
           />
           <GradientStatCard
             icon="time-outline"
             iconColor={colors.emerald}
-            label="Upcoming"
+            label={t('calendar.upcoming')}
             value={upcomingPayments.length.toString()}
-            subtitle="next 30 days"
-            delay={100}
+            subtitle={t('calendar.dueIn', { days: 30 })}
+            delay={0}
           />
         </View>
 
@@ -199,7 +201,7 @@ export function CalendarScreen() {
         <Calendar billingDates={billingDates} />
 
         {/* Upcoming This Month */}
-        <Text style={styles.sectionTitle}>Upcoming Payments</Text>
+        <Text style={styles.sectionTitle}>{t('calendar.upcoming')}</Text>
         
         {upcomingPayments.map((sub, index) => (
           <PaymentItem key={sub.id} sub={sub} index={index} />
@@ -208,7 +210,7 @@ export function CalendarScreen() {
         {upcomingPayments.length === 0 && (
           <View style={styles.empty}>
             <Ionicons name="calendar-outline" size={48} color={colors.textMuted} />
-            <Text style={styles.emptyText}>No upcoming payments</Text>
+            <Text style={styles.emptyText}>{t('calendar.noUpcoming')}</Text>
           </View>
         )}
       </ScrollView>
@@ -216,7 +218,7 @@ export function CalendarScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
@@ -230,7 +232,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 140,
   },
   statsRow: {
     flexDirection: 'row',
@@ -316,6 +318,16 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: colors.red,
   },
+  billingDotToday: {
+    position: 'absolute',
+    bottom: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: colors.text,
+    borderWidth: 1,
+    borderColor: colors.red,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
@@ -341,6 +353,11 @@ const styles = StyleSheet.create({
   },
   paymentEmoji: {
     fontSize: 20,
+  },
+  paymentLogo: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
   },
   paymentInfo: {
     flex: 1,

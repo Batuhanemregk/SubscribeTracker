@@ -5,6 +5,8 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import { Platform } from 'react-native';
 import type { Subscription } from '../types';
+import { t } from '../i18n';
+import { formatCurrency } from '../utils';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -68,7 +70,8 @@ export async function requestNotificationPermission(): Promise<boolean> {
  */
 export async function scheduleBillingReminder(
   subscription: Subscription,
-  daysBeforeBilling: number
+  daysBeforeBilling: number,
+  currency: string = 'USD'
 ): Promise<string | null> {
   const billingDate = new Date(subscription.nextBillingDate);
   const reminderDate = new Date(billingDate);
@@ -82,12 +85,15 @@ export async function scheduleBillingReminder(
     return null;
   }
 
+  const formattedAmount = formatCurrency(subscription.amount, currency);
+  const formattedDate = billingDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {
       title: daysBeforeBilling === 1 
-        ? `${subscription.name} bills tomorrow!`
-        : `${subscription.name} bills in ${daysBeforeBilling} days`,
-      body: `$${subscription.amount.toFixed(2)} will be charged on ${billingDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+        ? t('notifications.billsTomorrow', { name: subscription.name })
+        : t('notifications.billsInDays', { name: subscription.name, days: daysBeforeBilling }),
+      body: t('notifications.chargedOn', { amount: formattedAmount, date: formattedDate }),
       data: { 
         subscriptionId: subscription.id,
         type: 'billing-reminder',
@@ -123,7 +129,8 @@ export async function cancelSubscriptionReminders(subscriptionId: string): Promi
  */
 export async function scheduleAllReminders(
   subscriptions: Subscription[],
-  settings: NotificationSettings = DEFAULT_NOTIFICATION_SETTINGS
+  settings: NotificationSettings = DEFAULT_NOTIFICATION_SETTINGS,
+  currency: string = 'USD'
 ): Promise<void> {
   if (!settings.enabled) {
     return;
@@ -137,7 +144,7 @@ export async function scheduleAllReminders(
   
   for (const subscription of activeSubscriptions) {
     for (const daysBefore of settings.reminderDays) {
-      await scheduleBillingReminder(subscription, daysBefore);
+      await scheduleBillingReminder(subscription, daysBefore, currency);
     }
   }
 
@@ -180,8 +187,8 @@ export function addNotificationResponseListener(
 export async function sendTestNotification(): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'Test Notification 🔔',
-      body: 'Push notifications are working!',
+      title: t('notifications.testTitle') + ' 🔔',
+      body: t('notifications.testBody'),
       sound: 'default',
     },
     trigger: null, // Send immediately

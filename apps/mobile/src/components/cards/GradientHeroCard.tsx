@@ -1,15 +1,19 @@
 /**
  * GradientHeroCard - Large hero card for subscription details
  */
-import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ViewStyle, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, borderRadius } from '../../theme';
+import { useTheme, borderRadius } from '../../theme';
+import { formatCurrency } from '../../utils';
+import { t } from '../../i18n';
 
 interface GradientHeroCardProps {
   icon: string;
+  logoUrl?: string;
   name: string;
   amount: number;
+  currency: string;
   cycle: 'monthly' | 'yearly' | 'weekly' | 'quarterly';
   category: string;
   colorKey: string;
@@ -18,18 +22,23 @@ interface GradientHeroCardProps {
 
 export function GradientHeroCard({ 
   icon, 
+  logoUrl,
   name, 
   amount, 
+  currency,
   cycle, 
   category,
   colorKey,
   style 
 }: GradientHeroCardProps) {
+  const { colors } = useTheme();
+  const [logoError, setLogoError] = useState(false);
+
   const cycleLabel = {
-    weekly: 'week',
-    monthly: 'month',
-    quarterly: 'quarter',
-    yearly: 'year',
+    weekly: t('subscription.perWeek'),
+    monthly: t('subscription.perMonth'),
+    quarterly: t('subscription.perQuarter'),
+    yearly: t('subscription.perYear'),
   }[cycle];
 
   return (
@@ -46,14 +55,22 @@ export function GradientHeroCard({
 
       {/* Icon */}
       <View style={[styles.iconContainer, { backgroundColor: `${colorKey}40` }]}>
-        <Text style={styles.iconEmoji}>{icon}</Text>
+        {logoUrl && !logoError ? (
+          <Image
+            source={{ uri: logoUrl }}
+            style={styles.logoImage}
+            onError={() => setLogoError(true)}
+          />
+        ) : (
+          <Text style={styles.iconEmoji}>{icon}</Text>
+        )}
       </View>
 
       {/* Name & Price */}
-      <Text style={styles.name}>{name}</Text>
+      <Text style={[styles.name, { color: colors.text }]}>{name}</Text>
       <View style={styles.priceRow}>
-        <Text style={styles.priceValue}>${amount.toFixed(2)}</Text>
-        <Text style={styles.pricePeriod}> / {cycleLabel}</Text>
+        <Text style={[styles.priceValue, { color: colors.text }]}>{formatCurrency(amount, currency)}</Text>
+        <Text style={[styles.pricePeriod, { color: colors.textMuted }]}> / {cycleLabel}</Text>
       </View>
     </LinearGradient>
   );
@@ -79,7 +96,7 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 12,
-    color: colors.emerald,
+    color: '#10B981',
     fontWeight: '600',
   },
   iconContainer: {
@@ -93,10 +110,14 @@ const styles = StyleSheet.create({
   iconEmoji: {
     fontSize: 28,
   },
+  logoImage: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+  },
   name: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.text,
     marginBottom: 8,
   },
   priceRow: {
@@ -106,10 +127,8 @@ const styles = StyleSheet.create({
   priceValue: {
     fontSize: 32,
     fontWeight: '800',
-    color: colors.text,
   },
   pricePeriod: {
     fontSize: 16,
-    color: colors.textMuted,
   },
 });

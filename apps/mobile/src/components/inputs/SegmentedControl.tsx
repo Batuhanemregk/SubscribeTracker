@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
-import { colors, borderRadius } from '../../theme';
+import { useTheme, borderRadius } from '../../theme';
 
 interface SegmentedControlProps<T extends string> {
   options: { value: T; label: string }[];
@@ -20,10 +20,12 @@ export function SegmentedControl<T extends string>({
   label,
   style 
 }: SegmentedControlProps<T>) {
+  const { colors } = useTheme();
+
   return (
     <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <View style={styles.segmentContainer}>
+      {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
+      <View style={[styles.segmentContainer, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
         {options.map((option) => {
           const isSelected = option.value === value;
           return (
@@ -32,13 +34,14 @@ export function SegmentedControl<T extends string>({
               onPress={() => onChange(option.value)}
               style={[
                 styles.segment,
-                isSelected && styles.segmentSelected,
+                isSelected && { backgroundColor: colors.primary },
               ]}
               activeOpacity={0.7}
             >
               <Text style={[
                 styles.segmentText,
-                isSelected && styles.segmentTextSelected,
+                { color: colors.textMuted },
+                isSelected && { color: '#FFFFFF' },
               ]}>
                 {option.label}
               </Text>
@@ -57,15 +60,12 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
     marginBottom: 8,
   },
   segmentContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.bgCard,
     borderRadius: borderRadius.lg,
     borderWidth: 1,
-    borderColor: colors.border,
     padding: 4,
   },
   segment: {
@@ -74,15 +74,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: borderRadius.md,
   },
-  segmentSelected: {
-    backgroundColor: colors.primary,
-  },
   segmentText: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textMuted,
-  },
-  segmentTextSelected: {
-    color: colors.text,
   },
 });

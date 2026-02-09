@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "SubscribeTracker",
-    "slug": "subscribetracker",
-    "version": "1.0.0",
+    "name": "Finify",
+    "slug": "finify",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "scheme": "subscribetracker",
+    "scheme": "finify",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.subscribetracker.app",
+      "bundleIdentifier": "com.subssentry.app",
       "infoPlist": {
         "NSUserTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you."
       }
@@ -25,7 +25,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0F0F23"
       },
-      "package": "com.subscribetracker.app",
+      "package": "com.subssentry.app",
+      "versionCode": 2,
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -46,7 +47,9 @@
           "userTrackingPermission": "This identifier will be used to deliver personalized ads to you."
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-localization",
+      "expo-secure-store"
     ]
   },
   "react-native-google-mobile-ads": {

@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
-import { colors } from '../../theme';
+import { useTheme } from '../../theme';
 
 interface SecondaryButtonProps {
   title: string;
@@ -22,6 +22,8 @@ export function SecondaryButton({
   fullWidth = true,
   style 
 }: SecondaryButtonProps) {
+  const { colors } = useTheme();
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -29,6 +31,7 @@ export function SecondaryButton({
       activeOpacity={0.7}
       style={[
         styles.container,
+        { borderColor: colors.border, backgroundColor: colors.bgCard },
         fullWidth && styles.fullWidth,
         disabled && styles.disabled,
         style,
@@ -37,7 +40,7 @@ export function SecondaryButton({
       {loading ? (
         <ActivityIndicator color={colors.primary} size="small" />
       ) : (
-        <Text style={[styles.text, disabled && styles.textDisabled]}>{title}</Text>
+        <Text style={[styles.text, { color: colors.text }, disabled && { color: colors.textMuted }]}>{title}</Text>
       )}
     </TouchableOpacity>
   );
@@ -47,8 +50,6 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.bgCard,
     paddingVertical: 16,
     paddingHorizontal: 24,
     alignItems: 'center',
@@ -60,12 +61,8 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
   },
   disabled: {
     opacity: 0.5,
-  },
-  textDisabled: {
-    color: colors.textMuted,
   },
 });

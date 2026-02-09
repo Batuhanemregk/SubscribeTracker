@@ -1,20 +1,24 @@
 /**
- * SubscribeTracker - App Entry Point
+ * Finify - App Entry Point
  * Navigation configuration only - all logic in modular files
  */
 import React, { useEffect, useState, useRef } from 'react';
-import { StatusBar, ActivityIndicator, View } from 'react-native';
+import { StatusBar, ActivityIndicator, View, Text, TouchableOpacity, Platform, StyleSheet } from 'react-native';
 import { NavigationContainer, DefaultTheme, NavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
 
 // Internal imports
-import { colors } from './src/theme';
+import { ThemeProvider, useTheme } from './src/theme';
+import { AnimatedTabScreen } from './src/components';
 import { initData } from './src/data/repository';
-import { useSettingsStore, useSubscriptionStore } from './src/state';
+import { useSettingsStore, useSubscriptionStore, useCurrencyStore } from './src/state';
+import { t, initLocaleFromSettings } from './src/i18n';
 import {
   requestNotificationPermission,
   scheduleAllReminders,
@@ -22,6 +26,9 @@ import {
   loadInterstitialAd,
   initAdManager,
   startAppOpenAdTimer,
+  authenticateWithBiometrics,
+  initPurchases,
+  checkCatalogUpdate,
 } from './src/services';
 import {
   HomeScreen,
@@ -32,112 +39,189 @@ import {
   AddSubscriptionScreen,
   SubscriptionDetailsScreen,
   PaywallScreen,
-  EmailAccountsScreen,
-  AddEmailAccountScreen,
-  ScanProgressScreen,
-  ScanResultsScreen,
   OnboardingScreen,
+  ServicePickerScreen,
+  PlanPickerScreen,
+  BankStatementScanScreen,
+  PrivacyPolicyScreen,
+  TermsOfServiceScreen,
 } from './src/screens';
 
 // Navigation setup
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-// Custom navigation theme
-const NavigationTheme = {
-  ...DefaultTheme,
-  colors: {
-    ...DefaultTheme.colors,
-    background: colors.bg,
-    card: colors.bgCard,
-    text: colors.text,
-    border: colors.border,
-    primary: colors.primary,
-  },
+// Tab route → icon + i18n key mapping
+const TAB_CONFIG: Record<string, { icon: keyof typeof Ionicons.glyphMap; labelKey: string }> = {
+  Home: { icon: 'home', labelKey: 'tabs.home' },
+  Insights: { icon: 'stats-chart', labelKey: 'tabs.insights' },
+  Budget: { icon: 'wallet', labelKey: 'tabs.budget' },
+  Calendar: { icon: 'calendar', labelKey: 'tabs.calendar' },
+  Settings: { icon: 'settings', labelKey: 'tabs.settings' },
 };
 
-// Tab navigator with all main screens
+// Premium floating glass tab bar
 function MainTabs() {
+  const { colors, isDark } = useTheme();
+
+  // Wrap screens with fade animation
+  const AnimatedHome = (props: any) => (<AnimatedTabScreen><HomeScreen {...props} /></AnimatedTabScreen>);
+  const AnimatedInsights = (props: any) => (<AnimatedTabScreen><InsightsScreen {...props} /></AnimatedTabScreen>);
+  const AnimatedBudget = (props: any) => (<AnimatedTabScreen><BudgetScreen {...props} /></AnimatedTabScreen>);
+  const AnimatedCalendar = (props: any) => (<AnimatedTabScreen><CalendarScreen {...props} /></AnimatedTabScreen>);
+  const AnimatedSettings = (props: any) => (<AnimatedTabScreen><SettingsScreen {...props} /></AnimatedTabScreen>);
+
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: colors.bgCard,
-          borderTopColor: colors.border,
-          borderTopWidth: 1,
-          height: 65,
-          paddingBottom: 10,
-          paddingTop: 8,
+      screenOptions={({ route }) => {
+        const config = TAB_CONFIG[route.name] || { icon: 'apps' as any, labelKey: route.name };
+        return {
+          headerShown: false,
+          tabBarHideOnKeyboard: true,
+          tabBarStyle: {
+            position: 'absolute' as const,
+            bottom: Platform.OS === 'ios' ? 24 : 16,
+            left: 20,
+            right: 20,
+            height: 64,
+            borderRadius: 24,
+            borderTopWidth: 0,
+            backgroundColor: isDark ? 'rgba(26, 26, 36, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+            borderWidth: 1,
+            borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+            paddingBottom: 0,
+            paddingTop: 0,
+            ...Platform.select({
+              ios: {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: isDark ? 0.4 : 0.12,
+                shadowRadius: 24,
+              },
+              android: {
+                elevation: 12,
+              },
+            }),
+          },
+          tabBarBackground: () => (
+            Platform.OS === 'ios' ? (
+              <BlurView
+                intensity={isDark ? 60 : 80}
+                tint={isDark ? 'dark' : 'light'}
+                style={{
+                  ...StyleSheet.absoluteFillObject,
+                  borderRadius: 24,
+                  overflow: 'hidden',
+                }}
+              />
+            ) : null
+          ),
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor: colors.textMuted,
+          tabBarLabel: t(config.labelKey),
+          tabBarLabelStyle: {
+            fontSize: 10,
+            fontWeight: '600' as const,
+            marginTop: -4,
+            marginBottom: Platform.OS === 'ios' ? 10 : 10,
+          },
+          tabBarIconStyle: {
+            marginTop: Platform.OS === 'ios' ? 10 : 6,
+          },
+          tabBarIcon: ({ color }) => (
+            <Ionicons name={config.icon} size={22} color={color} />
+          ),
+        };
+      }}
+      screenListeners={{
+        tabPress: () => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarIcon: ({ color }) => {
-          let iconName: keyof typeof Ionicons.glyphMap = 'apps';
-          if (route.name === 'Home') iconName = 'home';
-          else if (route.name === 'Insights') iconName = 'stats-chart';
-          else if (route.name === 'Budget') iconName = 'wallet';
-          else if (route.name === 'Calendar') iconName = 'calendar';
-          else if (route.name === 'Settings') iconName = 'settings';
-          return <Ionicons name={iconName} size={22} color={color} />;
-        },
-      })}
+      }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Insights" component={InsightsScreen} />
-      <Tab.Screen name="Budget" component={BudgetScreen} />
-      <Tab.Screen name="Calendar" component={CalendarScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      <Tab.Screen name="Home" component={AnimatedHome} />
+      <Tab.Screen name="Insights" component={AnimatedInsights} />
+      <Tab.Screen name="Budget" component={AnimatedBudget} />
+      <Tab.Screen name="Calendar" component={AnimatedCalendar} />
+      <Tab.Screen name="Settings" component={AnimatedSettings} />
     </Tab.Navigator>
   );
 }
 
-// Main App component
-export default function App() {
+// Inner app component that uses theme context
+function AppContent() {
+  const { colors, isDark } = useTheme();
   const [isReady, setIsReady] = useState(false);
+  const [isLocked, setIsLocked] = useState(true);
   const navigationRef = useRef<NavigationContainerRef<any>>(null);
   const hasSeenOnboarding = useSettingsStore((state) => state.hasSeenOnboarding);
   const notificationsEnabled = useSettingsStore((state) => state.app.notificationsEnabled);
+  const biometricLockEnabled = useSettingsStore((state) => state.app.biometricLockEnabled);
   const subscriptions = useSubscriptionStore((state) => state.subscriptions);
+
+  // Dynamic navigation theme
+  const navigationTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      background: colors.bg,
+      card: colors.bgCard,
+      text: colors.text,
+      border: colors.border,
+      primary: colors.primary,
+    },
+  };
 
   useEffect(() => {
     const prepare = async () => {
       await initData();
+
+      // Initialize locale from saved language preference
+      const savedLanguage = useSettingsStore.getState().app.language;
+      initLocaleFromSettings(savedLanguage || 'system');
       
-      // Request notification permission and schedule reminders
       const hasPermission = await requestNotificationPermission();
       if (hasPermission && notificationsEnabled) {
-        await scheduleAllReminders(subscriptions);
+        await scheduleAllReminders(subscriptions, undefined, useSettingsStore.getState().app.currency);
       }
       
-      // Preload interstitial ad for Standard users
       loadInterstitialAd();
-      
-      // Initialize AdManager and start 30-second timer for app open ad
       await initAdManager();
       startAppOpenAdTimer();
+      await initPurchases();
+
+      // Fetch exchange rates in background
+      useCurrencyStore.getState().fetchRates();
+
+      // Check for service catalog updates in background
+      checkCatalogUpdate().catch(() => {});
       
-      // Small delay to ensure store is hydrated
-      setTimeout(() => setIsReady(true), 100);
+      setTimeout(async () => {
+        setIsReady(true);
+        const biometricEnabled = useSettingsStore.getState().app.biometricLockEnabled;
+        if (biometricEnabled) {
+          const success = await authenticateWithBiometrics();
+          setIsLocked(!success);
+        } else {
+          setIsLocked(false);
+        }
+      }, 100);
     };
     prepare();
   }, []);
 
-  // Reschedule reminders when subscriptions change
   useEffect(() => {
     if (isReady && notificationsEnabled) {
-      scheduleAllReminders(subscriptions);
+      scheduleAllReminders(subscriptions, undefined, useSettingsStore.getState().app.currency);
     }
   }, [subscriptions, notificationsEnabled, isReady]);
 
-  // Handle notification tap - navigate to subscription details
   useEffect(() => {
     const subscription = addNotificationResponseListener((subscriptionId) => {
       if (navigationRef.current) {
         navigationRef.current.navigate('SubscriptionDetails', { subscriptionId });
       }
     });
-
     return () => subscription.remove();
   }, []);
 
@@ -149,60 +233,112 @@ export default function App() {
     );
   }
 
+  if (isLocked && biometricLockEnabled) {
+    const handleUnlock = async () => {
+      const success = await authenticateWithBiometrics();
+      setIsLocked(!success);
+    };
+
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.bg, padding: 40 }}>
+        <Ionicons name="lock-closed" size={48} color={colors.primary} style={{ marginBottom: 24 }} />
+        <Text style={{ color: colors.text, fontSize: 24, fontWeight: '700', marginBottom: 12 }}>
+          App Locked
+        </Text>
+        <Text style={{ color: colors.textMuted, fontSize: 16, textAlign: 'center', marginBottom: 32 }}>
+          Authenticate to unlock Finify
+        </Text>
+        <TouchableOpacity 
+          onPress={handleUnlock}
+          style={{ 
+            backgroundColor: colors.primary, 
+            paddingHorizontal: 32, paddingVertical: 14, 
+            borderRadius: 16 
+          }}
+        >
+          <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '600' }}>
+            Unlock with Biometrics
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const showOnboarding = !hasSeenOnboarding();
 
   return (
+    <>
+      <StatusBar 
+        barStyle={isDark ? 'light-content' : 'dark-content'} 
+        backgroundColor={colors.bg} 
+      />
+      <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+        <Stack.Navigator
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            animationDuration: 250,
+            contentStyle: { backgroundColor: colors.bg },
+          }}
+          initialRouteName={showOnboarding ? 'Onboarding' : 'MainTabs'}
+        >
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+          <Stack.Screen name="MainTabs" component={MainTabs} options={{ animation: 'fade' }} />
+          <Stack.Screen
+            name="SubscriptionDetails"
+            component={SubscriptionDetailsScreen}
+            options={{ animation: 'slide_from_bottom' }}
+          />
+          <Stack.Screen
+            name="AddSubscription"
+            component={AddSubscriptionScreen}
+            options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="Paywall"
+            component={PaywallScreen}
+            options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="ServicePicker"
+            component={ServicePickerScreen}
+            options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="PlanPicker"
+            component={PlanPickerScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="BankStatementScan"
+            component={BankStatementScanScreen}
+            options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="PrivacyPolicy"
+            component={PrivacyPolicyScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="TermsOfService"
+            component={TermsOfServiceScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </>
+  );
+}
+
+// Root App - wraps everything with ThemeProvider
+export default function App() {
+  return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
-        <NavigationContainer ref={navigationRef} theme={NavigationTheme}>
-          <Stack.Navigator
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.bg },
-            }}
-            initialRouteName={showOnboarding ? 'Onboarding' : 'MainTabs'}
-          >
-            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-            <Stack.Screen name="MainTabs" component={MainTabs} />
-            <Stack.Screen
-              name="SubscriptionDetails"
-              component={SubscriptionDetailsScreen}
-              options={{ animation: 'slide_from_bottom' }}
-            />
-            <Stack.Screen
-              name="AddSubscription"
-              component={AddSubscriptionScreen}
-              options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
-            />
-            <Stack.Screen
-              name="Paywall"
-              component={PaywallScreen}
-              options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
-            />
-            <Stack.Screen
-              name="EmailAccounts"
-              component={EmailAccountsScreen}
-              options={{ animation: 'slide_from_right' }}
-            />
-            <Stack.Screen
-              name="AddEmailAccount"
-              component={AddEmailAccountScreen}
-              options={{ animation: 'slide_from_right' }}
-            />
-            <Stack.Screen
-              name="ScanProgress"
-              component={ScanProgressScreen}
-              options={{ animation: 'fade', presentation: 'modal' }}
-            />
-            <Stack.Screen
-              name="ScanResults"
-              component={ScanResultsScreen}
-              options={{ animation: 'slide_from_bottom' }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </SafeAreaProvider>
+      <ThemeProvider>
+        <SafeAreaProvider>
+          <AppContent />
+        </SafeAreaProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }

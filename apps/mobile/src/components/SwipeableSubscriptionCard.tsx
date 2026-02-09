@@ -6,7 +6,7 @@ import React, { useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme';
+import { useTheme, type ThemeColors } from '../theme';
 import type { Subscription } from '../types';
 
 interface SwipeableSubscriptionCardProps {
@@ -17,6 +17,8 @@ interface SwipeableSubscriptionCardProps {
 }
 
 export function SwipeableSubscriptionCard({ item, onPress, onEdit, onDelete }: SwipeableSubscriptionCardProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const swipeableRef = useRef<Swipeable>(null);
   
   const daysUntil = Math.ceil((new Date(item.nextBillingDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
@@ -99,7 +101,7 @@ export function SwipeableSubscriptionCard({ item, onPress, onEdit, onDelete }: S
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   card: {
     flexDirection: 'row',
     backgroundColor: colors.bgCard,
@@ -202,10 +204,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   swipeBtnEdit: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#8B5CF6',
   },
   swipeBtnDelete: {
-    backgroundColor: colors.red,
+    backgroundColor: '#EF4444',
     borderTopRightRadius: 16,
     borderBottomRightRadius: 16,
   },

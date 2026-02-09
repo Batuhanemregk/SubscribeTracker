@@ -4,7 +4,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, shadows } from '../../theme';
+import { useTheme, shadows } from '../../theme';
 
 interface PrimaryButtonProps {
   title: string;
@@ -23,6 +23,8 @@ export function PrimaryButton({
   fullWidth = true,
   style 
 }: PrimaryButtonProps) {
+  const { colors } = useTheme();
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -42,9 +44,9 @@ export function PrimaryButton({
         style={styles.gradient}
       >
         {loading ? (
-          <ActivityIndicator color={colors.text} size="small" />
+          <ActivityIndicator color="#FFFFFF" size="small" />
         ) : (
-          <Text style={[styles.text, disabled && styles.textDisabled]}>{title}</Text>
+          <Text style={[styles.text, disabled && { color: colors.textMuted }]}>{title}</Text>
         )}
       </LinearGradient>
     </TouchableOpacity>
@@ -69,12 +71,9 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     fontWeight: '600',
-    color: colors.text,
+    color: '#FFFFFF',
   },
   disabled: {
     opacity: 0.6,
-  },
-  textDisabled: {
-    color: colors.textMuted,
   },
 });

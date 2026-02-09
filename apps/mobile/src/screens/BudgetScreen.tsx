@@ -3,19 +3,24 @@
  * Uses Zustand stores, calculation utils, and gifted-charts
  */
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header, SecondaryButton, BudgetCircularProgress } from '../components';
-import { colors, borderRadius } from '../theme';
-import { useSubscriptionStore, useSettingsStore } from '../state';
-import { toMonthlyAmount, getBudgetStatus } from '../utils';
+import { useTheme, borderRadius, type ThemeColors } from '../theme';
+import { useSubscriptionStore, useSettingsStore, useCurrencyStore } from '../state';
+import { toMonthlyAmount, getBudgetStatus, getCurrencySymbol, formatCurrency } from '../utils';
+import { t } from '../i18n';
 
 export function BudgetScreen() {
-  const { subscriptions, getActiveSubscriptions, calculateMonthlyTotal } = useSubscriptionStore();
-  const { budget, setBudgetLimit, setBudgetEnabled } = useSettingsStore();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const { subscriptions, getActiveSubscriptions, calculateMonthlyTotalConverted } = useSubscriptionStore();
+  const { budget, setBudgetLimit, setBudgetEnabled, app } = useSettingsStore();
+  const { convert } = useCurrencyStore();
+  const currency = app.currency;
 
   const subs = getActiveSubscriptions();
-  const monthlySpending = calculateMonthlyTotal();
+  const monthlySpending = calculateMonthlyTotalConverted(convert, currency);
   const budgetStatus = getBudgetStatus(monthlySpending, budget.monthlyLimit);
 
   // Sort by monthly equivalent
@@ -26,25 +31,20 @@ export function BudgetScreen() {
     }))
     .sort((a, b) => b.monthlyAmount - a.monthlyAmount);
 
+  const [budgetModalVisible, setBudgetModalVisible] = React.useState(false);
+  const [budgetInput, setBudgetInput] = React.useState(budget.monthlyLimit.toString());
+
   const handleEditBudget = () => {
-    Alert.prompt(
-      'Set Monthly Budget',
-      'Enter your monthly subscription limit',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Save',
-          onPress: (value: string | undefined) => {
-            const limit = parseFloat(value || '0');
-            if (limit > 0) {
-              setBudgetLimit(limit);
-            }
-          },
-        },
-      ],
-      'plain-text',
-      budget.monthlyLimit.toString()
-    );
+    setBudgetInput(budget.monthlyLimit.toString());
+    setBudgetModalVisible(true);
+  };
+
+  const handleSaveBudget = () => {
+    const limit = parseFloat(budgetInput || '0');
+    if (limit > 0) {
+      setBudgetLimit(limit);
+    }
+    setBudgetModalVisible(false);
   };
 
   const getStatusColor = () => {
@@ -61,8 +61,8 @@ export function BudgetScreen() {
         <Header
           icon="wallet"
           iconColor={colors.emerald}
-          title="Budget"
-          subtitle="Track your spending limit"
+          title={t('budget.title')}
+          subtitle={t('budget.subtitle')}
         />
       </View>
 
@@ -82,23 +82,23 @@ export function BudgetScreen() {
           <View style={styles.budgetInfo}>
             <View style={styles.infoRow}>
               <View style={[styles.dot, { backgroundColor: getStatusColor() }]} />
-              <Text style={styles.infoLabel}>Spent</Text>
-              <Text style={styles.infoValue}>${monthlySpending.toFixed(2)}</Text>
+              <Text style={styles.infoLabel}>{t('budget.spent')}</Text>
+              <Text style={styles.infoValue}>{formatCurrency(monthlySpending, currency)}</Text>
             </View>
             <View style={styles.infoRow}>
               <View style={[styles.dot, { backgroundColor: colors.textMuted }]} />
-              <Text style={styles.infoLabel}>Remaining</Text>
-              <Text style={styles.infoValue}>${budgetStatus.remaining.toFixed(2)}</Text>
+              <Text style={styles.infoLabel}>{t('budget.remaining')}</Text>
+              <Text style={styles.infoValue}>{formatCurrency(budgetStatus.remaining, currency)}</Text>
             </View>
             <View style={styles.infoRow}>
               <View style={[styles.dot, { backgroundColor: colors.primary }]} />
-              <Text style={styles.infoLabel}>Budget</Text>
-              <Text style={styles.infoValue}>${budget.monthlyLimit.toFixed(2)}</Text>
+              <Text style={styles.infoLabel}>{t('budget.monthlyBudget')}</Text>
+              <Text style={styles.infoValue}>{formatCurrency(budget.monthlyLimit, currency)}</Text>
             </View>
           </View>
 
           <SecondaryButton 
-            title="Edit Budget"
+            title={t('budget.editBudget')}
             onPress={handleEditBudget}
           />
         </View>
@@ -116,25 +116,32 @@ export function BudgetScreen() {
                 color={budgetStatus.status === 'danger' ? colors.red : colors.amber} 
               />
               <Text style={styles.alertTitle}>
-                {budgetStatus.status === 'danger' ? 'Budget Exceeded!' : 'Approaching Limit'}
+                {budgetStatus.status === 'danger' ? t('budget.exceeded') : t('budget.approaching')}
               </Text>
             </View>
             <Text style={styles.alertDescription}>
               {budgetStatus.status === 'danger'
-                ? `You've exceeded your budget by $${(monthlySpending - budget.monthlyLimit).toFixed(2)}`
-                : `You're at ${budgetStatus.percentage.toFixed(0)}% of your monthly budget`
+                ? `${t('budget.exceededBy')} ${formatCurrency(monthlySpending - budget.monthlyLimit, currency)}`
+                : t('budget.atPercent', { percent: budgetStatus.percentage.toFixed(0) })
               }
             </Text>
           </View>
         )}
 
         {/* Spending Breakdown */}
-        <Text style={styles.sectionTitle}>Top Spending</Text>
+        <Text style={styles.sectionTitle}>{t('budget.topSpending')}</Text>
         
         {sortedSubs.slice(0, 5).map((sub) => (
           <View key={sub.id} style={styles.spendingItem}>
-            <View style={[styles.spendingIcon, { backgroundColor: sub.colorKey }]}>
-              <Text style={styles.spendingEmoji}>{sub.iconKey}</Text>
+            <View style={[styles.spendingIcon, !sub.logoUrl && { backgroundColor: sub.colorKey }]}>
+              {sub.logoUrl ? (
+                <Image
+                  source={{ uri: sub.logoUrl }}
+                  style={styles.spendingLogo}
+                />
+              ) : (
+                <Text style={styles.spendingEmoji}>{sub.iconKey}</Text>
+              )}
             </View>
             <View style={styles.spendingInfo}>
               <Text style={styles.spendingName}>{sub.name}</Text>
@@ -150,14 +157,14 @@ export function BudgetScreen() {
                 />
               </View>
             </View>
-            <Text style={styles.spendingAmount}>${sub.monthlyAmount.toFixed(2)}</Text>
+            <Text style={styles.spendingAmount}>{formatCurrency(convert(sub.monthlyAmount, sub.currency || 'TRY', currency), currency)}</Text>
           </View>
         ))}
 
         {sortedSubs.length === 0 && (
           <View style={styles.empty}>
             <Ionicons name="wallet-outline" size={48} color={colors.textMuted} />
-            <Text style={styles.emptyText}>No subscriptions to track</Text>
+            <Text style={styles.emptyText}>{t('insights.noSubscriptions')}</Text>
           </View>
         )}
 
@@ -165,10 +172,10 @@ export function BudgetScreen() {
         <View style={styles.settingsCard}>
           <View style={styles.settingsHeader}>
             <Ionicons name="notifications-outline" size={20} color={colors.primary} />
-            <Text style={styles.settingsTitle}>Budget Alerts</Text>
+            <Text style={styles.settingsTitle}>{t('budget.alertsTitle')}</Text>
           </View>
           <Text style={styles.settingsDescription}>
-            Get notified at {(budget.alertThreshold * 100).toFixed(0)}% of your monthly budget
+            {t('budget.alertsDescription', { percent: (budget.alertThreshold * 100).toFixed(0) })}
           </Text>
           <TouchableOpacity 
             style={[styles.toggle, budget.isEnabled && styles.toggleActive]}
@@ -178,11 +185,55 @@ export function BudgetScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Budget Edit Modal */}
+      <Modal
+        visible={budgetModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setBudgetModalVisible(false)}
+      >
+        <Pressable 
+          style={styles.modalOverlay} 
+          onPress={() => setBudgetModalVisible(false)}
+        >
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>{t('budget.setBudget')}</Text>
+            <Text style={styles.modalSubtitle}>{t('budget.budgetPlaceholder')}</Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.currencySymbol}>{getCurrencySymbol(currency)}</Text>
+              <TextInput
+                style={styles.budgetInput}
+                value={budgetInput}
+                onChangeText={setBudgetInput}
+                keyboardType="decimal-pad"
+                placeholder="0.00"
+                placeholderTextColor={colors.textMuted}
+                autoFocus
+              />
+            </View>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity 
+                style={styles.cancelButton}
+                onPress={() => setBudgetModalVisible(false)}
+              >
+                <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.saveButton}
+                onPress={handleSaveBudget}
+              >
+                <Text style={styles.saveButtonText}>{t('common.save')}</Text>
+              </TouchableOpacity>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
@@ -196,7 +247,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-    paddingBottom: 100,
+    paddingBottom: 140,
   },
   budgetCard: {
     backgroundColor: colors.bgCard,
@@ -288,6 +339,11 @@ const styles = StyleSheet.create({
   spendingEmoji: {
     fontSize: 18,
   },
+  spendingLogo: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+  },
   spendingInfo: {
     flex: 1,
     marginLeft: 12,
@@ -369,5 +425,85 @@ const styles = StyleSheet.create({
   },
   toggleDotActive: {
     alignSelf: 'flex-end',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: colors.bgCard,
+    borderRadius: borderRadius.xl,
+    padding: 24,
+    width: '85%',
+    maxWidth: 340,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bgElevated,
+    borderRadius: borderRadius.lg,
+    paddingHorizontal: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  currencySymbol: {
+    fontSize: 24,
+    fontWeight: '600',
+    color: colors.emerald,
+    marginRight: 8,
+  },
+  budgetInput: {
+    flex: 1,
+    fontSize: 24,
+    fontWeight: '600',
+    color: colors.text,
+    paddingVertical: 16,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.bgElevated,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  saveButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: borderRadius.lg,
+    backgroundColor: colors.emerald,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
   },
 });

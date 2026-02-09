@@ -2,7 +2,7 @@
  * SubscriptionDetailsScreen - View subscription details
  * Uses new component library and Zustand stores
  */
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, {
@@ -12,54 +12,49 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { Header, GradientHeroCard, GradientStatCard, PrimaryButton, SecondaryButton } from '../components';
-import { colors, borderRadius } from '../theme';
-import { useSubscriptionStore } from '../state';
+import { useTheme, borderRadius, type ThemeColors } from '../theme';
+import { useSubscriptionStore, useSettingsStore } from '../state';
+import { formatCurrency, getCurrencySymbol } from '../utils';
 import type { Subscription } from '../types';
+import { t, getLocale } from '../i18n';
 
 interface SubscriptionDetailsScreenProps {
   navigation: any;
   route: any;
 }
 
-// Payment history item
-function PaymentHistoryItem({ date, amount, index }: { date: string; amount: number; index: number }) {
-  const opacity = useSharedValue(0);
-  const translateX = useSharedValue(-20);
-
-  useEffect(() => {
-    opacity.value = withDelay(index * 60 + 300, withSpring(1));
-    translateX.value = withDelay(index * 60 + 300, withSpring(0, { damping: 15 }));
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateX: translateX.value }],
-  }));
-
+// Payment history item - no animation (animations only on HomeScreen)
+function PaymentHistoryItem({ date, amount, currency }: { date: string; amount: number; currency: string }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return (
-    <Animated.View style={[styles.historyItem, animatedStyle]}>
+    <View style={styles.historyItem}>
       <View style={styles.historyDot}>
         <View style={styles.dotInner} />
       </View>
       <View style={styles.historyInfo}>
         <Text style={styles.historyDate}>{date}</Text>
-        <Text style={styles.historyStatus}>Completed</Text>
+        <Text style={styles.historyStatus}>{t('subscription.completed')}</Text>
       </View>
-      <Text style={styles.historyAmount}>${amount.toFixed(2)}</Text>
-    </Animated.View>
+      <Text style={styles.historyAmount}>{formatCurrency(amount, currency)}</Text>
+    </View>
   );
 }
 
 export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDetailsScreenProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const { subscriptionId } = route.params;
   const { getSubscriptionById, deleteSubscription } = useSubscriptionStore();
+  const { app } = useSettingsStore();
+  const dateLocale = getLocale() === 'tr' ? 'tr-TR' : 'en-US';
   
   const sub = getSubscriptionById(subscriptionId);
 
   if (!sub) {
     return (
       <View style={styles.container}>
-        <Header title="Subscription Details" showBack />
+        <Header title={t('subscription.details')} showBack />
         <View style={styles.notFound}>
           <Text style={styles.notFoundText}>Subscription not found</Text>
         </View>
@@ -67,29 +62,45 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
     );
   }
 
-  const monthlyAmt = sub.cycle === 'monthly' ? sub.amount : sub.amount / 12;
+  const subCurrency = sub.currency || 'TRY';
+  const monthlyAmt = sub.cycle === 'monthly' ? sub.amount
+    : sub.cycle === 'weekly' ? sub.amount * 4.33
+    : sub.cycle === 'quarterly' ? sub.amount / 3
+    : sub.amount / 12;
   const yearlyAmt = monthlyAmt * 12;
   const daysUntil = Math.ceil(
     (new Date(sub.nextBillingDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
   );
 
-  // Generate fake payment history
-  const paymentHistory = Array.from({ length: 6 }, (_, i) => {
-    const date = new Date();
-    date.setMonth(date.getMonth() - (i + 1));
-    return {
-      date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-      amount: sub.amount,
-    };
-  });
+  // Generate realistic payment history based on creation date and billing cycle
+  const paymentHistory = useMemo(() => {
+    const history: { date: string; amount: number }[] = [];
+    const created = new Date(sub.createdAt);
+    const now = new Date();
+    const cycleMonths = sub.cycle === 'weekly' ? 0.25
+      : sub.cycle === 'monthly' ? 1
+      : sub.cycle === 'quarterly' ? 3
+      : 12;
+
+    let payDate = new Date(created);
+    while (payDate <= now && history.length < 12) {
+      history.push({
+        date: payDate.toLocaleDateString(dateLocale, { month: 'short', day: 'numeric', year: 'numeric' }),
+        amount: sub.amount,
+      });
+      payDate = new Date(payDate);
+      payDate.setMonth(payDate.getMonth() + cycleMonths);
+    }
+    return history.reverse(); // newest first
+  }, [sub.createdAt, sub.amount, sub.cycle, dateLocale]);
 
   const totalPaid = paymentHistory.reduce((sum, p) => sum + p.amount, 0);
 
   const handleDelete = () => {
-    Alert.alert('Delete Subscription', `Are you sure you want to delete ${sub.name}?`, [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert(t('subscription.deleteConfirmTitle'), t('subscription.deleteConfirmMessage', { name: sub.name }), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Delete',
+        text: t('common.delete'),
         style: 'destructive',
         onPress: () => {
           deleteSubscription(sub.id);
@@ -107,7 +118,7 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
     <View style={styles.container}>
       <View style={styles.header}>
         <Header
-          title="Subscription Details"
+          title={t('subscription.details')}
           showBack
           rightAction={
             <TouchableOpacity onPress={handleDelete}>
@@ -125,8 +136,10 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
         {/* Hero Card */}
         <GradientHeroCard
           icon={sub.iconKey}
+          logoUrl={sub.logoUrl || undefined}
           name={sub.name}
           amount={sub.amount}
+          currency={subCurrency}
           cycle={sub.cycle}
           category={sub.category}
           colorKey={sub.colorKey}
@@ -138,16 +151,16 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
           <GradientStatCard
             icon="cash-outline"
             iconColor={colors.emerald}
-            label="Monthly Cost"
-            value={`$${monthlyAmt.toFixed(2)}`}
-            delay={100}
+            label={t('subscription.monthlyCost')}
+            value={formatCurrency(monthlyAmt, subCurrency)}
+            delay={0}
           />
           <GradientStatCard
             icon="trending-up"
             iconColor={colors.primary}
-            label="Yearly Cost"
-            value={`$${yearlyAmt.toFixed(2)}`}
-            delay={200}
+            label={t('subscription.yearlyCost')}
+            value={formatCurrency(yearlyAmt, subCurrency)}
+            delay={0}
           />
         </View>
 
@@ -157,9 +170,9 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
             <Ionicons name="calendar" size={20} color={colors.primary} />
           </View>
           <View style={styles.billingInfo}>
-            <Text style={styles.billingTitle}>Next Billing Date</Text>
+            <Text style={styles.billingTitle}>{t('subscription.nextBilling')}</Text>
             <Text style={styles.billingDate}>
-              {new Date(sub.nextBillingDate).toLocaleDateString('en-US', {
+              {new Date(sub.nextBillingDate).toLocaleDateString(dateLocale, {
                 weekday: 'long',
                 month: 'long',
                 day: 'numeric',
@@ -168,7 +181,7 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
             </Text>
             <View style={styles.billingRemaining}>
               <Ionicons name="time-outline" size={14} color={colors.emerald} />
-              <Text style={styles.billingDays}>{daysUntil} days remaining</Text>
+              <Text style={styles.billingDays}>{daysUntil} {t('subscription.daysRemaining')}</Text>
             </View>
           </View>
         </View>
@@ -176,43 +189,37 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
         {/* Action Buttons */}
         <View style={styles.actionsRow}>
           <SecondaryButton
-            title="Edit"
+            title={t('common.edit')}
             onPress={handleEdit}
-            fullWidth={false}
-            style={styles.actionButton}
-          />
-          <SecondaryButton
-            title="Reschedule"
-            onPress={() => {}}
-            fullWidth={false}
+            fullWidth
             style={styles.actionButton}
           />
         </View>
 
         {/* Payment History */}
-        <Text style={styles.sectionTitle}>Payment History</Text>
+        <Text style={styles.sectionTitle}>{t('subscription.paymentHistory')}</Text>
         <View style={styles.historyCard}>
           {paymentHistory.map((payment, index) => (
             <PaymentHistoryItem
               key={index}
               date={payment.date}
               amount={payment.amount}
-              index={index}
+              currency={subCurrency}
             />
           ))}
         </View>
 
         {/* Statistics */}
         <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Statistics</Text>
+          <Text style={styles.statsTitle}>{t('subscription.statistics')}</Text>
           <View style={styles.statsRowItem}>
-            <Text style={styles.statsLabel}>Total Paid</Text>
-            <Text style={styles.statsValue}>${totalPaid.toFixed(2)}</Text>
+            <Text style={styles.statsLabel}>{t('subscription.totalPaid')}</Text>
+            <Text style={styles.statsValue}>{formatCurrency(totalPaid, subCurrency)}</Text>
           </View>
           <View style={styles.statsRowItem}>
-            <Text style={styles.statsLabel}>Member Since</Text>
+            <Text style={styles.statsLabel}>{t('subscription.memberSince')}</Text>
             <Text style={styles.statsValue}>
-              {new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+              {new Date(sub.createdAt).toLocaleDateString(dateLocale, { month: 'short', year: 'numeric' })}
             </Text>
           </View>
         </View>
@@ -220,14 +227,14 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
         {/* Delete Button */}
         <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
           <Ionicons name="trash-outline" size={18} color={colors.red} />
-          <Text style={styles.deleteText}>Delete Subscription</Text>
+          <Text style={styles.deleteText}>{t('subscription.deleteConfirmTitle')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,

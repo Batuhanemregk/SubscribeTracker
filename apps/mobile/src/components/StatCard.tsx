@@ -4,7 +4,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../theme';
+import { useTheme } from '../theme';
 
 interface StatCardProps {
   icon: string;
@@ -14,13 +14,15 @@ interface StatCardProps {
 }
 
 export function StatCard({ icon, value, label, iconColor }: StatCardProps) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
       <View style={[styles.iconContainer, { backgroundColor: `${iconColor}20` }]}>
         <Ionicons name={icon as any} size={18} color={iconColor} />
       </View>
-      <Text style={styles.value}>{value}</Text>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.value, { color: colors.text }]}>{value}</Text>
+      <Text style={[styles.label, { color: colors.textMuted }]}>{label}</Text>
     </View>
   );
 }
@@ -28,11 +30,9 @@ export function StatCard({ icon, value, label, iconColor }: StatCardProps) {
 const styles = StyleSheet.create({
   card: {
     flex: 1,
-    backgroundColor: colors.bgCard,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   iconContainer: {
     width: 36,
@@ -45,11 +45,9 @@ const styles = StyleSheet.create({
   value: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: colors.text,
   },
   label: {
     fontSize: 12,
-    color: colors.textMuted,
     marginTop: 2,
   },
 });

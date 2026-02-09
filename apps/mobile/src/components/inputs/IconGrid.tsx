@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ViewStyle } from 'react-native';
-import { colors, borderRadius } from '../../theme';
+import { useTheme, borderRadius } from '../../theme';
 
 const defaultIcons = [
   '🎵', '📺', '☁️', '🎮', '💻', '🎨',
@@ -27,9 +27,11 @@ export function IconGrid({
   label,
   style 
 }: IconGridProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
       <View style={styles.grid}>
         {icons.map((icon) => {
           const isSelected = icon === value;
@@ -39,7 +41,8 @@ export function IconGrid({
               onPress={() => onChange(icon)}
               style={[
                 styles.iconButton,
-                isSelected && styles.iconButtonSelected,
+                { backgroundColor: colors.bgCard, borderColor: colors.border },
+                isSelected && { backgroundColor: `${colors.primary}30`, borderColor: colors.primary },
               ]}
               activeOpacity={0.7}
             >
@@ -59,7 +62,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
     marginBottom: 8,
   },
   grid: {
@@ -71,15 +73,9 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: borderRadius.lg,
-    backgroundColor: colors.bgCard,
     borderWidth: 1,
-    borderColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  iconButtonSelected: {
-    backgroundColor: `${colors.primary}30`,
-    borderColor: colors.primary,
   },
   iconText: {
     fontSize: 24,

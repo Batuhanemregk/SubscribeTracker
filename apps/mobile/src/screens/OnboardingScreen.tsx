@@ -22,9 +22,11 @@ import Animated, {
   withDelay,
   interpolate,
   Extrapolation,
+  SharedValue,
 } from 'react-native-reanimated';
-import { colors, borderRadius } from '../theme';
+import { useTheme, borderRadius, type ThemeColors } from '../theme';
 import { useSettingsStore } from '../state';
+import { t } from '../i18n';
 
 const { width, height } = Dimensions.get('window');
 
@@ -34,43 +36,20 @@ interface OnboardingSlide {
   iconColor: string;
   title: string;
   subtitle: string;
-  gradient: string[];
+  gradient: readonly [string, string];
 }
 
-const SLIDES: OnboardingSlide[] = [
-  {
-    id: '1',
-    icon: 'wallet',
-    iconColor: colors.primary,
-    title: 'Track All Subscriptions',
-    subtitle: 'Keep all your recurring payments in one place. Never lose track of what you\'re paying for.',
-    gradient: [colors.primary, colors.pink],
-  },
-  {
-    id: '2',
-    icon: 'mail',
-    iconColor: colors.cyan,
-    title: 'Auto-Detect from Email',
-    subtitle: 'Connect your email to automatically find and add subscriptions. We only read metadata, never content.',
-    gradient: [colors.cyan, colors.primary],
-  },
-  {
-    id: '3',
-    icon: 'notifications',
-    iconColor: colors.amber,
-    title: 'Never Get Surprised',
-    subtitle: 'Get reminders before you\'re charged. Set budgets and see spending insights.',
-    gradient: [colors.amber, colors.pink],
-  },
-];
+
 
 interface SlideProps {
   item: OnboardingSlide;
   index: number;
-  scrollX: Animated.SharedValue<number>;
+  scrollX: SharedValue<number>;
 }
 
 function Slide({ item, index, scrollX }: SlideProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
     const scale = interpolate(
@@ -98,7 +77,7 @@ function Slide({ item, index, scrollX }: SlideProps) {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <Ionicons name={item.icon as any} size={64} color={colors.text} />
+          <Ionicons name={item.icon as any} size={64} color="#FFFFFF" />
         </LinearGradient>
 
         {/* Text */}
@@ -110,6 +89,8 @@ function Slide({ item, index, scrollX }: SlideProps) {
 }
 
 function Pagination({ currentIndex, total }: { currentIndex: number; total: number }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   return (
     <View style={styles.pagination}>
       {Array.from({ length: total }).map((_, index) => (
@@ -126,7 +107,37 @@ function Pagination({ currentIndex, total }: { currentIndex: number; total: numb
 }
 
 export function OnboardingScreen({ navigation }: any) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  const SLIDES: OnboardingSlide[] = [
+    {
+      id: '1',
+      icon: 'wallet',
+      iconColor: colors.primary,
+      title: t('onboarding.slide1Title'),
+      subtitle: t('onboarding.slide1Subtitle'),
+      gradient: [colors.primary, colors.pink] as const,
+    },
+    {
+      id: '2',
+      icon: 'document-text',
+      iconColor: colors.cyan,
+      title: t('onboarding.slide2Title'),
+      subtitle: t('onboarding.slide2Subtitle'),
+      gradient: [colors.cyan, colors.primary] as const,
+    },
+    {
+      id: '3',
+      icon: 'notifications',
+      iconColor: colors.amber,
+      title: t('onboarding.slide3Title'),
+      subtitle: t('onboarding.slide3Subtitle'),
+      gradient: [colors.amber, colors.pink] as const,
+    },
+  ];
+
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useSharedValue(0);
   const { setHasSeenOnboarding } = useSettingsStore();
@@ -149,16 +160,13 @@ export function OnboardingScreen({ navigation }: any) {
 
   const handleGetStarted = () => {
     setHasSeenOnboarding(true);
-    navigation.replace('MainTabs');
+    // Route through paywall — user can dismiss to continue free
+    navigation.replace('Paywall', { fromOnboarding: true });
   };
 
   const handleGoPro = () => {
     setHasSeenOnboarding(true);
-    navigation.replace('MainTabs');
-    // Small delay then navigate to paywall
-    setTimeout(() => {
-      navigation.navigate('Paywall');
-    }, 500);
+    navigation.replace('Paywall', { fromOnboarding: true });
   };
 
   const isLastSlide = currentIndex === SLIDES.length - 1;
@@ -168,7 +176,7 @@ export function OnboardingScreen({ navigation }: any) {
       {/* Skip Button */}
       {!isLastSlide && (
         <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <Text style={styles.skipText}>Skip</Text>
+          <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
         </TouchableOpacity>
       )}
 
@@ -203,14 +211,14 @@ export function OnboardingScreen({ navigation }: any) {
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
               >
-                <Text style={styles.primaryButtonText}>Start Free</Text>
+                <Text style={styles.primaryButtonText}>{t('onboarding.getStarted')}</Text>
               </LinearGradient>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.secondaryButton} onPress={handleGoPro}>
               <View style={styles.proButtonContent}>
                 <Ionicons name="star" size={16} color={colors.amber} />
-                <Text style={styles.secondaryButtonText}>Go Pro</Text>
+                <Text style={styles.secondaryButtonText}>{t('paywall.title')}</Text>
               </View>
             </TouchableOpacity>
           </>
@@ -231,7 +239,7 @@ export function OnboardingScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,

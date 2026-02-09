@@ -131,3 +131,14 @@ do not keep deprecated modules commented code unused components or legacy config
 every change must include a quick sweep to remove unused imports routes endpoints feature flags and assets
 keep the repository lean if something is not referenced by the current build it should not exist
 when removing code ensure tests and documentation are updated accordingly
+
+future-work-tracking
+after-every-task-check-future-work: at the end of each significant change or feature implementation, check and update future-work.md
+future-work-location: always use a single file at repo root named future-work.md
+append-not-replace: add new items to appropriate priority section, never delete existing items
+mark-done-not-delete: when completing an item, move it to COMPLETED section with [DONE] status
+entry-format-required: each entry must include date, area, current-state, why-it-matters, next-action
+priority-sections: use 🔴 HIGH PRIORITY, 🟡 MEDIUM PRIORITY, 🟢 LOW PRIORITY, ✅ COMPLETED
+track-tech-debt: record any shortcuts, temporary solutions, or known limitations
+track-dependencies: note if a future item blocks or is blocked by another item
+review-on-new-conversation: at start of new conversation, read future-work.md to understand pending work

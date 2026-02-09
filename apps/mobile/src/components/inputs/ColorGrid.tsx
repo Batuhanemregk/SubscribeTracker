@@ -4,7 +4,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius } from '../../theme';
+import { useTheme, borderRadius } from '../../theme';
 
 const defaultColors = [
   '#8B5CF6', // Purple
@@ -36,9 +36,11 @@ export function ColorGrid({
   label,
   style 
 }: ColorGridProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={[styles.container, style]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
       <View style={styles.grid}>
         {colorOptions.map((color) => {
           const isSelected = color === value;
@@ -71,7 +73,6 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: colors.textSecondary,
     marginBottom: 8,
   },
   grid: {

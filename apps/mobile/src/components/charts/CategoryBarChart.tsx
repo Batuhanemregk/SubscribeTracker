@@ -6,7 +6,10 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius } from '../../theme';
+import { useTheme, borderRadius, type ThemeColors } from '../../theme';
+import { useSettingsStore } from '../../state';
+import { getCurrencySymbol } from '../../utils';
+import { t } from '../../i18n';
 import type { CategoryData } from '../../types';
 
 interface CategoryBarChartProps {
@@ -14,8 +17,12 @@ interface CategoryBarChartProps {
   title?: string;
 }
 
-export function CategoryBarChart({ data, title = 'Spending by Category' }: CategoryBarChartProps) {
+export function CategoryBarChart({ data, title }: CategoryBarChartProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const chartWidth = Dimensions.get('window').width - 80;
+  const { app } = useSettingsStore();
+  const symbol = getCurrencySymbol(app.currency);
   
   // Transform data for gifted-charts
   const barData = data.slice(0, 5).map((item) => ({
@@ -24,7 +31,7 @@ export function CategoryBarChart({ data, title = 'Spending by Category' }: Categ
     frontColor: item.color,
     gradientColor: `${item.color}80`,
     topLabelComponent: () => (
-      <Text style={styles.barLabel}>${item.amount.toFixed(0)}</Text>
+      <Text style={styles.barLabel}>{symbol}{item.amount.toFixed(0)}</Text>
     ),
   }));
 
@@ -33,7 +40,7 @@ export function CategoryBarChart({ data, title = 'Spending by Category' }: Categ
       <View style={styles.container}>
         <View style={styles.header}>
           <Ionicons name="pie-chart" size={18} color={colors.primary} />
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title}>{title || t('insights.spendingByCategory')}</Text>
         </View>
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No data to display</Text>
@@ -46,7 +53,7 @@ export function CategoryBarChart({ data, title = 'Spending by Category' }: Categ
     <View style={styles.container}>
       <View style={styles.header}>
         <Ionicons name="pie-chart" size={18} color={colors.primary} />
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title}>{title || t('insights.spendingByCategory')}</Text>
       </View>
       
       <BarChart
@@ -81,7 +88,7 @@ export function CategoryBarChart({ data, title = 'Spending by Category' }: Categ
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     backgroundColor: colors.bgCard,
     borderRadius: borderRadius['2xl'],

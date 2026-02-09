@@ -6,7 +6,8 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, borderRadius } from '../../theme';
+import { useTheme, borderRadius, type ThemeColors } from '../../theme';
+import { t } from '../../i18n';
 
 interface ForecastData {
   month: string;
@@ -18,7 +19,9 @@ interface ForecastLineChartProps {
   title?: string;
 }
 
-export function ForecastLineChart({ data, title = '6-Month Forecast' }: ForecastLineChartProps) {
+export function ForecastLineChart({ data, title }: ForecastLineChartProps) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const chartWidth = Dimensions.get('window').width - 80;
 
   // Transform data for gifted-charts
@@ -29,15 +32,12 @@ export function ForecastLineChart({ data, title = '6-Month Forecast' }: Forecast
     dataPointText: `$${item.value.toFixed(0)}`,
   }));
 
-  const maxValue = Math.max(...data.map(d => d.value)) * 1.1;
-  const minValue = Math.min(...data.map(d => d.value)) * 0.9;
-
   if (data.length === 0) {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
           <Ionicons name="trending-up" size={18} color={colors.primary} />
-          <Text style={styles.title}>{title}</Text>
+          <Text style={styles.title}>{title || t('insights.forecastTitle')}</Text>
         </View>
         <View style={styles.emptyState}>
           <Text style={styles.emptyText}>No forecast data</Text>
@@ -50,7 +50,7 @@ export function ForecastLineChart({ data, title = '6-Month Forecast' }: Forecast
     <View style={styles.container}>
       <View style={styles.header}>
         <Ionicons name="trending-up" size={18} color={colors.primary} />
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title}>{title || t('insights.forecastTitle')}</Text>
       </View>
 
       <LineChart
@@ -76,7 +76,7 @@ export function ForecastLineChart({ data, title = '6-Month Forecast' }: Forecast
         yAxisColor="transparent"
         xAxisColor="transparent"
         rulesType="dashed"
-        rulesColor="rgba(255,255,255,0.1)"
+        rulesColor={`${colors.textMuted}20`}
         isAnimated
         animationDuration={500}
         pointerConfig={{
@@ -120,7 +120,7 @@ export function ForecastLineChart({ data, title = '6-Month Forecast' }: Forecast
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     backgroundColor: colors.bgCard,
     borderRadius: borderRadius['2xl'],
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   tooltipText: {
-    color: colors.text,
+    color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '600',
   },

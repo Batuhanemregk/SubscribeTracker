@@ -2,10 +2,10 @@
  * Reusable UI Components
  */
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ViewStyle, TextStyle } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, gradients, borderRadius, spacing, typography, shadows, brandIcons, iconMap } from '../theme';
+import { useTheme, gradients, borderRadius, shadows } from '../theme';
 
 // ============================================================================
 // SCREEN CONTAINER
@@ -16,8 +16,9 @@ interface ScreenContainerProps {
 }
 
 export function ScreenContainer({ children, style }: ScreenContainerProps) {
+  const { colors } = useTheme();
   return (
-    <View style={[styles.screenContainer, style]}>
+    <View style={[styles.screenContainer, { backgroundColor: colors.bg }, style]}>
       {children}
     </View>
   );
@@ -33,10 +34,11 @@ interface GlassCardProps {
 }
 
 export function GlassCard({ children, style, onPress }: GlassCardProps) {
+  const { colors } = useTheme();
   const Wrapper = onPress ? TouchableOpacity : View;
   return (
     <Wrapper 
-      style={[styles.glassCard, style]} 
+      style={[styles.glassCard, { backgroundColor: colors.bgCard, borderColor: colors.border }, style]} 
       onPress={onPress}
       activeOpacity={0.8}
     >
@@ -54,7 +56,7 @@ interface GradientHeroCardProps {
   style?: ViewStyle;
 }
 
-export function GradientHeroCard({ children, gradient = gradients.purple, style }: GradientHeroCardProps) {
+export function GradientHeroCard({ children, gradient = gradients.primary, style }: GradientHeroCardProps) {
   return (
     <LinearGradient
       colors={gradient}
@@ -78,14 +80,16 @@ interface StatCardProps {
   style?: ViewStyle;
 }
 
-export function StatCard({ icon, value, label, iconColor = colors.primary, style }: StatCardProps) {
+export function StatCard({ icon, value, label, iconColor, style }: StatCardProps) {
+  const { colors } = useTheme();
+  const resolvedColor = iconColor || colors.primary;
   return (
-    <View style={[styles.statCard, style]}>
-      <View style={[styles.statIconBox, { backgroundColor: `${iconColor}20` }]}>
-        <Ionicons name={icon as any} size={16} color={iconColor} />
+    <View style={[styles.statCard, { backgroundColor: colors.bgCard, borderColor: colors.border }, style]}>
+      <View style={[styles.statIconBox, { backgroundColor: `${resolvedColor}20` }]}>
+        <Ionicons name={icon as any} size={16} color={resolvedColor} />
       </View>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={[styles.statValue, { color: colors.text }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
     </View>
   );
 }
@@ -100,13 +104,14 @@ interface SectionHeaderProps {
 }
 
 export function SectionHeader({ title, actionLabel, onAction }: SectionHeaderProps) {
+  const { colors } = useTheme();
   return (
     <View style={styles.sectionHeader}>
-      <Text style={styles.sectionTitle}>{title}</Text>
+      <Text style={[styles.sectionTitle, { color: colors.text }]}>{title}</Text>
       {actionLabel && onAction && (
-        <TouchableOpacity style={styles.sectionAction} onPress={onAction}>
+        <TouchableOpacity style={[styles.sectionAction, { backgroundColor: colors.bgCard, borderColor: colors.border }]} onPress={onAction}>
           <Ionicons name="add" size={16} color={colors.text} />
-          <Text style={styles.sectionActionText}>{actionLabel}</Text>
+          <Text style={[styles.sectionActionText, { color: colors.text }]}>{actionLabel}</Text>
         </TouchableOpacity>
       )}
     </View>
@@ -122,10 +127,12 @@ interface PillTagProps {
   style?: ViewStyle;
 }
 
-export function PillTag({ label, color = colors.primary, style }: PillTagProps) {
+export function PillTag({ label, color, style }: PillTagProps) {
+  const { colors } = useTheme();
+  const resolvedColor = color || colors.primary;
   return (
-    <View style={[styles.pill, { backgroundColor: `${color}20` }, style]}>
-      <Text style={[styles.pillText, { color }]}>{label}</Text>
+    <View style={[styles.pill, { backgroundColor: `${resolvedColor}20` }, style]}>
+      <Text style={[styles.pillText, { color: resolvedColor }]}>{label}</Text>
     </View>
   );
 }
@@ -142,14 +149,15 @@ interface PrimaryButtonProps {
 }
 
 export function PrimaryButton({ label, onPress, icon, disabled, style }: PrimaryButtonProps) {
+  const { colors } = useTheme();
   return (
     <TouchableOpacity
-      style={[styles.primaryButton, disabled && styles.buttonDisabled, style]}
+      style={[styles.primaryButton, { backgroundColor: colors.primary }, disabled && styles.buttonDisabled, style]}
       onPress={onPress}
       disabled={disabled}
       activeOpacity={0.8}
     >
-      {icon && <Ionicons name={icon as any} size={18} color={colors.text} style={{ marginRight: 8 }} />}
+      {icon && <Ionicons name={icon as any} size={18} color="#FFFFFF" style={{ marginRight: 8 }} />}
       <Text style={styles.primaryButtonText}>{label}</Text>
     </TouchableOpacity>
   );
@@ -166,14 +174,15 @@ interface SecondaryButtonProps {
 }
 
 export function SecondaryButton({ label, onPress, icon, style }: SecondaryButtonProps) {
+  const { colors } = useTheme();
   return (
     <TouchableOpacity
-      style={[styles.secondaryButton, style]}
+      style={[styles.secondaryButton, { backgroundColor: colors.bgCard, borderColor: colors.border }, style]}
       onPress={onPress}
       activeOpacity={0.8}
     >
       {icon && <Ionicons name={icon as any} size={18} color={colors.text} style={{ marginRight: 8 }} />}
-      <Text style={styles.secondaryButtonText}>{label}</Text>
+      <Text style={[styles.secondaryButtonText, { color: colors.text }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -192,22 +201,24 @@ interface ListRowProps {
 }
 
 export function ListRow({ icon, iconColor, title, subtitle, rightText, rightSubtext, onPress }: ListRowProps) {
+  const { colors } = useTheme();
+  const resolvedIconColor = iconColor || colors.primary;
   const Wrapper = onPress ? TouchableOpacity : View;
   return (
-    <Wrapper style={styles.listRow} onPress={onPress} activeOpacity={0.7}>
+    <Wrapper style={[styles.listRow, { backgroundColor: colors.bgCard, borderColor: colors.border }]} onPress={onPress} activeOpacity={0.7}>
       {icon && (
-        <View style={[styles.listRowIcon, { backgroundColor: `${iconColor || colors.primary}20` }]}>
-          <Ionicons name={icon as any} size={18} color={iconColor || colors.primary} />
+        <View style={[styles.listRowIcon, { backgroundColor: `${resolvedIconColor}20` }]}>
+          <Ionicons name={icon as any} size={18} color={resolvedIconColor} />
         </View>
       )}
       <View style={styles.listRowContent}>
-        <Text style={styles.listRowTitle}>{title}</Text>
-        {subtitle && <Text style={styles.listRowSubtitle}>{subtitle}</Text>}
+        <Text style={[styles.listRowTitle, { color: colors.text }]}>{title}</Text>
+        {subtitle && <Text style={[styles.listRowSubtitle, { color: colors.textMuted }]}>{subtitle}</Text>}
       </View>
       {(rightText || rightSubtext) && (
         <View style={styles.listRowRight}>
-          {rightText && <Text style={styles.listRowRightText}>{rightText}</Text>}
-          {rightSubtext && <Text style={styles.listRowRightSubtext}>{rightSubtext}</Text>}
+          {rightText && <Text style={[styles.listRowRightText, { color: colors.text }]}>{rightText}</Text>}
+          {rightSubtext && <Text style={[styles.listRowRightSubtext, { color: colors.textMuted }]}>{rightSubtext}</Text>}
         </View>
       )}
       {onPress && <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />}
@@ -226,17 +237,18 @@ interface ProgressRowProps {
 }
 
 export function ProgressRow({ label, amount, total, color }: ProgressRowProps) {
+  const { colors } = useTheme();
   const percentage = total > 0 ? (amount / total) * 100 : 0;
   return (
     <View style={styles.progressRow}>
       <View style={styles.progressHeader}>
         <View style={styles.progressLabelRow}>
           <View style={[styles.progressDot, { backgroundColor: color }]} />
-          <Text style={styles.progressLabel}>{label}</Text>
+          <Text style={[styles.progressLabel, { color: colors.text }]}>{label}</Text>
         </View>
-        <Text style={styles.progressAmount}>${amount.toFixed(2)}</Text>
+        <Text style={[styles.progressAmount, { color: colors.textSecondary }]}>${amount.toFixed(2)}</Text>
       </View>
-      <View style={styles.progressBar}>
+      <View style={[styles.progressBar, { backgroundColor: colors.bgElevated }]}>
         <View style={[styles.progressFill, { width: `${percentage}%`, backgroundColor: color }]} />
       </View>
     </View>
@@ -254,49 +266,39 @@ interface SubscriptionIconProps {
 }
 
 export function SubscriptionIcon({ name, iconKey, colorKey, size = 44 }: SubscriptionIconProps) {
-  // Check for brand-specific icon
-  const brand = brandIcons[name];
-  const icon = brand?.icon || iconMap[iconKey] || 'apps';
-  const color = brand?.color || colorKey;
-
   return (
-    <View style={[styles.subscriptionIcon, { width: size, height: size, backgroundColor: color }]}>
-      <Ionicons name={icon as any} size={size * 0.45} color="#FFFFFF" />
+    <View style={[styles.subscriptionIcon, { width: size, height: size, backgroundColor: colorKey }]}>
+      <Ionicons name={(iconKey || 'apps') as any} size={size * 0.45} color="#FFFFFF" />
     </View>
   );
 }
 
 // ============================================================================
-// STYLES
+// STYLES (layout only — colors applied via inline styles)
 // ============================================================================
 const styles = StyleSheet.create({
   screenContainer: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
 
   glassCard: {
-    backgroundColor: colors.bgCard,
     borderRadius: borderRadius.xl,
-    padding: spacing.lg,
+    padding: 16,
     borderWidth: 1,
-    borderColor: colors.border,
     ...shadows.card,
   },
 
   gradientCard: {
     borderRadius: borderRadius.xl,
-    padding: spacing.xl,
-    marginBottom: spacing.lg,
+    padding: 20,
+    marginBottom: 16,
   },
 
   statCard: {
     flex: 1,
-    backgroundColor: colors.bgCard,
     borderRadius: borderRadius.lg,
-    padding: spacing.md,
+    padding: 12,
     borderWidth: 1,
-    borderColor: colors.border,
     alignItems: 'flex-start',
   },
 
@@ -306,75 +308,68 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: 8,
   },
 
   statValue: {
-    fontSize: typography.sectionTitle,
-    fontWeight: typography.bold,
-    color: colors.text,
+    fontSize: 18,
+    fontWeight: '700',
   },
 
   statLabel: {
-    fontSize: typography.small,
-    color: colors.textMuted,
-    marginTop: spacing.xs,
+    fontSize: 12,
+    marginTop: 4,
   },
 
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.lg,
+    marginBottom: 16,
   },
 
   sectionTitle: {
-    fontSize: typography.sectionTitle,
-    fontWeight: typography.semibold,
-    color: colors.text,
+    fontSize: 18,
+    fontWeight: '600',
   },
 
   sectionAction: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.bgCard,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: borderRadius.full,
     borderWidth: 1,
-    borderColor: colors.border,
   },
 
   sectionActionText: {
-    color: colors.text,
-    fontSize: typography.caption,
-    marginLeft: spacing.xs,
+    fontSize: 13,
+    marginLeft: 4,
   },
 
   pill: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     borderRadius: borderRadius.full,
   },
 
   pillText: {
-    fontSize: typography.small,
-    fontWeight: typography.medium,
+    fontSize: 12,
+    fontWeight: '500',
   },
 
   primaryButton: {
     flexDirection: 'row',
-    backgroundColor: colors.primary,
-    padding: spacing.lg,
+    padding: 16,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   primaryButtonText: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 
   buttonDisabled: {
@@ -383,30 +378,25 @@ const styles = StyleSheet.create({
 
   secondaryButton: {
     flexDirection: 'row',
-    backgroundColor: colors.bgCard,
-    padding: spacing.lg,
+    padding: 16,
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.border,
   },
 
   secondaryButtonText: {
-    color: colors.text,
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
+    fontSize: 14,
+    fontWeight: '600',
   },
 
   listRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: spacing.lg,
-    backgroundColor: colors.bgCard,
+    padding: 16,
     borderRadius: borderRadius.lg,
-    marginBottom: spacing.sm,
+    marginBottom: 8,
     borderWidth: 1,
-    borderColor: colors.border,
   },
 
   listRowIcon: {
@@ -415,7 +405,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: spacing.md,
+    marginRight: 12,
   },
 
   listRowContent: {
@@ -423,43 +413,39 @@ const styles = StyleSheet.create({
   },
 
   listRowTitle: {
-    fontSize: typography.body,
-    fontWeight: typography.medium,
-    color: colors.text,
+    fontSize: 14,
+    fontWeight: '500',
   },
 
   listRowSubtitle: {
-    fontSize: typography.caption,
-    color: colors.textMuted,
+    fontSize: 13,
     marginTop: 2,
   },
 
   listRowRight: {
     alignItems: 'flex-end',
-    marginRight: spacing.sm,
+    marginRight: 8,
   },
 
   listRowRightText: {
-    fontSize: typography.body,
-    fontWeight: typography.semibold,
-    color: colors.text,
+    fontSize: 14,
+    fontWeight: '600',
   },
 
   listRowRightSubtext: {
-    fontSize: typography.small,
-    color: colors.textMuted,
+    fontSize: 12,
     marginTop: 2,
   },
 
   progressRow: {
-    marginBottom: spacing.lg,
+    marginBottom: 16,
   },
 
   progressHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: spacing.sm,
+    marginBottom: 8,
   },
 
   progressLabelRow: {
@@ -471,23 +457,20 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    marginRight: spacing.sm,
+    marginRight: 8,
   },
 
   progressLabel: {
-    fontSize: typography.caption,
-    color: colors.text,
+    fontSize: 13,
   },
 
   progressAmount: {
-    fontSize: typography.caption,
-    fontWeight: typography.semibold,
-    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '600',
   },
 
   progressBar: {
     height: 6,
-    backgroundColor: colors.bgTertiary,
     borderRadius: 3,
     overflow: 'hidden',
   },

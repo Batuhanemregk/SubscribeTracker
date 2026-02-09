@@ -1,13 +1,28 @@
 /**
  * BannerAd Component - Real AdMob integration
- * Shows ads only for Standard users
+ * Shows ads only for Standard users.
+ * Gracefully returns null in Expo Go where native module is unavailable.
  */
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
-import { BannerAd as GoogleBannerAd, BannerAdSize } from 'react-native-google-mobile-ads';
+import React, { useState } from 'react';
+import { View, StyleSheet } from 'react-native';
 import { usePlanStore } from '../../state';
-import { getBannerAdUnitId } from '../../services';
-import { colors } from '../../theme';
+import { getBannerAdUnitId, areAdsAvailable } from '../../services/AdMobService';
+
+// Dynamic import to avoid crash in Expo Go
+let GoogleBannerAd: any = null;
+let BannerAdSize: any = {
+  BANNER: 'BANNER',
+  LARGE_BANNER: 'LARGE_BANNER',
+  MEDIUM_RECTANGLE: 'MEDIUM_RECTANGLE',
+};
+
+try {
+  const adModule = require('react-native-google-mobile-ads');
+  GoogleBannerAd = adModule.BannerAd;
+  BannerAdSize = adModule.BannerAdSize;
+} catch {
+  // Native module not available (Expo Go)
+}
 
 interface BannerAdProps {
   size?: 'standard' | 'large' | 'medium';
@@ -17,8 +32,8 @@ export function BannerAd({ size = 'standard' }: BannerAdProps) {
   const { shouldShowAds } = usePlanStore();
   const [adError, setAdError] = useState(false);
 
-  // Don't show ads for Pro users
-  if (!shouldShowAds()) {
+  // Don't show ads for Pro users or if native module unavailable
+  if (!shouldShowAds() || !areAdsAvailable() || !GoogleBannerAd) {
     return null;
   }
 
@@ -43,7 +58,7 @@ export function BannerAd({ size = 'standard' }: BannerAdProps) {
         requestOptions={{
           requestNonPersonalizedAdsOnly: false,
         }}
-        onAdFailedToLoad={(error) => {
+        onAdFailedToLoad={(error: any) => {
           console.log('Banner ad failed to load:', error);
           setAdError(true);
         }}

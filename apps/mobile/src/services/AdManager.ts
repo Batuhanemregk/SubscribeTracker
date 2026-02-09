@@ -3,7 +3,7 @@
  * 
  * Rules:
  * - 30 seconds after app open (once daily)
- * - Before email scan starts
+ * - Before bank statement scan starts
  * - When paywall is dismissed without purchase
  * - Minimum 3 minutes between ads
  * - Maximum 2-3 per day

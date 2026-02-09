@@ -129,19 +129,56 @@ export function getUpcomingPayments(subscriptions: Subscription[], days: number)
   return subscriptions
     .filter(s => s.status === 'active')
     .filter(s => {
-      const billingDate = new Date(s.nextBillingDate);
+      const billingDate = advanceToNextBillingDate(s.nextBillingDate, s.cycle);
       return billingDate >= now && billingDate <= futureDate;
     })
     .sort((a, b) => 
-      new Date(a.nextBillingDate).getTime() - new Date(b.nextBillingDate).getTime()
+      advanceToNextBillingDate(a.nextBillingDate, a.cycle).getTime() - 
+      advanceToNextBillingDate(b.nextBillingDate, b.cycle).getTime()
     );
 }
 
 /**
- * Calculate days until next billing
+ * Advance a past billing date forward by cycle until it's in the future.
+ * Handles edge case where nextBillingDate is in the past (e.g. payment
+ * was charged to a different card and didn't appear in the scanned statement).
  */
-export function getDaysUntilBilling(nextBillingDate: string): number {
+export function advanceToNextBillingDate(
+  nextBillingDate: string,
+  cycle: BillingCycle
+): Date {
+  const billing = new Date(nextBillingDate);
   const now = new Date();
+
+  while (billing < now) {
+    switch (cycle) {
+      case 'weekly':
+        billing.setDate(billing.getDate() + 7);
+        break;
+      case 'monthly':
+        billing.setMonth(billing.getMonth() + 1);
+        break;
+      case 'quarterly':
+        billing.setMonth(billing.getMonth() + 3);
+        break;
+      case 'yearly':
+        billing.setFullYear(billing.getFullYear() + 1);
+        break;
+    }
+  }
+
+  return billing;
+}
+
+/**
+ * Calculate days until next billing (auto-advances past dates)
+ */
+export function getDaysUntilBilling(nextBillingDate: string, cycle?: BillingCycle): number {
+  const now = new Date();
+  if (cycle) {
+    const billing = advanceToNextBillingDate(nextBillingDate, cycle);
+    return Math.ceil((billing.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  }
   const billing = new Date(nextBillingDate);
   return Math.ceil((billing.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }

@@ -8,7 +8,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '../theme';
+import { useTheme, type ThemeColors } from '../theme';
 import type { Subscription } from '../types';
 
 interface AnimatedSubscriptionCardProps {
@@ -28,6 +28,8 @@ export function AnimatedSubscriptionCard({
   onDelete,
   isRefreshing = false 
 }: AnimatedSubscriptionCardProps) {
+  const { colors, isDark } = useTheme();
+  const styles = createStyles(colors);
   const swipeableRef = useRef<Swipeable>(null);
   
   // Animation values
@@ -168,7 +170,7 @@ export function AnimatedSubscriptionCard({
           activeOpacity={1}
         >
           {/* Glassmorphism background */}
-          <BlurView intensity={20} tint="dark" style={styles.blurBg}>
+          <BlurView intensity={20} tint={isDark ? 'dark' : 'light'} style={[styles.blurBg, { backgroundColor: isDark ? 'rgba(20, 20, 25, 0.8)' : 'rgba(255, 255, 255, 0.85)' }]}>
             {/* Shimmer effect */}
             <RNAnimated.View
               style={[
@@ -179,7 +181,7 @@ export function AnimatedSubscriptionCard({
               ]}
             >
               <LinearGradient
-                colors={['transparent', 'rgba(255,255,255,0.1)', 'transparent']}
+                colors={['transparent', isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.04)', 'transparent']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.shimmerGradient}
@@ -226,12 +228,11 @@ export function AnimatedSubscriptionCard({
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   cardWrapper: {
     marginBottom: 16,
     position: 'relative',
   },
-  // Neon glow effect
   neonGlow: {
     position: 'absolute',
     top: 8,
@@ -249,14 +250,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: colors.border,
   },
   blurBg: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(20, 20, 25, 0.8)',
     overflow: 'hidden',
   },
-  // Shimmer
   shimmer: {
     position: 'absolute',
     top: 0,
@@ -351,7 +350,6 @@ const styles = StyleSheet.create({
   daysTextUrgent: {
     color: colors.amber,
   },
-  // Swipe actions
   swipeActions: {
     flexDirection: 'row',
     marginBottom: 16,
@@ -362,10 +360,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   swipeBtnEdit: {
-    backgroundColor: colors.primary,
+    backgroundColor: '#8B5CF6',
   },
   swipeBtnDelete: {
-    backgroundColor: colors.red,
+    backgroundColor: '#EF4444',
     borderTopRightRadius: 20,
     borderBottomRightRadius: 20,
   },

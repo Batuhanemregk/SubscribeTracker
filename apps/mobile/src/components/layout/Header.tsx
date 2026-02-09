@@ -5,13 +5,14 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, layout } from '../../theme';
+import { useTheme, layout } from '../../theme';
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
   showBack?: boolean;
   rightAction?: React.ReactNode;
+  leftElement?: React.ReactNode;
   icon?: string;
   iconColor?: string;
   style?: ViewStyle;
@@ -22,29 +23,38 @@ export function Header({
   subtitle, 
   showBack = false, 
   rightAction,
+  leftElement,
   icon,
-  iconColor = colors.primary,
+  iconColor,
   style 
 }: HeaderProps) {
   const navigation = useNavigation();
+  const { colors } = useTheme();
+  const resolvedIconColor = iconColor || colors.primary;
 
   return (
     <View style={[styles.container, style]}>
       {showBack && (
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: colors.bgCard }]}>
           <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
       )}
 
-      {icon && (
-        <View style={[styles.iconContainer, { backgroundColor: `${iconColor}20` }]}>
-          <Ionicons name={icon as any} size={24} color={iconColor} />
+      {leftElement && (
+        <View style={styles.iconContainer}>
+          {leftElement}
+        </View>
+      )}
+
+      {!leftElement && icon && (
+        <View style={[styles.iconContainer, { backgroundColor: `${resolvedIconColor}20` }]}>
+          <Ionicons name={icon as any} size={24} color={resolvedIconColor} />
         </View>
       )}
 
       <View style={styles.titleContainer}>
-        <Text style={styles.title}>{title}</Text>
-        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+        <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
+        {subtitle && <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>}
       </View>
 
       {rightAction && <View style={styles.rightAction}>{rightAction}</View>}
@@ -62,7 +72,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: colors.bgCard,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -81,14 +90,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: colors.text,
   },
   subtitle: {
     fontSize: 14,
-    color: colors.textMuted,
     marginTop: 2,
   },
   rightAction: {
     marginLeft: 12,
   },
 });
+

@@ -7,46 +7,48 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors, borderRadius } from '../../theme';
+import { useTheme, borderRadius, type ThemeColors } from '../../theme';
 import { usePlanStore } from '../../state';
 
 interface FeatureGateProps {
-  feature: 'dailyScan' | 'bodyParsing' | 'autoFill' | 'priceAlerts' | 'cancelLinks';
+  feature: 'bankStatementScan' | 'cloudSync' | 'dataExport' | 'biometricLock' | 'noAds';
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }
 
 const FEATURE_INFO = {
-  dailyScan: {
-    icon: 'scan',
-    title: 'Daily Scan',
-    description: 'Auto-scan your emails daily for new subscriptions',
-  },
-  bodyParsing: {
+  bankStatementScan: {
     icon: 'document-text',
-    title: 'Full Email Parsing',
-    description: 'Extract price and billing details from email content',
+    title: 'Document Scan',
+    description: 'Automatically detect subscriptions from your bank documents',
   },
-  autoFill: {
-    icon: 'flash',
-    title: 'Auto-fill Pricing',
-    description: 'Automatically detect subscription prices',
+  cloudSync: {
+    icon: 'cloud-upload',
+    title: 'Cloud Sync',
+    description: 'Sync your subscriptions across all your devices',
   },
-  priceAlerts: {
-    icon: 'notifications',
-    title: 'Price Alerts',
-    description: 'Get notified when subscription prices change',
+  dataExport: {
+    icon: 'download',
+    title: 'Data Export',
+    description: 'Export your subscription data in CSV or PDF format',
   },
-  cancelLinks: {
-    icon: 'link',
-    title: 'Cancel Links',
-    description: 'Quick access to subscription cancellation pages',
+  biometricLock: {
+    icon: 'finger-print',
+    title: 'Biometric Lock',
+    description: 'Secure the app with Face ID or fingerprint',
+  },
+  noAds: {
+    icon: 'eye-off',
+    title: 'Ad-Free Experience',
+    description: 'Enjoy the app without any advertisements',
   },
 };
 
 export function FeatureGate({ feature, children, fallback }: FeatureGateProps) {
   const navigation = useNavigation<any>();
   const { isPro, isTrialActive } = usePlanStore();
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
 
   // If user is Pro or on trial, show the feature
   if (isPro() || isTrialActive()) {
@@ -62,7 +64,7 @@ export function FeatureGate({ feature, children, fallback }: FeatureGateProps) {
   const info = FEATURE_INFO[feature];
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.container}
       onPress={() => navigation.navigate('Paywall')}
       activeOpacity={0.8}
@@ -102,23 +104,25 @@ interface FeatureGateInlineProps {
 }
 
 export function FeatureGateInline({ isPro, children, lockedContent }: FeatureGateInlineProps) {
+  const { colors } = useTheme();
+
   if (isPro) {
     return <>{children}</>;
   }
-  
+
   if (lockedContent) {
     return <>{lockedContent}</>;
   }
 
   return (
-    <View style={styles.inlineLock}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: `${colors.amber}20`, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 }}>
       <Ionicons name="lock-closed" size={12} color={colors.amber} />
-      <Text style={styles.inlineLockText}>Pro</Text>
+      <Text style={{ fontSize: 11, fontWeight: '600', color: colors.amber }}>Pro</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     borderRadius: borderRadius['2xl'],
     overflow: 'hidden',
@@ -178,19 +182,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: colors.primary,
-  },
-  inlineLock: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: `${colors.amber}20`,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  inlineLockText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.amber,
   },
 });

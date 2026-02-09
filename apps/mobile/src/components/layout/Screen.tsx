@@ -4,7 +4,7 @@
 import React from 'react';
 import { View, StyleSheet, StatusBar, ScrollView, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../theme';
+import { useTheme } from '../../theme';
 
 interface ScreenProps {
   children: React.ReactNode;
@@ -15,10 +15,12 @@ interface ScreenProps {
 
 export function Screen({ children, scrollable = true, padding = true, style }: ScreenProps) {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
 
   const containerStyle = [
     styles.container,
     {
+      backgroundColor: colors.bg,
       paddingTop: insets.top,
       paddingBottom: insets.bottom,
       paddingHorizontal: padding ? 16 : 0,
@@ -28,10 +30,10 @@ export function Screen({ children, scrollable = true, padding = true, style }: S
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor={colors.bg} />
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.bg} />
       {scrollable ? (
         <ScrollView
-          style={styles.scrollView}
+          style={[styles.scrollView, { backgroundColor: colors.bg }]}
           contentContainerStyle={[containerStyle, { paddingBottom: insets.bottom + 100 }]}
           showsVerticalScrollIndicator={false}
         >
@@ -47,10 +49,9 @@ export function Screen({ children, scrollable = true, padding = true, style }: S
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
   scrollView: {
     flex: 1,
-    backgroundColor: colors.bg,
   },
 });
+

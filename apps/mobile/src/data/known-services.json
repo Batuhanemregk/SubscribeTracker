@@ -1,366 +1,1502 @@
 {
-  "version": "1.0.0",
-  "lastUpdated": "2024-01-19",
+  "version": "2.0.0",
+  "lastUpdated": "2026-02-05",
   "services": [
     {
       "id": "netflix",
       "name": "Netflix",
       "domain": "netflix.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=netflix.com&sz=128",
       "senderPatterns": ["netflix.com", "mailer.netflix.com"],
       "subjectPatterns": ["payment", "receipt", "bill", "invoice", "subscription"],
       "category": "Entertainment",
       "icon": "🎬",
       "color": "#E50914",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.netflix.com/YourAccount"
+      "manageUrl": "https://www.netflix.com/YourAccount",
+      "plans": [
+        { "id": "basic", "name": "Standard with ads", "price": 6.99, "cycle": "monthly" },
+        { "id": "standard", "name": "Standard", "price": 15.49, "cycle": "monthly" },
+        { "id": "premium", "name": "Premium", "price": 22.99, "cycle": "monthly" }
+      ]
     },
     {
       "id": "spotify",
       "name": "Spotify",
       "domain": "spotify.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=spotify.com&sz=128",
       "senderPatterns": ["spotify.com", "email.spotify.com"],
       "subjectPatterns": ["receipt", "payment", "premium", "subscription"],
       "category": "Music",
       "icon": "🎵",
       "color": "#1DB954",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.spotify.com/us/account/"
+      "manageUrl": "https://www.spotify.com/us/account/",
+      "plans": [
+        { "id": "individual", "name": "Individual", "price": 10.99, "cycle": "monthly" },
+        { "id": "duo", "name": "Duo", "price": 14.99, "cycle": "monthly" },
+        { "id": "family", "name": "Family", "price": 16.99, "cycle": "monthly" },
+        { "id": "student", "name": "Student", "price": 5.99, "cycle": "monthly" }
+      ]
     },
     {
       "id": "apple-one",
       "name": "Apple One",
       "domain": "apple.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=apple.com&sz=128",
       "senderPatterns": ["apple.com", "email.apple.com", "itunes"],
       "subjectPatterns": ["receipt", "subscription", "icloud", "apple one"],
       "category": "Productivity",
       "icon": "🍎",
       "color": "#000000",
       "defaultCycle": "monthly",
-      "manageUrl": "https://support.apple.com/en-us/HT202039"
+      "manageUrl": "https://support.apple.com/en-us/HT202039",
+      "plans": [
+        { "id": "individual", "name": "Individual", "price": 19.95, "cycle": "monthly" },
+        { "id": "family", "name": "Family", "price": 25.95, "cycle": "monthly" },
+        { "id": "premier", "name": "Premier", "price": 37.95, "cycle": "monthly" }
+      ]
     },
     {
       "id": "youtube-premium",
       "name": "YouTube Premium",
       "domain": "youtube.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=youtube.com&sz=128",
       "senderPatterns": ["youtube.com", "google.com"],
       "subjectPatterns": ["youtube premium", "receipt", "subscription"],
       "category": "Entertainment",
       "icon": "📺",
       "color": "#FF0000",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.youtube.com/paid_memberships"
+      "manageUrl": "https://www.youtube.com/paid_memberships",
+      "plans": [
+        { "id": "individual", "name": "Individual", "price": 13.99, "cycle": "monthly" },
+        { "id": "family", "name": "Family", "price": 22.99, "cycle": "monthly" },
+        { "id": "student", "name": "Student", "price": 7.99, "cycle": "monthly" }
+      ]
     },
     {
       "id": "disney-plus",
       "name": "Disney+",
       "domain": "disneyplus.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=disneyplus.com&sz=128",
       "senderPatterns": ["disneyplus.com", "disney.com"],
       "subjectPatterns": ["receipt", "payment", "subscription"],
       "category": "Entertainment",
       "icon": "✨",
       "color": "#113CCF",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.disneyplus.com/account"
+      "manageUrl": "https://www.disneyplus.com/account",
+      "plans": [
+        { "id": "basic", "name": "Basic (with ads)", "price": 7.99, "cycle": "monthly" },
+        { "id": "premium", "name": "Premium", "price": 13.99, "cycle": "monthly" },
+        { "id": "bundle", "name": "Trio Bundle", "price": 24.99, "cycle": "monthly" }
+      ]
     },
     {
       "id": "hbo-max",
-      "name": "HBO Max",
-      "domain": "hbomax.com",
+      "name": "Max (HBO)",
+      "domain": "max.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=max.com&sz=128",
       "senderPatterns": ["hbomax.com", "max.com"],
       "subjectPatterns": ["receipt", "payment", "subscription"],
       "category": "Entertainment",
       "icon": "🎭",
       "color": "#5B21B6",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.max.com/settings"
+      "manageUrl": "https://www.max.com/settings",
+      "plans": [
+        { "id": "with-ads", "name": "With Ads", "price": 9.99, "cycle": "monthly" },
+        { "id": "ad-free", "name": "Ad-Free", "price": 15.99, "cycle": "monthly" },
+        { "id": "ultimate", "name": "Ultimate Ad-Free", "price": 19.99, "cycle": "monthly" }
+      ]
     },
     {
       "id": "amazon-prime",
       "name": "Amazon Prime",
       "domain": "amazon.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=amazon.com&sz=128",
       "senderPatterns": ["amazon.com", "amazon.co.uk"],
       "subjectPatterns": ["prime membership", "prime video", "subscription"],
       "category": "Entertainment",
       "icon": "📦",
       "color": "#FF9900",
       "defaultCycle": "yearly",
-      "manageUrl": "https://www.amazon.com/gp/primecentral"
+      "manageUrl": "https://www.amazon.com/gp/primecentral",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 14.99, "cycle": "monthly" },
+        { "id": "yearly", "name": "Yearly", "price": 139.00, "cycle": "yearly" },
+        { "id": "student", "name": "Student Monthly", "price": 7.49, "cycle": "monthly" }
+      ]
     },
     {
       "id": "adobe-cc",
       "name": "Adobe Creative Cloud",
       "domain": "adobe.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=adobe.com&sz=128",
       "senderPatterns": ["adobe.com", "mail.adobe.com"],
       "subjectPatterns": ["invoice", "payment", "creative cloud", "subscription"],
       "category": "Design",
       "icon": "🎨",
       "color": "#FF0000",
       "defaultCycle": "monthly",
-      "manageUrl": "https://account.adobe.com/plans"
+      "manageUrl": "https://account.adobe.com/plans",
+      "plans": [
+        { "id": "photography", "name": "Photography (20GB)", "price": 9.99, "cycle": "monthly" },
+        { "id": "single-app", "name": "Single App", "price": 22.99, "cycle": "monthly" },
+        { "id": "all-apps", "name": "All Apps", "price": 59.99, "cycle": "monthly" }
+      ]
     },
     {
       "id": "figma",
       "name": "Figma",
       "domain": "figma.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=figma.com&sz=128",
       "senderPatterns": ["figma.com"],
       "subjectPatterns": ["invoice", "receipt", "subscription"],
       "category": "Design",
       "icon": "🖼️",
       "color": "#F24E1E",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.figma.com/settings"
+      "manageUrl": "https://www.figma.com/settings",
+      "plans": [
+        { "id": "professional", "name": "Professional", "price": 15.00, "cycle": "monthly" },
+        { "id": "organization", "name": "Organization", "price": 45.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "notion",
       "name": "Notion",
       "domain": "notion.so",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=notion.so&sz=128",
       "senderPatterns": ["notion.so", "makenotion.com"],
       "subjectPatterns": ["invoice", "receipt", "subscription", "payment"],
       "category": "Productivity",
       "icon": "📝",
       "color": "#000000",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.notion.so/my-account"
+      "manageUrl": "https://www.notion.so/my-account",
+      "plans": [
+        { "id": "plus", "name": "Plus", "price": 10.00, "cycle": "monthly" },
+        { "id": "business", "name": "Business", "price": 18.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "slack",
       "name": "Slack",
       "domain": "slack.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=slack.com&sz=128",
       "senderPatterns": ["slack.com"],
       "subjectPatterns": ["invoice", "receipt", "subscription"],
       "category": "Productivity",
       "icon": "💬",
       "color": "#4A154B",
       "defaultCycle": "monthly",
-      "manageUrl": "https://slack.com/account/settings"
+      "manageUrl": "https://slack.com/account/settings",
+      "plans": [
+        { "id": "pro", "name": "Pro", "price": 8.75, "cycle": "monthly" },
+        { "id": "business", "name": "Business+", "price": 15.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "dropbox",
       "name": "Dropbox",
       "domain": "dropbox.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=dropbox.com&sz=128",
       "senderPatterns": ["dropbox.com", "dropboxmail.com"],
       "subjectPatterns": ["receipt", "payment", "subscription", "plus", "professional"],
       "category": "Storage",
       "icon": "☁️",
       "color": "#0061FF",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.dropbox.com/account"
+      "manageUrl": "https://www.dropbox.com/account",
+      "plans": [
+        { "id": "plus", "name": "Plus (2TB)", "price": 11.99, "cycle": "monthly" },
+        { "id": "essentials", "name": "Essentials (3TB)", "price": 22.00, "cycle": "monthly" },
+        { "id": "business", "name": "Business", "price": 20.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "google-one",
       "name": "Google One",
       "domain": "google.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=google.com&sz=128",
       "senderPatterns": ["google.com", "googlemail.com"],
       "subjectPatterns": ["google one", "storage", "receipt"],
       "category": "Storage",
       "icon": "🌐",
       "color": "#4285F4",
       "defaultCycle": "monthly",
-      "manageUrl": "https://one.google.com/settings"
+      "manageUrl": "https://one.google.com/settings",
+      "plans": [
+        { "id": "100gb", "name": "100 GB", "price": 1.99, "cycle": "monthly" },
+        { "id": "200gb", "name": "200 GB", "price": 2.99, "cycle": "monthly" },
+        { "id": "2tb", "name": "2 TB", "price": 9.99, "cycle": "monthly" }
+      ]
     },
     {
       "id": "icloud",
       "name": "iCloud+",
       "domain": "apple.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=icloud.com&sz=128",
       "senderPatterns": ["apple.com", "icloud.com"],
       "subjectPatterns": ["icloud", "storage", "receipt"],
       "category": "Storage",
       "icon": "☁️",
       "color": "#3395FF",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.icloud.com/settings"
+      "manageUrl": "https://www.icloud.com/settings",
+      "plans": [
+        { "id": "50gb", "name": "50 GB", "price": 0.99, "cycle": "monthly" },
+        { "id": "200gb", "name": "200 GB", "price": 2.99, "cycle": "monthly" },
+        { "id": "2tb", "name": "2 TB", "price": 10.99, "cycle": "monthly" }
+      ]
     },
     {
       "id": "github",
       "name": "GitHub",
       "domain": "github.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=github.com&sz=128",
       "senderPatterns": ["github.com", "noreply.github.com"],
       "subjectPatterns": ["receipt", "invoice", "pro", "team", "subscription"],
       "category": "Development",
       "icon": "💻",
       "color": "#181717",
       "defaultCycle": "monthly",
-      "manageUrl": "https://github.com/settings/billing"
+      "manageUrl": "https://github.com/settings/billing",
+      "plans": [
+        { "id": "pro", "name": "Pro", "price": 4.00, "cycle": "monthly" },
+        { "id": "team", "name": "Team", "price": 4.00, "cycle": "monthly" },
+        { "id": "enterprise", "name": "Enterprise", "price": 21.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "chatgpt-plus",
       "name": "ChatGPT Plus",
       "domain": "openai.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=openai.com&sz=128",
       "senderPatterns": ["openai.com"],
       "subjectPatterns": ["receipt", "payment", "chatgpt", "subscription"],
       "category": "Productivity",
       "icon": "🤖",
       "color": "#10A37F",
       "defaultCycle": "monthly",
-      "manageUrl": "https://chat.openai.com/#settings"
+      "manageUrl": "https://chat.openai.com/#settings",
+      "plans": [
+        { "id": "plus", "name": "Plus", "price": 20.00, "cycle": "monthly" },
+        { "id": "pro", "name": "Pro", "price": 200.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "claude-pro",
       "name": "Claude Pro",
       "domain": "anthropic.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=anthropic.com&sz=128",
       "senderPatterns": ["anthropic.com"],
       "subjectPatterns": ["receipt", "payment", "claude", "subscription"],
       "category": "Productivity",
       "icon": "🧠",
       "color": "#8B5CF6",
       "defaultCycle": "monthly",
-      "manageUrl": "https://claude.ai/settings"
+      "manageUrl": "https://claude.ai/settings",
+      "plans": [
+        { "id": "pro", "name": "Pro", "price": 20.00, "cycle": "monthly" },
+        { "id": "max", "name": "Max", "price": 100.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "microsoft-365",
       "name": "Microsoft 365",
       "domain": "microsoft.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=microsoft.com&sz=128",
       "senderPatterns": ["microsoft.com", "office.com"],
       "subjectPatterns": ["microsoft 365", "office", "receipt", "subscription"],
       "category": "Productivity",
       "icon": "📊",
       "color": "#0078D4",
       "defaultCycle": "yearly",
-      "manageUrl": "https://account.microsoft.com/services"
+      "manageUrl": "https://account.microsoft.com/services",
+      "plans": [
+        { "id": "personal", "name": "Personal", "price": 6.99, "cycle": "monthly" },
+        { "id": "family", "name": "Family", "price": 9.99, "cycle": "monthly" },
+        { "id": "business-basic", "name": "Business Basic", "price": 6.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "grammarly",
       "name": "Grammarly",
       "domain": "grammarly.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=grammarly.com&sz=128",
       "senderPatterns": ["grammarly.com"],
       "subjectPatterns": ["receipt", "payment", "premium", "subscription"],
       "category": "Productivity",
       "icon": "✍️",
       "color": "#15C39A",
       "defaultCycle": "monthly",
-      "manageUrl": "https://account.grammarly.com/subscription"
+      "manageUrl": "https://account.grammarly.com/subscription",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 12.00, "cycle": "monthly" },
+        { "id": "business", "name": "Business", "price": 15.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "headspace",
       "name": "Headspace",
       "domain": "headspace.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=headspace.com&sz=128",
       "senderPatterns": ["headspace.com"],
       "subjectPatterns": ["receipt", "payment", "subscription"],
       "category": "Health",
       "icon": "🧘",
       "color": "#F47D31",
       "defaultCycle": "yearly",
-      "manageUrl": "https://www.headspace.com/settings"
+      "manageUrl": "https://www.headspace.com/settings",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 12.99, "cycle": "monthly" },
+        { "id": "yearly", "name": "Yearly", "price": 69.99, "cycle": "yearly" },
+        { "id": "family", "name": "Family (6 users)", "price": 99.99, "cycle": "yearly" }
+      ]
     },
     {
       "id": "calm",
       "name": "Calm",
       "domain": "calm.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=calm.com&sz=128",
       "senderPatterns": ["calm.com"],
       "subjectPatterns": ["receipt", "payment", "subscription"],
       "category": "Health",
       "icon": "🌙",
       "color": "#7FBFFF",
       "defaultCycle": "yearly",
-      "manageUrl": "https://www.calm.com/account"
+      "manageUrl": "https://www.calm.com/account",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 14.99, "cycle": "monthly" },
+        { "id": "yearly", "name": "Yearly", "price": 69.99, "cycle": "yearly" },
+        { "id": "lifetime", "name": "Lifetime", "price": 399.99, "cycle": "once" }
+      ]
     },
     {
       "id": "peloton",
       "name": "Peloton",
       "domain": "onepeloton.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=onepeloton.com&sz=128",
       "senderPatterns": ["onepeloton.com"],
       "subjectPatterns": ["receipt", "payment", "subscription", "membership"],
       "category": "Health",
       "icon": "🏋️",
       "color": "#FF0000",
       "defaultCycle": "monthly",
-      "manageUrl": "https://members.onepeloton.com/settings"
+      "manageUrl": "https://members.onepeloton.com/settings",
+      "plans": [
+        { "id": "app", "name": "App Only", "price": 12.99, "cycle": "monthly" },
+        { "id": "all-access", "name": "All-Access", "price": 44.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "linkedin-premium",
       "name": "LinkedIn Premium",
       "domain": "linkedin.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=linkedin.com&sz=128",
       "senderPatterns": ["linkedin.com"],
       "subjectPatterns": ["premium", "receipt", "subscription"],
       "category": "Productivity",
       "icon": "💼",
       "color": "#0A66C2",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.linkedin.com/psettings/"
+      "manageUrl": "https://www.linkedin.com/psettings/",
+      "plans": [
+        { "id": "career", "name": "Career", "price": 29.99, "cycle": "monthly" },
+        { "id": "business", "name": "Business", "price": 59.99, "cycle": "monthly" },
+        { "id": "sales", "name": "Sales Navigator", "price": 99.99, "cycle": "monthly" }
+      ]
     },
     {
       "id": "canva-pro",
       "name": "Canva Pro",
       "domain": "canva.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=canva.com&sz=128",
       "senderPatterns": ["canva.com"],
       "subjectPatterns": ["receipt", "payment", "pro", "subscription"],
       "category": "Design",
       "icon": "🎯",
       "color": "#00C4CC",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.canva.com/settings/billing"
+      "manageUrl": "https://www.canva.com/settings/billing",
+      "plans": [
+        { "id": "pro", "name": "Pro", "price": 14.99, "cycle": "monthly" },
+        { "id": "teams", "name": "Teams", "price": 10.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "duolingo-plus",
-      "name": "Duolingo Plus",
+      "name": "Duolingo Super",
       "domain": "duolingo.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=duolingo.com&sz=128",
       "senderPatterns": ["duolingo.com"],
       "subjectPatterns": ["receipt", "payment", "plus", "subscription"],
       "category": "Education",
       "icon": "🦉",
       "color": "#58CC02",
       "defaultCycle": "monthly",
-      "manageUrl": "https://www.duolingo.com/settings/subscription"
+      "manageUrl": "https://www.duolingo.com/settings/subscription",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 12.99, "cycle": "monthly" },
+        { "id": "yearly", "name": "Yearly", "price": 83.99, "cycle": "yearly" },
+        { "id": "family", "name": "Family (6 users)", "price": 119.99, "cycle": "yearly" }
+      ]
     },
     {
       "id": "masterclass",
       "name": "MasterClass",
       "domain": "masterclass.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=masterclass.com&sz=128",
       "senderPatterns": ["masterclass.com"],
       "subjectPatterns": ["receipt", "payment", "subscription", "membership"],
       "category": "Education",
       "icon": "🎓",
       "color": "#000000",
       "defaultCycle": "yearly",
-      "manageUrl": "https://www.masterclass.com/account"
+      "manageUrl": "https://www.masterclass.com/account",
+      "plans": [
+        { "id": "individual", "name": "Individual", "price": 10.00, "cycle": "monthly" },
+        { "id": "duo", "name": "Duo", "price": 15.00, "cycle": "monthly" },
+        { "id": "family", "name": "Family", "price": 20.00, "cycle": "monthly" }
+      ]
     },
     {
       "id": "1password",
       "name": "1Password",
       "domain": "1password.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=1password.com&sz=128",
       "senderPatterns": ["1password.com"],
       "subjectPatterns": ["receipt", "invoice", "subscription"],
       "category": "Productivity",
       "icon": "🔐",
       "color": "#0094F5",
       "defaultCycle": "yearly",
-      "manageUrl": "https://my.1password.com/profile"
+      "manageUrl": "https://my.1password.com/profile",
+      "plans": [
+        { "id": "individual", "name": "Individual", "price": 2.99, "cycle": "monthly" },
+        { "id": "families", "name": "Families (5 users)", "price": 4.99, "cycle": "monthly" },
+        { "id": "teams", "name": "Teams", "price": 7.99, "cycle": "monthly" }
+      ]
     },
     {
       "id": "nordvpn",
       "name": "NordVPN",
       "domain": "nordvpn.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=nordvpn.com&sz=128",
       "senderPatterns": ["nordvpn.com", "nordaccount.com"],
       "subjectPatterns": ["receipt", "payment", "subscription"],
       "category": "Productivity",
       "icon": "🔒",
       "color": "#4687FF",
       "defaultCycle": "yearly",
-      "manageUrl": "https://my.nordaccount.com/dashboard/"
+      "manageUrl": "https://my.nordaccount.com/dashboard/",
+      "plans": [
+        { "id": "basic", "name": "Basic (1 year)", "price": 4.59, "cycle": "monthly" },
+        { "id": "plus", "name": "Plus (1 year)", "price": 5.49, "cycle": "monthly" },
+        { "id": "complete", "name": "Complete (1 year)", "price": 6.49, "cycle": "monthly" }
+      ]
     },
     {
       "id": "expressvpn",
       "name": "ExpressVPN",
       "domain": "expressvpn.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=expressvpn.com&sz=128",
       "senderPatterns": ["expressvpn.com"],
       "subjectPatterns": ["receipt", "payment", "subscription"],
       "category": "Productivity",
       "icon": "🛡️",
       "color": "#DA3940",
       "defaultCycle": "yearly",
-      "manageUrl": "https://www.expressvpn.com/subscriptions"
+      "manageUrl": "https://www.expressvpn.com/subscriptions",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 12.95, "cycle": "monthly" },
+        { "id": "6months", "name": "6 Months", "price": 9.99, "cycle": "monthly" },
+        { "id": "yearly", "name": "1 Year", "price": 8.32, "cycle": "monthly" }
+      ]
     },
     {
       "id": "hulu",
       "name": "Hulu",
       "domain": "hulu.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=hulu.com&sz=128",
       "senderPatterns": ["hulu.com", "hulumail.com"],
       "subjectPatterns": ["receipt", "payment", "subscription"],
       "category": "Entertainment",
       "icon": "📺",
       "color": "#1CE783",
       "defaultCycle": "monthly",
-      "manageUrl": "https://secure.hulu.com/account"
+      "manageUrl": "https://secure.hulu.com/account",
+      "plans": [
+        { "id": "basic", "name": "Basic (with ads)", "price": 7.99, "cycle": "monthly" },
+        { "id": "no-ads", "name": "No Ads", "price": 17.99, "cycle": "monthly" },
+        { "id": "live-tv", "name": "Hulu + Live TV", "price": 76.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "apple-music",
+      "name": "Apple Music",
+      "domain": "apple.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=apple.com&sz=128",
+      "category": "Music",
+      "icon": "🎵",
+      "color": "#FA243C",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "voice", "name": "Voice", "price": 4.99, "cycle": "monthly" },
+        { "id": "individual", "name": "Individual", "price": 10.99, "cycle": "monthly" },
+        { "id": "family", "name": "Family", "price": 16.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "tidal",
+      "name": "Tidal",
+      "domain": "tidal.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=tidal.com&sz=128",
+      "category": "Music",
+      "icon": "🎧",
+      "color": "#000000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "hifi", "name": "HiFi", "price": 10.99, "cycle": "monthly" },
+        { "id": "hifi-plus", "name": "HiFi Plus", "price": 19.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "deezer",
+      "name": "Deezer",
+      "domain": "deezer.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=deezer.com&sz=128",
+      "category": "Music",
+      "icon": "🎶",
+      "color": "#FEAA2D",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 10.99, "cycle": "monthly" },
+        { "id": "family", "name": "Family", "price": 17.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "xbox-game-pass",
+      "name": "Xbox Game Pass",
+      "domain": "xbox.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=xbox.com&sz=128",
+      "category": "Entertainment",
+      "icon": "🎮",
+      "color": "#107C10",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "core", "name": "Core", "price": 9.99, "cycle": "monthly" },
+        { "id": "standard", "name": "Standard", "price": 14.99, "cycle": "monthly" },
+        { "id": "ultimate", "name": "Ultimate", "price": 19.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "playstation-plus",
+      "name": "PlayStation Plus",
+      "domain": "playstation.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=playstation.com&sz=128",
+      "category": "Entertainment",
+      "icon": "🎮",
+      "color": "#003791",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "essential", "name": "Essential", "price": 9.99, "cycle": "monthly" },
+        { "id": "extra", "name": "Extra", "price": 14.99, "cycle": "monthly" },
+        { "id": "premium", "name": "Premium", "price": 17.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "nintendo-online",
+      "name": "Nintendo Switch Online",
+      "domain": "nintendo.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=nintendo.com&sz=128",
+      "category": "Entertainment",
+      "icon": "🎮",
+      "color": "#E60012",
+      "defaultCycle": "yearly",
+      "plans": [
+        { "id": "individual", "name": "Individual", "price": 3.99, "cycle": "monthly" },
+        { "id": "family", "name": "Family", "price": 34.99, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "twitch",
+      "name": "Twitch Turbo",
+      "domain": "twitch.tv",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=twitch.tv&sz=128",
+      "category": "Entertainment",
+      "icon": "📺",
+      "color": "#9146FF",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "turbo", "name": "Turbo", "price": 11.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "crunchyroll",
+      "name": "Crunchyroll",
+      "domain": "crunchyroll.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=crunchyroll.com&sz=128",
+      "category": "Entertainment",
+      "icon": "🍥",
+      "color": "#F47521",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "fan", "name": "Fan", "price": 7.99, "cycle": "monthly" },
+        { "id": "mega-fan", "name": "Mega Fan", "price": 9.99, "cycle": "monthly" },
+        { "id": "ultimate", "name": "Ultimate Fan", "price": 14.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "paramount-plus",
+      "name": "Paramount+",
+      "domain": "paramountplus.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=paramountplus.com&sz=128",
+      "category": "Entertainment",
+      "icon": "⛰️",
+      "color": "#0064FF",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "essential", "name": "Essential", "price": 5.99, "cycle": "monthly" },
+        { "id": "showtime", "name": "With Showtime", "price": 11.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "peacock",
+      "name": "Peacock",
+      "domain": "peacocktv.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=peacocktv.com&sz=128",
+      "category": "Entertainment",
+      "icon": "🦚",
+      "color": "#000000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 5.99, "cycle": "monthly" },
+        { "id": "premium-plus", "name": "Premium Plus", "price": 11.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "discovery-plus",
+      "name": "Discovery+",
+      "domain": "discoveryplus.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=discoveryplus.com&sz=128",
+      "category": "Entertainment",
+      "icon": "🌍",
+      "color": "#0033A1",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "ad-lite", "name": "Ad-Lite", "price": 4.99, "cycle": "monthly" },
+        { "id": "ad-free", "name": "Ad-Free", "price": 8.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "starz",
+      "name": "Starz",
+      "domain": "starz.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=starz.com&sz=128",
+      "category": "Entertainment",
+      "icon": "⭐",
+      "color": "#000000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 9.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "nyt",
+      "name": "New York Times",
+      "domain": "nytimes.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=nytimes.com&sz=128",
+      "category": "News",
+      "icon": "📰",
+      "color": "#000000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "basic", "name": "Basic Digital", "price": 4.00, "cycle": "monthly" },
+        { "id": "all-access", "name": "All Access", "price": 25.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "wsj",
+      "name": "Wall Street Journal",
+      "domain": "wsj.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=wsj.com&sz=128",
+      "category": "News",
+      "icon": "📈",
+      "color": "#0274B6",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "digital", "name": "Digital", "price": 12.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "washington-post",
+      "name": "Washington Post",
+      "domain": "washingtonpost.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=washingtonpost.com&sz=128",
+      "category": "News",
+      "icon": "📰",
+      "color": "#000000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "digital", "name": "Digital", "price": 10.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "medium",
+      "name": "Medium",
+      "domain": "medium.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=medium.com&sz=128",
+      "category": "News",
+      "icon": "📝",
+      "color": "#000000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "member", "name": "Member", "price": 5.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "the-athletic",
+      "name": "The Athletic",
+      "domain": "theathletic.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=theathletic.com&sz=128",
+      "category": "News",
+      "icon": "⚽",
+      "color": "#000000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 9.99, "cycle": "monthly" },
+        { "id": "yearly", "name": "Annual", "price": 71.99, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "strava",
+      "name": "Strava",
+      "domain": "strava.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=strava.com&sz=128",
+      "category": "Health",
+      "icon": "🏃",
+      "color": "#FC4C02",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "summit", "name": "Summit", "price": 11.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "myfitnesspal",
+      "name": "MyFitnessPal",
+      "domain": "myfitnesspal.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=myfitnesspal.com&sz=128",
+      "category": "Health",
+      "icon": "🥗",
+      "color": "#0066CC",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 19.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "noom",
+      "name": "Noom",
+      "domain": "noom.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=noom.com&sz=128",
+      "category": "Health",
+      "icon": "🍎",
+      "color": "#F05B4B",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 59.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "whoop",
+      "name": "Whoop",
+      "domain": "whoop.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=whoop.com&sz=128",
+      "category": "Health",
+      "icon": "⌚",
+      "color": "#2DFFB3",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 30.00, "cycle": "monthly" },
+        { "id": "yearly", "name": "Annual", "price": 239.00, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "fitbit-premium",
+      "name": "Fitbit Premium",
+      "domain": "fitbit.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=fitbit.com&sz=128",
+      "category": "Health",
+      "icon": "💪",
+      "color": "#00B0B9",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 9.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "surfshark",
+      "name": "Surfshark",
+      "domain": "surfshark.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=surfshark.com&sz=128",
+      "category": "Security",
+      "icon": "🦈",
+      "color": "#178BF1",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 15.45, "cycle": "monthly" },
+        { "id": "yearly", "name": "1 Year", "price": 47.88, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "protonvpn",
+      "name": "ProtonVPN",
+      "domain": "protonvpn.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=protonvpn.com&sz=128",
+      "category": "Security",
+      "icon": "🛡️",
+      "color": "#6D4AFF",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "plus", "name": "Plus", "price": 9.99, "cycle": "monthly" },
+        { "id": "unlimited", "name": "Unlimited", "price": 12.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "dashlane",
+      "name": "Dashlane",
+      "domain": "dashlane.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=dashlane.com&sz=128",
+      "category": "Security",
+      "icon": "🔐",
+      "color": "#0E6B76",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 4.99, "cycle": "monthly" },
+        { "id": "family", "name": "Family", "price": 7.49, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "lastpass",
+      "name": "LastPass",
+      "domain": "lastpass.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=lastpass.com&sz=128",
+      "category": "Security",
+      "icon": "🔑",
+      "color": "#D32D27",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 3.00, "cycle": "monthly" },
+        { "id": "family", "name": "Families", "price": 4.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "bitwarden",
+      "name": "Bitwarden",
+      "domain": "bitwarden.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=bitwarden.com&sz=128",
+      "category": "Security",
+      "icon": "🔒",
+      "color": "#175DDC",
+      "defaultCycle": "yearly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 10.00, "cycle": "yearly" },
+        { "id": "family", "name": "Family", "price": 40.00, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "skillshare",
+      "name": "Skillshare",
+      "domain": "skillshare.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=skillshare.com&sz=128",
+      "category": "Education",
+      "icon": "🎨",
+      "color": "#00FF84",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 13.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "coursera",
+      "name": "Coursera Plus",
+      "domain": "coursera.org",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=coursera.org&sz=128",
+      "category": "Education",
+      "icon": "🎓",
+      "color": "#0056D2",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "plus-monthly", "name": "Plus Monthly", "price": 59.00, "cycle": "monthly" },
+        { "id": "plus-yearly", "name": "Plus Annual", "price": 399.00, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "udemy",
+      "name": "Udemy Business",
+      "domain": "udemy.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=udemy.com&sz=128",
+      "category": "Education",
+      "icon": "📚",
+      "color": "#A435F0",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "personal", "name": "Personal Plan", "price": 16.58, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "brilliant",
+      "name": "Brilliant",
+      "domain": "brilliant.org",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=brilliant.org&sz=128",
+      "category": "Education",
+      "icon": "🧠",
+      "color": "#000000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 24.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "blinkist",
+      "name": "Blinkist",
+      "domain": "blinkist.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=blinkist.com&sz=128",
+      "category": "Education",
+      "icon": "📖",
+      "color": "#00A650",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 12.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "audible",
+      "name": "Audible",
+      "domain": "audible.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=audible.com&sz=128",
+      "category": "Education",
+      "icon": "🎧",
+      "color": "#F7991C",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "plus", "name": "Plus", "price": 7.95, "cycle": "monthly" },
+        { "id": "premium-plus", "name": "Premium Plus", "price": 14.95, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "kindle-unlimited",
+      "name": "Kindle Unlimited",
+      "domain": "amazon.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=amazon.com&sz=128",
+      "category": "Education",
+      "icon": "📱",
+      "color": "#FF9900",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "unlimited", "name": "Unlimited", "price": 11.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "evernote",
+      "name": "Evernote",
+      "domain": "evernote.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=evernote.com&sz=128",
+      "category": "Productivity",
+      "icon": "🐘",
+      "color": "#00A82D",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "personal", "name": "Personal", "price": 14.99, "cycle": "monthly" },
+        { "id": "professional", "name": "Professional", "price": 17.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "todoist",
+      "name": "Todoist",
+      "domain": "todoist.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=todoist.com&sz=128",
+      "category": "Productivity",
+      "icon": "✅",
+      "color": "#E44332",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "pro", "name": "Pro", "price": 4.00, "cycle": "monthly" },
+        { "id": "business", "name": "Business", "price": 6.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "asana",
+      "name": "Asana",
+      "domain": "asana.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=asana.com&sz=128",
+      "category": "Productivity",
+      "icon": "📋",
+      "color": "#F06A6A",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "premium", "name": "Premium", "price": 10.99, "cycle": "monthly" },
+        { "id": "business", "name": "Business", "price": 24.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "monday",
+      "name": "Monday.com",
+      "domain": "monday.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=monday.com&sz=128",
+      "category": "Productivity",
+      "icon": "📊",
+      "color": "#FF3D57",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "basic", "name": "Basic", "price": 9.00, "cycle": "monthly" },
+        { "id": "standard", "name": "Standard", "price": 12.00, "cycle": "monthly" },
+        { "id": "pro", "name": "Pro", "price": 19.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "trello",
+      "name": "Trello",
+      "domain": "trello.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=trello.com&sz=128",
+      "category": "Productivity",
+      "icon": "📝",
+      "color": "#0079BF",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "standard", "name": "Standard", "price": 5.00, "cycle": "monthly" },
+        { "id": "premium", "name": "Premium", "price": 10.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "clickup",
+      "name": "ClickUp",
+      "domain": "clickup.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=clickup.com&sz=128",
+      "category": "Productivity",
+      "icon": "✨",
+      "color": "#7B68EE",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "unlimited", "name": "Unlimited", "price": 7.00, "cycle": "monthly" },
+        { "id": "business", "name": "Business", "price": 12.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "linear",
+      "name": "Linear",
+      "domain": "linear.app",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=linear.app&sz=128",
+      "category": "Development",
+      "icon": "📐",
+      "color": "#5E6AD2",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "standard", "name": "Standard", "price": 8.00, "cycle": "monthly" },
+        { "id": "plus", "name": "Plus", "price": 14.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "vercel",
+      "name": "Vercel",
+      "domain": "vercel.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=vercel.com&sz=128",
+      "category": "Development",
+      "icon": "▲",
+      "color": "#000000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "pro", "name": "Pro", "price": 20.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "netlify",
+      "name": "Netlify",
+      "domain": "netlify.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=netlify.com&sz=128",
+      "category": "Development",
+      "icon": "🌐",
+      "color": "#00C7B7",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "pro", "name": "Pro", "price": 19.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "heroku",
+      "name": "Heroku",
+      "domain": "heroku.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=heroku.com&sz=128",
+      "category": "Development",
+      "icon": "☁️",
+      "color": "#430098",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "basic", "name": "Basic", "price": 5.00, "cycle": "monthly" },
+        { "id": "standard", "name": "Standard", "price": 25.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "digitalocean",
+      "name": "DigitalOcean",
+      "domain": "digitalocean.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=digitalocean.com&sz=128",
+      "category": "Development",
+      "icon": "🌊",
+      "color": "#0080FF",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "basic-droplet", "name": "Basic Droplet", "price": 4.00, "cycle": "monthly" },
+        { "id": "general-droplet", "name": "General Purpose", "price": 63.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "aws",
+      "name": "AWS",
+      "domain": "aws.amazon.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=aws.amazon.com&sz=128",
+      "category": "Development",
+      "icon": "☁️",
+      "color": "#FF9900",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "usage", "name": "Pay as you go", "price": 0.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "stripe",
+      "name": "Stripe",
+      "domain": "stripe.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=stripe.com&sz=128",
+      "category": "Finance",
+      "icon": "💳",
+      "color": "#635BFF",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "usage", "name": "Pay as you go", "price": 0.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "quickbooks",
+      "name": "QuickBooks",
+      "domain": "quickbooks.intuit.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=quickbooks.intuit.com&sz=128",
+      "category": "Finance",
+      "icon": "📒",
+      "color": "#2CA01C",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "simple-start", "name": "Simple Start", "price": 30.00, "cycle": "monthly" },
+        { "id": "essentials", "name": "Essentials", "price": 60.00, "cycle": "monthly" },
+        { "id": "plus", "name": "Plus", "price": 90.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "freshbooks",
+      "name": "FreshBooks",
+      "domain": "freshbooks.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=freshbooks.com&sz=128",
+      "category": "Finance",
+      "icon": "📗",
+      "color": "#0075DD",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "lite", "name": "Lite", "price": 17.00, "cycle": "monthly" },
+        { "id": "plus", "name": "Plus", "price": 30.00, "cycle": "monthly" },
+        { "id": "premium", "name": "Premium", "price": 55.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "xero",
+      "name": "Xero",
+      "domain": "xero.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=xero.com&sz=128",
+      "category": "Finance",
+      "icon": "📘",
+      "color": "#13B5EA",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "starter", "name": "Starter", "price": 29.00, "cycle": "monthly" },
+        { "id": "standard", "name": "Standard", "price": 46.00, "cycle": "monthly" },
+        { "id": "premium", "name": "Premium", "price": 62.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "ynab",
+      "name": "YNAB",
+      "domain": "ynab.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=ynab.com&sz=128",
+      "category": "Finance",
+      "icon": "💰",
+      "color": "#85C0FA",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 14.99, "cycle": "monthly" },
+        { "id": "yearly", "name": "Annual", "price": 99.00, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "zoom",
+      "name": "Zoom",
+      "domain": "zoom.us",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=zoom.us&sz=128",
+      "category": "Productivity",
+      "icon": "📹",
+      "color": "#2D8CFF",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "pro", "name": "Pro", "price": 15.99, "cycle": "monthly" },
+        { "id": "business", "name": "Business", "price": 21.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "loom",
+      "name": "Loom",
+      "domain": "loom.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=loom.com&sz=128",
+      "category": "Productivity",
+      "icon": "🎥",
+      "color": "#625DF5",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "business", "name": "Business", "price": 12.50, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "calendly",
+      "name": "Calendly",
+      "domain": "calendly.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=calendly.com&sz=128",
+      "category": "Productivity",
+      "icon": "📅",
+      "color": "#006BFF",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "standard", "name": "Standard", "price": 10.00, "cycle": "monthly" },
+        { "id": "teams", "name": "Teams", "price": 16.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "mailchimp",
+      "name": "Mailchimp",
+      "domain": "mailchimp.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=mailchimp.com&sz=128",
+      "category": "Marketing",
+      "icon": "📧",
+      "color": "#FFE01B",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "essentials", "name": "Essentials", "price": 13.00, "cycle": "monthly" },
+        { "id": "standard", "name": "Standard", "price": 20.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "hubspot",
+      "name": "HubSpot",
+      "domain": "hubspot.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=hubspot.com&sz=128",
+      "category": "Marketing",
+      "icon": "🧲",
+      "color": "#FF7A59",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "starter", "name": "Starter", "price": 20.00, "cycle": "monthly" },
+        { "id": "professional", "name": "Professional", "price": 890.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "buffer",
+      "name": "Buffer",
+      "domain": "buffer.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=buffer.com&sz=128",
+      "category": "Marketing",
+      "icon": "📱",
+      "color": "#2C4BFF",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "essentials", "name": "Essentials", "price": 6.00, "cycle": "monthly" },
+        { "id": "team", "name": "Team", "price": 12.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "hootsuite",
+      "name": "Hootsuite",
+      "domain": "hootsuite.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=hootsuite.com&sz=128",
+      "category": "Marketing",
+      "icon": "🦉",
+      "color": "#143059",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "professional", "name": "Professional", "price": 99.00, "cycle": "monthly" },
+        { "id": "team", "name": "Team", "price": 249.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "semrush",
+      "name": "Semrush",
+      "domain": "semrush.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=semrush.com&sz=128",
+      "category": "Marketing",
+      "icon": "📊",
+      "color": "#FF622D",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "pro", "name": "Pro", "price": 129.95, "cycle": "monthly" },
+        { "id": "guru", "name": "Guru", "price": 249.95, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "ahrefs",
+      "name": "Ahrefs",
+      "domain": "ahrefs.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=ahrefs.com&sz=128",
+      "category": "Marketing",
+      "icon": "🔗",
+      "color": "#FF6F00",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "lite", "name": "Lite", "price": 99.00, "cycle": "monthly" },
+        { "id": "standard", "name": "Standard", "price": 199.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "onedrive",
+      "name": "OneDrive",
+      "domain": "onedrive.live.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=onedrive.live.com&sz=128",
+      "category": "Storage",
+      "icon": "☁️",
+      "color": "#0078D4",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "basic", "name": "100GB", "price": 1.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "box",
+      "name": "Box",
+      "domain": "box.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=box.com&sz=128",
+      "category": "Storage",
+      "icon": "📦",
+      "color": "#0061D5",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "personal-pro", "name": "Personal Pro", "price": 11.50, "cycle": "monthly" },
+        { "id": "business", "name": "Business", "price": 15.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "pcloud",
+      "name": "pCloud",
+      "domain": "pcloud.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=pcloud.com&sz=128",
+      "category": "Storage",
+      "icon": "☁️",
+      "color": "#20CEFF",
+      "defaultCycle": "yearly",
+      "plans": [
+        { "id": "premium-500", "name": "Premium 500GB", "price": 49.99, "cycle": "yearly" },
+        { "id": "premium-2tb", "name": "Premium Plus 2TB", "price": 99.99, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "parsec",
+      "name": "Parsec",
+      "domain": "parsec.app",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=parsec.app&sz=128",
+      "category": "Entertainment",
+      "icon": "🎮",
+      "color": "#7B61FF",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "warp", "name": "Warp", "price": 9.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "discord-nitro",
+      "name": "Discord Nitro",
+      "domain": "discord.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=discord.com&sz=128",
+      "category": "Entertainment",
+      "icon": "💬",
+      "color": "#5865F2",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "basic", "name": "Basic", "price": 2.99, "cycle": "monthly" },
+        { "id": "nitro", "name": "Nitro", "price": 9.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "apple-tv-plus",
+      "name": "Apple TV+",
+      "domain": "tv.apple.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=tv.apple.com&sz=128",
+      "category": "Entertainment",
+      "icon": "📺",
+      "color": "#000000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 9.99, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "espn-plus",
+      "name": "ESPN+",
+      "domain": "espn.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=espn.com&sz=128",
+      "category": "Entertainment",
+      "icon": "⚽",
+      "color": "#FF0000",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 10.99, "cycle": "monthly" },
+        { "id": "yearly", "name": "Annual", "price": 109.99, "cycle": "yearly" }
+      ]
+    },
+    {
+      "id": "patreon",
+      "name": "Patreon",
+      "domain": "patreon.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=patreon.com&sz=128",
+      "category": "Other",
+      "icon": "❤️",
+      "color": "#FF424D",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "custom", "name": "Custom Amount", "price": 5.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "kofi",
+      "name": "Ko-fi",
+      "domain": "ko-fi.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=ko-fi.com&sz=128",
+      "category": "Other",
+      "icon": "☕",
+      "color": "#FF5E5B",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "gold", "name": "Gold", "price": 6.00, "cycle": "monthly" }
+      ]
+    },
+    {
+      "id": "substack",
+      "name": "Substack",
+      "domain": "substack.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=substack.com&sz=128",
+      "category": "News",
+      "icon": "📝",
+      "color": "#FF6719",
+      "defaultCycle": "monthly",
+      "plans": [
+        { "id": "custom", "name": "Custom Amount", "price": 5.00, "cycle": "monthly" }
+      ]
     }
   ],
   "categories": [
@@ -373,6 +1509,11 @@
     { "name": "Health", "color": "#22C55E" },
     { "name": "Education", "color": "#A855F7" },
     { "name": "Finance", "color": "#F97316" },
+    { "name": "Security", "color": "#6366F1" },
+    { "name": "News", "color": "#EF4444" },
+    { "name": "Marketing", "color": "#14B8A6" },
     { "name": "Other", "color": "#6B7280" }
   ]
 }
+
+

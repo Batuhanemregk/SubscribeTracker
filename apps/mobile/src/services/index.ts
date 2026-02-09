@@ -1,18 +1,14 @@
 /**
  * Services Barrel Export
  */
-export { 
-  ScanService, 
-  scanService,
-  findServiceByDomain,
-  isSubscriptionEmail,
-  extractAmount,
-  detectBillingCycle,
-  calculateConfidence,
-  createCandidate,
-  KNOWN_SERVICES,
-  CATEGORIES,
-} from './DetectionService';
+
+export {
+  signInWithGoogle,
+  signOut,
+  getCurrentUser,
+  isSignedIn,
+  type AuthUser,
+} from './AuthService';
 
 export {
   requestNotificationPermission,
@@ -26,16 +22,6 @@ export {
   DEFAULT_NOTIFICATION_SETTINGS,
   type NotificationSettings,
 } from './NotificationService';
-
-export {
-  authenticate,
-  authenticateWithGoogle,
-  authenticateWithMicrosoft,
-  revokeGoogleToken,
-  getRedirectUri,
-  type OAuthProvider,
-  type OAuthResult,
-} from './OAuthService';
 
 export {
   loadInterstitialAd,
@@ -54,3 +40,61 @@ export {
   showPaywallDismissAd,
   getAdStats,
 } from './AdManager';
+
+export {
+  authenticateWithBiometrics,
+  isBiometricAvailable,
+  getBiometricType,
+  requestBiometricEnrollment,
+} from './biometricService';
+
+export {
+  pushToCloud,
+  pullFromCloud,
+  deleteFromCloud,
+  fullSync,
+} from './syncService';
+
+export {
+  initPurchases,
+  isPurchasesConfigured,
+  getCustomerInfo,
+  checkProStatus,
+  getOfferings,
+  purchasePackage,
+  restorePurchases,
+  identifyUser,
+  logoutUser,
+  formatPackagePrice,
+  getPackageType,
+  PRODUCT_IDS,
+} from './PurchaseService';
+
+export {
+  exportToCSV,
+  exportToPDF,
+  generateCSV,
+  generatePDFHtml,
+} from './ExportService';
+
+export {
+  pickBankStatement,
+  readFileAsBase64,
+  extractSubscriptionsFromStatement,
+  validateFile,
+  checkScanLimits,
+  recordScan,
+  getRemainingScans,
+  type ExtractedSubscription,
+  type ExtractionResult,
+  type ValidationResult,
+  type UsageLimitResult,
+} from './BankStatementService';
+
+export {
+  checkCatalogUpdate,
+  getServiceCatalog,
+  clearCatalogCache,
+  type CatalogServiceItem,
+  type ServiceCatalog,
+} from './CatalogService';

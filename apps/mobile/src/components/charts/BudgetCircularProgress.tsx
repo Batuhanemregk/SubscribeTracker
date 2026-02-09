@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { PieChart } from 'react-native-gifted-charts';
-import { colors } from '../../theme';
+import { useTheme } from '../../theme';
 
 interface BudgetCircularProgressProps {
   spent: number;
@@ -18,6 +18,7 @@ export function BudgetCircularProgress({
   budget, 
   size = 200 
 }: BudgetCircularProgressProps) {
+  const { colors } = useTheme();
   const percentage = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
   const remaining = Math.max(budget - spent, 0);
   
@@ -54,8 +55,8 @@ export function BudgetCircularProgress({
         innerCircleColor={colors.bgCard}
         centerLabelComponent={() => (
           <View style={styles.centerLabel}>
-            <Text style={styles.percentage}>{percentage.toFixed(0)}%</Text>
-            <Text style={styles.label}>of budget</Text>
+            <Text style={[styles.percentage, { color: colors.text }]}>{percentage.toFixed(0)}%</Text>
+            <Text style={[styles.label, { color: colors.textMuted }]}>of budget</Text>
           </View>
         )}
         isAnimated
@@ -77,11 +78,9 @@ const styles = StyleSheet.create({
   percentage: {
     fontSize: 36,
     fontWeight: '700',
-    color: colors.text,
   },
   label: {
     fontSize: 14,
-    color: colors.textMuted,
     marginTop: 4,
   },
 });

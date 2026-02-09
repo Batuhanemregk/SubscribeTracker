@@ -1,10 +1,17 @@
 /**
- * EmptyState - Empty list placeholder
+ * EmptyState - Empty list placeholder with fade-in animation
  */
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from '../../theme';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withDelay,
+  Easing,
+} from 'react-native-reanimated';
+import { useTheme } from '../../theme';
 import { PrimaryButton } from '../buttons/PrimaryButton';
 import { SecondaryButton } from '../buttons/SecondaryButton';
 
@@ -31,16 +38,30 @@ export function EmptyState({
   secondaryAction,
   style 
 }: EmptyStateProps) {
+  const { colors } = useTheme();
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(20);
+
+  useEffect(() => {
+    opacity.value = withDelay(200, withTiming(1, { duration: 500, easing: Easing.out(Easing.quad) }));
+    translateY.value = withDelay(200, withTiming(0, { duration: 500, easing: Easing.out(Easing.quad) }));
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }],
+  }));
+
   return (
-    <View style={[styles.container, style]}>
-      <View style={styles.iconContainer}>
-        <Ionicons name={icon as any} size={56} color={colors.textMuted} />
+    <Animated.View style={[styles.container, animatedStyle, style]}>
+      <View style={[styles.iconContainer, { backgroundColor: `${colors.primary}12` }]}>
+        <Ionicons name={icon as any} size={48} color={colors.primary} />
       </View>
       
-      <Text style={styles.title}>{title}</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       
       {subtitle && (
-        <Text style={styles.subtitle}>{subtitle}</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>
       )}
 
       {(primaryAction || secondaryAction) && (
@@ -63,7 +84,7 @@ export function EmptyState({
           )}
         </View>
       )}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -75,20 +96,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   iconContainer: {
-    marginBottom: 16,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: colors.text,
+    fontSize: 20,
+    fontWeight: '700',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14,
-    color: colors.textMuted,
+    fontSize: 15,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 22,
+    maxWidth: 280,
   },
   actions: {
     flexDirection: 'row',

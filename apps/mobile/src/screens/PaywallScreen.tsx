@@ -1,8 +1,8 @@
 /**
  * PaywallScreen - Pro upgrade paywall
- * Feature comparison and purchase flow
+ * Feature comparison and purchase flow with RevenueCat
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -15,10 +15,20 @@ import Animated, {
   withSequence,
   interpolateColor,
 } from 'react-native-reanimated';
+// PurchasesPackage type - use any for Expo Go compatibility
 import { Header, PrimaryButton, SecondaryButton } from '../components';
-import { colors, borderRadius } from '../theme';
+import { useTheme, borderRadius, type ThemeColors } from '../theme';
 import { usePlanStore } from '../state';
-import { showPaywallDismissAd } from '../services';
+import { 
+  showPaywallDismissAd,
+  getOfferings,
+  purchasePackage,
+  restorePurchases,
+  formatPackagePrice,
+  getPackageType,
+  isPurchasesConfigured,
+} from '../services';
+import { t } from '../i18n';
 
 interface FeatureRowProps {
   icon: string;
@@ -30,19 +40,8 @@ interface FeatureRowProps {
 }
 
 function FeatureRow({ icon, iconColor, title, standardValue, proValue, index }: FeatureRowProps) {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
-
-  React.useEffect(() => {
-    opacity.value = withDelay(index * 50 + 200, withSpring(1));
-    translateY.value = withDelay(index * 50 + 200, withSpring(0, { damping: 15 }));
-  }, []);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
   const renderValue = (value: string | boolean, isPro: boolean) => {
     if (typeof value === 'boolean') {
       return value ? (
@@ -57,7 +56,7 @@ function FeatureRow({ icon, iconColor, title, standardValue, proValue, index }: 
   };
 
   return (
-    <Animated.View style={[styles.featureRow, animatedStyle]}>
+    <View style={styles.featureRow}>
       <View style={[styles.featureIcon, { backgroundColor: `${iconColor}20` }]}>
         <Ionicons name={icon as any} size={18} color={iconColor} />
       </View>
@@ -70,49 +69,113 @@ function FeatureRow({ icon, iconColor, title, standardValue, proValue, index }: 
           {renderValue(proValue, true)}
         </View>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
-const FEATURES = [
-  { icon: 'mail', iconColor: colors.cyan, title: 'Email Accounts', standard: '1', pro: '5' },
-  { icon: 'scan', iconColor: colors.primary, title: 'Email Scanning', standard: 'Manual', pro: 'Daily Auto' },
-  { icon: 'document-text', iconColor: colors.amber, title: 'Scan Depth', standard: 'Metadata', pro: 'Full Body' },
-  { icon: 'cash', iconColor: colors.emerald, title: 'Price Auto-fill', standard: false, pro: true },
-  { icon: 'calendar', iconColor: colors.pink, title: 'Cycle Detection', standard: false, pro: true },
-  { icon: 'link', iconColor: colors.cyan, title: 'Cancel Links', standard: false, pro: true },
-  { icon: 'notifications', iconColor: colors.amber, title: 'Price Alerts', standard: false, pro: true },
-  { icon: 'remove-circle', iconColor: colors.red, title: 'Ad-Free', standard: false, pro: true },
-];
+export function PaywallScreen({ navigation, route }: any) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  const fromOnboarding = route?.params?.fromOnboarding === true;
 
-export function PaywallScreen({ navigation }: any) {
+  const FEATURES = [
+    { icon: 'document-text', iconColor: colors.amber, title: t('paywall.features.bankScan'), standard: false, pro: true },
+    { icon: 'cloud', iconColor: colors.primary, title: t('paywall.features.cloudSync'), standard: false, pro: true },
+    { icon: 'download', iconColor: colors.emerald, title: t('paywall.features.dataExport'), standard: false, pro: 'CSV/PDF' },
+    { icon: 'color-palette', iconColor: colors.pink, title: t('paywall.features.biometricLock'), standard: false, pro: true },
+    { icon: 'lock-closed', iconColor: colors.primary, title: t('paywall.features.biometricLock'), standard: false, pro: true },
+    { icon: 'infinite', iconColor: colors.cyan, title: t('paywall.features.unlimitedSubs'), standard: '10', pro: t('common.upgrade') },
+    { icon: 'remove-circle', iconColor: colors.red, title: t('paywall.features.noAds'), standard: false, pro: true },
+  ];
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [isLoading, setIsLoading] = useState(false);
+  const [packages, setPackages] = useState<any[]>([]);
   const { upgradeToPro, startTrial } = usePlanStore();
 
-  const monthlyPrice = 4.99;
-  const yearlyPrice = 39.99;
-  const yearlySavings = Math.round((1 - yearlyPrice / (monthlyPrice * 12)) * 100);
+  const handleDismiss = () => {
+    showPaywallDismissAd();
+    if (fromOnboarding) {
+      navigation.replace('MainTabs');
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  const handleSuccess = () => {
+    if (fromOnboarding) {
+      navigation.replace('MainTabs');
+    } else {
+      navigation.goBack();
+    }
+  };
+
+  // Fallback prices (TRY) - used when RevenueCat not configured
+  const [monthlyPrice, setMonthlyPrice] = useState('₺99');
+  const [yearlyPrice, setYearlyPrice] = useState('₺799');
+  const yearlySavings = 33; // Pre-calculated for fallback
+
+  // Load offerings from RevenueCat
+  useEffect(() => {
+    async function loadOfferings() {
+      if (!isPurchasesConfigured()) return;
+      
+      const offering = await getOfferings();
+      if (offering?.availablePackages) {
+        setPackages(offering.availablePackages);
+        
+        // Update prices from RevenueCat
+        offering.availablePackages.forEach((pkg: any) => {
+          const type = getPackageType(pkg);
+          if (type === 'monthly') {
+            setMonthlyPrice(formatPackagePrice(pkg));
+          } else if (type === 'yearly') {
+            setYearlyPrice(formatPackagePrice(pkg));
+          }
+        });
+      }
+    }
+    loadOfferings();
+  }, []);
+
+  const getSelectedPackage = (): any | undefined => {
+    return packages.find(pkg => getPackageType(pkg) === billingCycle);
+  };
 
   const handlePurchase = async () => {
     setIsLoading(true);
     try {
-      // Simulate purchase - will be replaced with actual IAP
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const pkg = getSelectedPackage();
       
-      const now = new Date();
-      const expiryDate = billingCycle === 'yearly' 
-        ? new Date(now.setFullYear(now.getFullYear() + 1))
-        : new Date(now.setMonth(now.getMonth() + 1));
-      
-      upgradeToPro();
-      
-      Alert.alert(
-        'Welcome to Pro! 🎉',
-        'You now have access to all premium features.',
-        [{ text: 'Continue', onPress: () => navigation.goBack() }]
-      );
-    } catch (error) {
+      if (!pkg && isPurchasesConfigured()) {
+        Alert.alert('Error', 'Product not available. Please try again.');
+        return;
+      }
+
+      if (pkg) {
+        // Real purchase with RevenueCat
+        const result = await purchasePackage(pkg);
+        
+        if (result.success) {
+          upgradeToPro();
+          Alert.alert(
+            'Welcome to Pro! 🎉',
+            'You now have access to all premium features.',
+            [{ text: 'Continue', onPress: () => navigation.goBack() }]
+          );
+        } else if (result.error !== 'Purchase cancelled') {
+          Alert.alert('Purchase Failed', result.error || 'Please try again.');
+        }
+      } else {
+        // Mock purchase for development (RevenueCat not configured)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        upgradeToPro();
+        Alert.alert(
+          'Welcome to Pro! 🎉 (Dev Mode)',
+          'RevenueCat not configured. Simulated purchase.',
+          [{ text: 'Continue', onPress: () => navigation.goBack() }]
+        );
+      }
+    } catch (error: any) {
       Alert.alert('Purchase Failed', 'Please try again later.');
     } finally {
       setIsLoading(false);
@@ -124,23 +187,40 @@ export function PaywallScreen({ navigation }: any) {
     Alert.alert(
       'Trial Started! 🎉',
       'Enjoy 7 days of Pro features for free.',
-      [{ text: 'Continue', onPress: () => navigation.goBack() }]
+      [{ text: 'Continue', onPress: handleSuccess }]
     );
   };
 
-  const handleRestorePurchases = () => {
-    Alert.alert('Restore Purchases', 'Checking for previous purchases...');
-    // TODO: Implement restore with IAP
+  const handleRestorePurchases = async () => {
+    if (!isPurchasesConfigured()) {
+      Alert.alert('Not Available', 'RevenueCat not configured.');
+      return;
+    }
+    
+    setIsLoading(true);
+    const result = await restorePurchases();
+    setIsLoading(false);
+    
+    if (result.success && result.isPro) {
+      upgradeToPro();
+      Alert.alert(
+        'Restored! 🎉',
+        'Your Pro subscription has been restored.',
+        [{ text: 'Continue', onPress: handleSuccess }]
+      );
+    } else if (result.success) {
+      Alert.alert('No Purchases', 'No previous purchases found.');
+    } else {
+      Alert.alert('Error', result.error || 'Failed to restore purchases.');
+    }
   };
+
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity 
-          onPress={() => {
-            showPaywallDismissAd();
-            navigation.goBack();
-          }} 
+          onPress={handleDismiss} 
           style={styles.closeButton}
         >
           <Ionicons name="close" size={24} color={colors.text} />
@@ -161,9 +241,9 @@ export function PaywallScreen({ navigation }: any) {
             <Ionicons name="star" size={16} color={colors.amber} />
             <Text style={styles.proBadgeText}>PRO</Text>
           </View>
-          <Text style={styles.heroTitle}>Upgrade to Pro</Text>
+          <Text style={styles.heroTitle}>{t('settings.upgradeToPro')}</Text>
           <Text style={styles.heroSubtitle}>
-            Unlock powerful features to manage your subscriptions effortlessly
+            {t('paywall.subtitle')}
           </Text>
         </LinearGradient>
 
@@ -174,7 +254,7 @@ export function PaywallScreen({ navigation }: any) {
             onPress={() => setBillingCycle('monthly')}
           >
             <Text style={[styles.billingOptionText, billingCycle === 'monthly' && styles.billingOptionTextActive]}>
-              Monthly
+              {t('paywall.monthlyPlan')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -182,7 +262,7 @@ export function PaywallScreen({ navigation }: any) {
             onPress={() => setBillingCycle('yearly')}
           >
             <Text style={[styles.billingOptionText, billingCycle === 'yearly' && styles.billingOptionTextActive]}>
-              Yearly
+              {t('paywall.yearlyPlan')}
             </Text>
             <View style={styles.saveBadge}>
               <Text style={styles.saveBadgeText}>Save {yearlySavings}%</Text>
@@ -193,24 +273,24 @@ export function PaywallScreen({ navigation }: any) {
         {/* Price Card */}
         <View style={styles.priceCard}>
           <Text style={styles.priceAmount}>
-            ${billingCycle === 'yearly' ? yearlyPrice.toFixed(2) : monthlyPrice.toFixed(2)}
+            {billingCycle === 'yearly' ? yearlyPrice : monthlyPrice}
           </Text>
           <Text style={styles.pricePeriod}>
-            per {billingCycle === 'yearly' ? 'year' : 'month'}
+            {billingCycle === 'yearly' ? t('paywall.perYear') : t('paywall.perMonth')}
           </Text>
           {billingCycle === 'yearly' && (
             <Text style={styles.priceBreakdown}>
-              Just ${(yearlyPrice / 12).toFixed(2)}/month
+              Great value - save {yearlySavings}%
             </Text>
           )}
         </View>
 
         {/* Feature Comparison */}
         <View style={styles.comparisonHeader}>
-          <Text style={styles.comparisonTitle}>Compare Plans</Text>
+          <Text style={styles.comparisonTitle}>{t('paywall.compareTitle')}</Text>
           <View style={styles.columnHeaders}>
-            <Text style={styles.columnHeader}>Standard</Text>
-            <Text style={[styles.columnHeader, styles.proColumnHeader]}>Pro</Text>
+            <Text style={styles.columnHeader}>{t('paywall.standard')}</Text>
+            <Text style={[styles.columnHeader, styles.proColumnHeader]}>{t('paywall.pro')}</Text>
           </View>
         </View>
 
@@ -229,17 +309,17 @@ export function PaywallScreen({ navigation }: any) {
         {/* CTA Buttons */}
         <View style={styles.ctaContainer}>
           <PrimaryButton
-            title={`Subscribe Now - $${billingCycle === 'yearly' ? yearlyPrice : monthlyPrice}`}
+            title={`Subscribe Now - ${billingCycle === 'yearly' ? yearlyPrice : monthlyPrice}`}
             onPress={handlePurchase}
             loading={isLoading}
           />
           
           <TouchableOpacity style={styles.trialButton} onPress={handleStartTrial}>
-            <Text style={styles.trialButtonText}>Start 7-Day Free Trial</Text>
+            <Text style={styles.trialButtonText}>{t('paywall.startTrial')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.restoreButton} onPress={handleRestorePurchases}>
-            <Text style={styles.restoreButtonText}>Restore Purchases</Text>
+            <Text style={styles.restoreButtonText}>{t('paywall.restore')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -251,11 +331,11 @@ export function PaywallScreen({ navigation }: any) {
 
         <View style={styles.legalLinks}>
           <TouchableOpacity>
-            <Text style={styles.legalLink}>Privacy Policy</Text>
+            <Text style={styles.legalLink}>{t('settings.privacyPolicy')}</Text>
           </TouchableOpacity>
           <Text style={styles.legalDivider}>•</Text>
           <TouchableOpacity>
-            <Text style={styles.legalLink}>Terms of Service</Text>
+            <Text style={styles.legalLink}>{t('settings.termsOfService')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -263,7 +343,7 @@ export function PaywallScreen({ navigation }: any) {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,

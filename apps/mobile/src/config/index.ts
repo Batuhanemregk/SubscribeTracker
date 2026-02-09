@@ -10,14 +10,9 @@ export const CONFIG = {
   google: {
     iosClientId: '199620956001-dlpichi5sbkkh8dh0d34r005c0bajguf.apps.googleusercontent.com',
     androidClientId: '199620956001-72rprn4amp24cuuom3424he7hu1rqpkj.apps.googleusercontent.com',
-    scopes: ['https://www.googleapis.com/auth/gmail.readonly'],
-  },
-
-  // Microsoft Azure OAuth (Outlook)
-  microsoft: {
-    clientId: '66ce2ee7-b8e3-4a79-b2f7-c9bb481823b4',
-    scopes: ['openid', 'profile', 'email', 'Mail.Read'],
-    redirectUri: 'subscribetracker://oauth-callback',
+    // expo-auth-session uses browser-based flow, needs Web Application client ID
+    webClientId: '199620956001-jkd548j5alvttcltq0b4kkulap1f6sj7.apps.googleusercontent.com',
+    scopes: ['openid', 'profile', 'email'],
   },
 
   // AdMob
@@ -41,9 +36,9 @@ export const CONFIG = {
 
   // App Info
   app: {
-    scheme: 'subscribetracker',
-    bundleId: 'com.subscribetracker.app',
-    packageName: 'com.subscribetracker.app',
+    scheme: 'finify',
+    bundleId: 'com.subssentry.app',
+    packageName: 'com.subssentry.app',
   },
 };
 
@@ -77,6 +72,11 @@ export const getAdMobIds = () => {
 };
 
 export const getGoogleClientId = () => {
+  // expo-auth-session uses browser-based flow, Web client ID works on all platforms
+  if (CONFIG.google.webClientId) {
+    return CONFIG.google.webClientId;
+  }
+  // Fallback to platform-specific
   return Platform.select({
     ios: CONFIG.google.iosClientId,
     android: CONFIG.google.androidClientId,
