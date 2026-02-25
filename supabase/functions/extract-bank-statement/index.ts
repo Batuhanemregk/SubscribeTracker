@@ -130,7 +130,30 @@ Deno.serve(async (req: Request) => {
     if (!res.ok) {
       const errText = await res.text();
       console.error('OpenAI error:', res.status, errText);
-      return jsonResponse(502, { error: `OpenAI error: ${res.status}`, details: errText });
+
+      // Return user-friendly error messages based on status code
+      let userMessage: string;
+      switch (res.status) {
+        case 429:
+          userMessage = 'The analysis service is temporarily busy. Please try again in a moment.';
+          break;
+        case 401:
+        case 403:
+          userMessage = 'Service authentication error. Please contact support.';
+          break;
+        case 413:
+          userMessage = 'The file is too large for analysis. Please use a smaller file.';
+          break;
+        case 500:
+        case 502:
+        case 503:
+          userMessage = 'The analysis service is temporarily unavailable. Please try again later.';
+          break;
+        default:
+          userMessage = 'Failed to analyze the document. Please try again.';
+      }
+
+      return jsonResponse(502, { error: userMessage });
     }
 
     const chatJson = await res.json();
@@ -162,6 +185,6 @@ Deno.serve(async (req: Request) => {
 
   } catch (error: any) {
     console.error('Edge function error:', error.message, error.stack);
-    return jsonResponse(500, { error: error.message });
+    return jsonResponse(500, { error: 'An unexpected error occurred while analyzing your document. Please try again.' });
   }
 });

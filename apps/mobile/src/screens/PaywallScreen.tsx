@@ -145,38 +145,59 @@ export function PaywallScreen({ navigation, route }: any) {
     setIsLoading(true);
     try {
       const pkg = getSelectedPackage();
-      
+
       if (!pkg && isPurchasesConfigured()) {
-        Alert.alert('Error', 'Product not available. Please try again.');
+        Alert.alert(t('paywall.purchaseError'), t('paywall.productNotAvailable'));
         return;
       }
 
       if (pkg) {
         // Real purchase with RevenueCat
         const result = await purchasePackage(pkg);
-        
+
         if (result.success) {
           upgradeToPro();
           Alert.alert(
-            'Welcome to Pro! 🎉',
-            'You now have access to all premium features.',
-            [{ text: 'Continue', onPress: () => navigation.goBack() }]
+            t('paywall.welcomePro'),
+            t('paywall.welcomeProMessage'),
+            [{ text: t('common.continue') || 'Continue', onPress: handleSuccess }]
           );
-        } else if (result.error !== 'Purchase cancelled') {
-          Alert.alert('Purchase Failed', result.error || 'Please try again.');
+        } else if (result.errorType === 'cancelled') {
+          // User cancelled - do nothing, no alert
+        } else if (result.errorType === 'already_owned') {
+          // Auto-restore for already owned subscriptions
+          const restoreResult = await restorePurchases();
+          if (restoreResult.isPro) {
+            upgradeToPro();
+            Alert.alert(
+              t('paywall.welcomePro'),
+              t('paywall.welcomeProMessage'),
+              [{ text: t('common.continue') || 'Continue', onPress: handleSuccess }]
+            );
+          } else {
+            Alert.alert(
+              t('paywall.alreadyOwned'),
+              result.error,
+              [{ text: t('paywall.restore'), onPress: handleRestorePurchases }]
+            );
+          }
+        } else if (result.errorType === 'network') {
+          Alert.alert(t('paywall.networkError'), result.error);
+        } else {
+          Alert.alert(t('paywall.purchaseError'), result.error);
         }
       } else {
         // Mock purchase for development (RevenueCat not configured)
         await new Promise(resolve => setTimeout(resolve, 1500));
         upgradeToPro();
         Alert.alert(
-          'Welcome to Pro! 🎉 (Dev Mode)',
+          t('paywall.welcomePro') + ' (Dev)',
           'RevenueCat not configured. Simulated purchase.',
-          [{ text: 'Continue', onPress: () => navigation.goBack() }]
+          [{ text: t('common.continue') || 'Continue', onPress: handleSuccess }]
         );
       }
     } catch (error: any) {
-      Alert.alert('Purchase Failed', 'Please try again later.');
+      Alert.alert(t('paywall.purchaseError'), t('paywall.purchaseErrorGeneric'));
     } finally {
       setIsLoading(false);
     }
@@ -193,25 +214,25 @@ export function PaywallScreen({ navigation, route }: any) {
 
   const handleRestorePurchases = async () => {
     if (!isPurchasesConfigured()) {
-      Alert.alert('Not Available', 'RevenueCat not configured.');
+      Alert.alert(t('paywall.purchaseError'), t('paywall.purchasesNotConfigured'));
       return;
     }
-    
+
     setIsLoading(true);
     const result = await restorePurchases();
     setIsLoading(false);
-    
+
     if (result.success && result.isPro) {
       upgradeToPro();
       Alert.alert(
-        'Restored! 🎉',
-        'Your Pro subscription has been restored.',
-        [{ text: 'Continue', onPress: handleSuccess }]
+        t('paywall.restored'),
+        t('paywall.restoredMessage'),
+        [{ text: t('common.continue') || 'Continue', onPress: handleSuccess }]
       );
     } else if (result.success) {
-      Alert.alert('No Purchases', 'No previous purchases found.');
+      Alert.alert(t('paywall.noPurchases'), t('paywall.noPurchasesMessage'));
     } else {
-      Alert.alert('Error', result.error || 'Failed to restore purchases.');
+      Alert.alert(t('paywall.purchaseError'), result.error || t('paywall.restoreError'));
     }
   };
 

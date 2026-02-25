@@ -127,7 +127,7 @@ export function InsightsScreen() {
               <Text style={styles.breakdownLabel}>{t('addSubscription.weekly')}</Text>
               <View style={styles.breakdownValues}>
                 <Text style={styles.breakdownCount}>{breakdown.weekly.count} {t('insights.subscriptions')}</Text>
-                <Text style={styles.breakdownAmount}>{formatCurrency(breakdown.weekly.total, currency)}/wk</Text>
+                <Text style={styles.breakdownAmount}>{formatCurrency(breakdown.weekly.total, currency)}{t('subscription.perWeekShort')}</Text>
               </View>
             </View>
           )}
@@ -138,7 +138,7 @@ export function InsightsScreen() {
               <Text style={styles.breakdownLabel}>{t('addSubscription.quarterly')}</Text>
               <View style={styles.breakdownValues}>
                 <Text style={styles.breakdownCount}>{breakdown.quarterly.count} {t('insights.subscriptions')}</Text>
-                <Text style={styles.breakdownAmount}>{getCurrencySymbol(currency)}{breakdown.quarterly.total.toFixed(2)}/qtr</Text>
+                <Text style={styles.breakdownAmount}>{getCurrencySymbol(currency)}{breakdown.quarterly.total.toFixed(2)}{t('subscription.perQuarterShort')}</Text>
               </View>
             </View>
           )}

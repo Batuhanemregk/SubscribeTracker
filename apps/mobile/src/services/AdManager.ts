@@ -2,7 +2,7 @@
  * AdManager - Interstitial Ad Strategy Controller
  * 
  * Rules:
- * - 30 seconds after app open (once daily)
+ * - After first subscription is added (once daily)
  * - Before bank statement scan starts
  * - When paywall is dismissed without purchase
  * - Minimum 3 minutes between ads
@@ -15,13 +15,13 @@ import { showInterstitialAd, isInterstitialReady } from './AdMobService';
 const STORAGE_KEY = 'ad_manager_state';
 const MIN_COOLDOWN_MS = 3 * 60 * 1000; // 3 minutes
 const DAILY_MAX_ADS = 3;
-const DAILY_OPEN_AD_SHOWN_KEY = 'daily_open_ad_shown';
+const DAILY_OPEN_AD_SHOWN_KEY = 'daily_first_sub_ad_shown';
 
 interface AdManagerState {
   lastAdShownAt: number;
   dailyAdCount: number;
   lastResetDate: string;
-  dailyOpenAdShown: boolean;
+  dailyOpenAdShown: boolean; // reused for first-subscription ad
 }
 
 let state: AdManagerState = {
@@ -32,7 +32,6 @@ let state: AdManagerState = {
 };
 
 let appOpenTime: number = 0;
-let openAdTimerId: ReturnType<typeof setTimeout> | null = null;
 
 /**
  * Initialize AdManager - call on app start
@@ -119,40 +118,28 @@ async function showAdAndUpdateState(): Promise<boolean> {
 }
 
 /**
- * Start 30-second timer for app open ad (once daily)
+ * Show ad after first subscription is added (once daily)
  */
-export function startAppOpenAdTimer(): void {
+export async function showAfterFirstSubscriptionAd(): Promise<boolean> {
   if (state.dailyOpenAdShown) {
-    console.log('AdManager: Daily open ad already shown');
-    return;
+    console.log('AdManager: Daily first-subscription ad already shown');
+    return false;
   }
   
-  // Clear existing timer
-  if (openAdTimerId) {
-    clearTimeout(openAdTimerId);
+  const shown = await showAdAndUpdateState();
+  if (shown) {
+    state.dailyOpenAdShown = true;
+    await saveState();
+    console.log('AdManager: First-subscription ad shown');
   }
-  
-  // Set 30-second timer
-  openAdTimerId = setTimeout(async () => {
-    if (!state.dailyOpenAdShown && canShowAd()) {
-      const shown = await showAdAndUpdateState();
-      if (shown) {
-        state.dailyOpenAdShown = true;
-        await saveState();
-        console.log('AdManager: App open ad shown');
-      }
-    }
-  }, 30 * 1000); // 30 seconds
+  return shown;
 }
 
 /**
- * Cancel app open ad timer (e.g., if user leaves app)
+ * Cancel ad timer (kept for backward compatibility)
  */
 export function cancelAppOpenAdTimer(): void {
-  if (openAdTimerId) {
-    clearTimeout(openAdTimerId);
-    openAdTimerId = null;
-  }
+  // No-op: timer-based ads removed
 }
 
 /**

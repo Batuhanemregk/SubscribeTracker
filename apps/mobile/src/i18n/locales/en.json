@@ -53,6 +53,7 @@
     "goodAfternoon": "Good Afternoon",
     "goodEvening": "Good Evening",
     "listView": "List view",
+    "findSubscriptions": "Find Your Subscriptions",
     "findTitle": "Find Your Subscriptions",
     "findSubtitle": "Scan your bank document and we'll detect all your recurring payments automatically",
     "scanStatement": "Scan a Statement",
@@ -72,6 +73,7 @@
     "subtitle": "Auto-detect your subscriptions from a PDF or image"
   },
   "subscription": {
+    "notFound": "Subscription not found",
     "details": "Subscription Details",
     "paymentHistory": "Payment History",
     "statistics": "Statistics",
@@ -102,7 +104,11 @@
     "perWeek": "week",
     "perMonth": "month",
     "perQuarter": "quarter",
-    "perYear": "year"
+    "perYear": "year",
+    "perWeekShort": "/wk",
+    "perQuarterShort": "/qtr",
+    "perWeekSlash": "/week",
+    "oneTime": "one-time"
   },
   "addSubscription": {
     "title": "Add Subscription",
@@ -157,6 +163,7 @@
     "totalThisMonth": "This Month's Total",
     "dueIn": "Due in {{days}} days",
     "dueToday": "Due today",
+    "paymentsOnDay": "Payments on day {{day}}",
     "months": {
       "january": "January",
       "february": "February",
@@ -271,6 +278,10 @@
     "security": "Security",
     "biometricLock": "Biometric Lock",
     "biometricSubtitle": "Require Face ID or fingerprint",
+    "biometricAppSubtitle": "Secure app with Face ID/Touch ID",
+    "biometricAppSubtitlePro": "Secure app with Face ID/Touch ID (Pro)",
+    "biometricProTitle": "Pro Feature",
+    "biometricProMessage": "Biometric lock is a Pro feature. Upgrade to unlock!",
     "upgradeForBiometric": "Upgrade to Pro for biometric lock",
     "preferences": "Preferences",
     "appearance": "Appearance",
@@ -304,6 +315,29 @@
     "dark": "Dark",
     "light": "Light",
     "system": "System",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "systemMode": "System Mode",
+    "lightModePro": "Light Mode (Pro)",
+    "systemModePro": "System Mode (Pro)",
+    "notifSent": "Sent!",
+    "notifSentMessage": "Check your notifications",
+    "clearDataAlertTitle": "Clear All Data",
+    "clearDataAlertMessage": "This will delete all your subscriptions and settings. This action cannot be undone.",
+    "clearDataAlertButton": "Clear",
+    "dataCleared": "All data has been cleared",
+    "disconnectAlertTitle": "Disconnect Account",
+    "disconnectAlertMessage": "This will sign out your account and remove sync data. Your local subscriptions will remain.",
+    "disconnectAlertButton": "Disconnect",
+    "deleteAlertTitle": "Delete Account & Data",
+    "deleteAlertMessage": "This will permanently delete ALL your data including subscriptions, account connections, and settings. This action cannot be undone.",
+    "deleteAlertButton": "Delete Everything",
+    "accountDeleted": "Account Deleted",
+    "accountDeletedMessage": "All your data has been removed from this device.",
+    "resetPlanTitle": "Reset to Standard",
+    "resetPlanMessage": "This will downgrade your plan to Standard (Debug only).",
+    "resetPlanButton": "Reset",
+    "resetPlanDone": "Plan reset to Standard",
     "signedIn": "Signed In",
     "welcome": "Welcome, {{name}}"
   },
@@ -332,7 +366,20 @@
       "customCategories": "Custom Categories",
       "prioritySupport": "Priority Support"
     },
-    "dismiss": "Maybe later"
+    "dismiss": "Maybe later",
+    "purchaseError": "Purchase Failed",
+    "productNotAvailable": "This product is not available right now. Please try again later.",
+    "welcomePro": "Welcome to Pro!",
+    "welcomeProMessage": "You now have access to all premium features.",
+    "alreadyOwned": "Already Owned",
+    "networkError": "Connection Error",
+    "purchaseErrorGeneric": "Something went wrong. Please try again later.",
+    "purchasesNotConfigured": "Purchase service is not available.",
+    "restored": "Purchases Restored!",
+    "restoredMessage": "Your Pro subscription has been restored.",
+    "noPurchases": "No Purchases Found",
+    "noPurchasesMessage": "No previous purchases were found for this account.",
+    "restoreError": "Failed to restore purchases. Please try again."
   },
   "onboarding": {
     "slide1Title": "Track Your Subscriptions",
@@ -419,6 +466,16 @@
   "terms": {
     "title": "Terms of Service",
     "lastUpdated": "Last updated: {{date}}"
+  },
+  "biometric": {
+    "unlockApp": "Unlock SubscribeTracker",
+    "usePasscode": "Use Passcode",
+    "cancel": "Cancel",
+    "notSupported": "Not Supported",
+    "notSupportedMessage": "Your device does not support biometric authentication.",
+    "notSetUp": "Not Set Up",
+    "notSetUpMessage": "Please set up Face ID, Touch ID, or Fingerprint in your device settings first.",
+    "verifyIdentity": "Verify your identity to enable biometric lock"
   },
   "languageSelector": {
     "title": "Language",

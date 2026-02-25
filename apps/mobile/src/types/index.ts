@@ -185,6 +185,7 @@ export interface AppSettings {
   lastScanAt: string | null;
   onboardingCompleted: boolean;
   interstitialShownThisSession: boolean;
+  dataSeeded: boolean;
 }
 
 // Default settings
@@ -204,6 +205,7 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
   lastScanAt: null,
   onboardingCompleted: false,
   interstitialShownThisSession: false,
+  dataSeeded: false,
 };
 
 // =============================================================================

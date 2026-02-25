@@ -122,31 +122,104 @@ export async function getOfferings(): Promise<any | null> {
 }
 
 /**
+ * Purchase error types for granular handling
+ */
+export type PurchaseErrorType =
+  | 'cancelled'
+  | 'network'
+  | 'not_available'
+  | 'store_error'
+  | 'already_owned'
+  | 'not_configured'
+  | 'unknown';
+
+export interface PurchaseResult {
+  success: boolean;
+  customerInfo?: any;
+  error?: string;
+  errorType?: PurchaseErrorType;
+}
+
+/**
+ * Classify a RevenueCat error into a user-friendly error type
+ */
+function classifyPurchaseError(error: any): { errorType: PurchaseErrorType; message: string } {
+  // User explicitly cancelled
+  if (error.userCancelled) {
+    return { errorType: 'cancelled', message: 'Purchase cancelled' };
+  }
+
+  // RevenueCat error codes (from PurchasesErrorCode enum)
+  const code = error.code || error.errorCode;
+
+  switch (code) {
+    // Network issues
+    case 1: // networkError
+    case 'NetworkError':
+      return { errorType: 'network', message: 'Network error. Please check your connection and try again.' };
+
+    // Product not available
+    case 5: // productNotAvailableForPurchaseError
+    case 7: // purchaseNotAllowedError
+    case 'ProductNotAvailableForPurchaseError':
+    case 'PurchaseNotAllowedError':
+      return { errorType: 'not_available', message: 'This product is not available for purchase right now.' };
+
+    // Store problems
+    case 2: // invalidReceiptError
+    case 3: // readReceiptError
+    case 6: // storeProblemError
+    case 'StoreProblemError':
+      return { errorType: 'store_error', message: 'There was a problem with the app store. Please try again later.' };
+
+    // Already owned
+    case 4: // productAlreadyPurchasedError
+    case 'ProductAlreadyPurchasedError':
+      return { errorType: 'already_owned', message: 'You already own this subscription. Try restoring purchases.' };
+
+    default:
+      return { errorType: 'unknown', message: error.message || 'An unexpected error occurred. Please try again.' };
+  }
+}
+
+/**
  * Purchase a package
  */
-export async function purchasePackage(
-  pkg: any
-): Promise<{ success: boolean; customerInfo?: any; error?: string }> {
+export async function purchasePackage(pkg: any): Promise<PurchaseResult> {
   if (!purchasesAvailable || !Purchases) {
-    return { success: false, error: 'Purchases not available' };
+    return { success: false, error: 'In-app purchases are not available on this device.', errorType: 'not_configured' };
   }
+
+  if (!isPurchasesConfigured()) {
+    return { success: false, error: 'Purchase service is not configured.', errorType: 'not_configured' };
+  }
+
   try {
     const { customerInfo } = await Purchases.purchasePackage(pkg);
-    
+
     const isPro = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined;
-    
+
     return {
       success: isPro,
       customerInfo,
+      error: isPro ? undefined : 'Entitlement not granted. Please contact support.',
+      errorType: isPro ? undefined : 'store_error',
     };
   } catch (error: any) {
-    // Check if user cancelled
-    if (error.userCancelled) {
-      return { success: false, error: 'Purchase cancelled' };
-    }
-    
-    console.error('Purchase failed:', error);
-    return { success: false, error: error.message || 'Purchase failed' };
+    console.error('Purchase error details:', JSON.stringify({
+      code: error.code,
+      message: error.message,
+      userCancelled: error.userCancelled,
+      underlyingError: error.underlyingErrorMessage,
+      readableCode: error.readableErrorCode,
+    }, null, 2));
+    const classified = classifyPurchaseError(error);
+    console.error(`Purchase failed [${classified.errorType}]:`, classified.message);
+    return {
+      success: false,
+      error: classified.message,
+      errorType: classified.errorType,
+    };
   }
 }
 
@@ -159,16 +232,17 @@ export async function restorePurchases(): Promise<{
   error?: string;
 }> {
   if (!purchasesAvailable || !Purchases) {
-    return { success: false, isPro: false, error: 'Purchases not available' };
+    return { success: false, isPro: false, error: 'In-app purchases are not available on this device.' };
   }
   try {
     const customerInfo = await Purchases.restorePurchases();
     const isPro = customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined;
-    
+
     return { success: true, isPro };
   } catch (error: any) {
     console.error('Restore failed:', error);
-    return { success: false, isPro: false, error: error.message };
+    const classified = classifyPurchaseError(error);
+    return { success: false, isPro: false, error: classified.message };
   }
 }
 

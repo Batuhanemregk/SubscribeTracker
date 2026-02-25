@@ -32,7 +32,8 @@ interface SettingsState {
   setHasSeenOnboarding: (seen: boolean) => void;
   setLastScanAt: (date: string | null) => void;
   setInterstitialShown: (shown: boolean) => void;
-  
+  setDataSeeded: (seeded: boolean) => void;
+
   // Budget settings actions
   setBudgetLimit: (limit: number) => void;
   setBudgetCurrency: (currency: string) => void;
@@ -88,6 +89,9 @@ export const useSettingsStore = create<SettingsState>()(
 
       setInterstitialShown: (interstitialShownThisSession) =>
         set((state) => ({ app: { ...state.app, interstitialShownThisSession } })),
+
+      setDataSeeded: (dataSeeded) =>
+        set((state) => ({ app: { ...state.app, dataSeeded } })),
 
       // Budget settings
       setBudgetLimit: (monthlyLimit) =>

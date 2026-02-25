@@ -8,6 +8,7 @@ import * as FileSystem from 'expo-file-system';
 const { cacheDirectory, writeAsStringAsync, EncodingType } = FileSystem as any;
 import * as Sharing from 'expo-sharing';
 import type { Subscription } from '../types';
+import { t } from '../i18n';
 
 /**
  * Format currency amount
@@ -27,10 +28,10 @@ function formatCurrency(amount: number, currency: string): string {
  */
 function formatCycle(cycle: string): string {
   const cycles: Record<string, string> = {
-    weekly: 'Weekly',
-    monthly: 'Monthly',
-    quarterly: 'Quarterly',
-    yearly: 'Yearly',
+    weekly: t('addSubscription.weekly'),
+    monthly: t('addSubscription.monthly'),
+    quarterly: t('addSubscription.quarterly'),
+    yearly: t('addSubscription.yearly'),
   };
   return cycles[cycle] || cycle;
 }

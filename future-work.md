@@ -13,7 +13,7 @@
 - **Area:** Mobile / Pro Feature
 - **Current State:** [DONE] BankStatementService.ts connected to `extract-bank-statement` Edge Function (v13). Uses GPT-4o-mini with Chat Completions API. PDF sent via `file` content type, images via `image_url`. Cost: ~$0.005/scan (~4K tokens).
 - **Why It Matters:** Alternative to email scanning for users who don't want to connect Gmail
-- **Next Action:** Consider upgrading to gpt-5-nano when Responses API inline PDF support stabilizes
+- **Next Action:** Monitor OpenAI API for improved models; currently using gpt-4o-mini
 
 ---
 
@@ -272,12 +272,12 @@
 - **Status:** [DONE]
 - **Summary:** Added logoUrl to Subscription type. Updated PremiumSubscriptionCard with Image component, error handling, emoji fallback. AddSubscriptionScreen handles prefillData with logoUrl from ServicePicker flow.
 
-### LLM Email Scanning (GPT-5 Nano)
+### LLM Email Scanning (GPT-4o-mini)
 
 - **Date:** 2026-02-07
 - **Area:** Mobile / Email Scanning
 - **Status:** [DONE]
-- **Summary:** Complete LLM extraction pipeline: GmailService.ts (Gmail REST API), OutlookService.ts (MS Graph), LLMExtractorService.ts (rule-based + GPT-5 Nano with confidence gating, daily budget, template cache), Supabase Edge Function `extract-subscriptions`, DetectionService rewritten from simulated to real scanning. SecureStore token management added. ScanProgressScreen wired to real scanService.
+- **Summary:** Complete LLM extraction pipeline: GmailService.ts (Gmail REST API), OutlookService.ts (MS Graph), LLMExtractorService.ts (rule-based + GPT-4o-mini with confidence gating, daily budget, template cache), Supabase Edge Function `extract-subscriptions`, DetectionService rewritten from simulated to real scanning. SecureStore token management added. ScanProgressScreen wired to real scanService.
 
 ### Secure Token Storage
 

@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header, GradientStatCard } from '../components';
 import { useTheme, borderRadius, type ThemeColors } from '../theme';
 import { useSubscriptionStore, useSettingsStore, useCurrencyStore } from '../state';
-import { getUpcomingPayments, getDaysUntilBilling, getMonthBillingDates, formatCurrency, getCurrencySymbol } from '../utils';
+import { getUpcomingPayments, getDaysUntilBilling, getMonthSubscriptionMap, formatCurrency, getCurrencySymbol } from '../utils';
 import type { Subscription } from '../types';
 import { t, getLocale } from '../i18n';
 
@@ -16,12 +16,12 @@ const MONTH_KEYS = ['january', 'february', 'march', 'april', 'may', 'june',
                 'july', 'august', 'september', 'october', 'november', 'december'];
 const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
-// Calendar component
-function Calendar({ billingDates }: { billingDates: Date[] }) {
+// Calendar component - shows projected billing dates with subscription icons
+function Calendar({ subscriptions, onDayPress }: { subscriptions: Subscription[]; onDayPress?: (day: number, subs: Subscription[]) => void }) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const [viewDate, setViewDate] = useState(new Date());
-  
+
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
@@ -30,11 +30,11 @@ function Calendar({ billingDates }: { billingDates: Date[] }) {
   const prevMonth = () => setViewDate(new Date(year, month - 1, 1));
   const nextMonth = () => setViewDate(new Date(year, month + 1, 1));
 
-  const isBillingDate = (day: number) => {
-    return billingDates.some(d => 
-      d.getDate() === day && d.getMonth() === month && d.getFullYear() === year
-    );
-  };
+  // Build a map of day -> subscriptions for the entire viewed month
+  const daySubsMap = React.useMemo(
+    () => getMonthSubscriptionMap(subscriptions, year, month),
+    [subscriptions, year, month]
+  );
 
   const isToday = (day: number) => {
     const today = new Date();
@@ -46,13 +46,13 @@ function Calendar({ billingDates }: { billingDates: Date[] }) {
     days.push(<View key={`empty-${i}`} style={styles.dayCell} />);
   }
   for (let day = 1; day <= daysInMonth; day++) {
-    const hasBilling = isBillingDate(day);
+    const daySubs = daySubsMap.get(day) || [];
+    const hasBilling = daySubs.length > 0;
     const today = isToday(day);
-    
-    // Determine cell style - today takes precedence but we show billing indicator
+
     const cellStyles: any[] = [styles.dayCell];
     const textStyleList: any[] = [styles.dayText];
-    
+
     if (today) {
       cellStyles.push(styles.todayCell);
       textStyleList.push(styles.todayText);
@@ -60,15 +60,36 @@ function Calendar({ billingDates }: { billingDates: Date[] }) {
       cellStyles.push(styles.billingDayCell);
       textStyleList.push(styles.billingDayText);
     }
-    
+
+    // Show first subscription's icon and a "+N" badge if multiple
+    const firstSub = daySubs[0];
+    const extraCount = daySubs.length - 1;
+
     days.push(
-      <View key={day} style={cellStyles}>
-        <Text style={textStyleList}>
-          {day}
-        </Text>
-        {hasBilling && !today && <View style={styles.billingDot} />}
-        {hasBilling && today && <View style={styles.billingDotToday} />}
-      </View>
+      <TouchableOpacity
+        key={day}
+        style={cellStyles}
+        activeOpacity={hasBilling ? 0.6 : 1}
+        onPress={() => {
+          if (hasBilling && onDayPress) onDayPress(day, daySubs);
+        }}
+      >
+        <Text style={textStyleList}>{day}</Text>
+        {hasBilling && (
+          <View style={styles.dayIconRow}>
+            {firstSub.logoUrl ? (
+              <Image source={{ uri: firstSub.logoUrl }} style={styles.daySubLogo} />
+            ) : (
+              <Text style={styles.daySubEmoji}>{firstSub.iconKey}</Text>
+            )}
+            {extraCount > 0 && (
+              <View style={[styles.dayExtraBadge, { backgroundColor: colors.primary }]}>
+                <Text style={styles.dayExtraBadgeText}>+{extraCount}</Text>
+              </View>
+            )}
+          </View>
+        )}
+      </TouchableOpacity>
     );
   }
 
@@ -145,21 +166,25 @@ export function CalendarScreen() {
   const { app } = useSettingsStore();
   const { convert } = useCurrencyStore();
   const currency = app.currency;
+  const [selectedDaySubs, setSelectedDaySubs] = useState<Subscription[] | null>(null);
+  const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   const subs = getActiveSubscriptions();
   const monthlyTotal = calculateMonthlyTotalConverted(convert, currency);
-  
-  // Get billing dates for calendar markers
-  const billingDates = subs.map(s => new Date(s.nextBillingDate));
-  
+
   // Get upcoming payments (next 30 days)
   const upcomingPayments = getUpcomingPayments(subscriptions, 30);
-  
+
   // Get payments this month
   const now = new Date();
-  const thisMonthPayments = getUpcomingPayments(subscriptions, 
+  const thisMonthPayments = getUpcomingPayments(subscriptions,
     new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate() - now.getDate()
   );
+
+  const handleDayPress = (day: number, daySubs: Subscription[]) => {
+    setSelectedDay(day);
+    setSelectedDaySubs(daySubs);
+  };
 
   return (
     <View style={styles.container}>
@@ -172,8 +197,8 @@ export function CalendarScreen() {
         />
       </View>
 
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
@@ -197,12 +222,24 @@ export function CalendarScreen() {
           />
         </View>
 
-        {/* Calendar */}
-        <Calendar billingDates={billingDates} />
+        {/* Calendar - now uses projected billing dates */}
+        <Calendar subscriptions={subs} onDayPress={handleDayPress} />
+
+        {/* Selected day's payments (if tapped) */}
+        {selectedDaySubs && selectedDaySubs.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>
+              {t('calendar.paymentsOnDay', { day: selectedDay })}
+            </Text>
+            {selectedDaySubs.map((sub) => (
+              <PaymentItem key={sub.id} sub={sub} index={0} />
+            ))}
+          </>
+        )}
 
         {/* Upcoming This Month */}
         <Text style={styles.sectionTitle}>{t('calendar.upcoming')}</Text>
-        
+
         {upcomingPayments.map((sub, index) => (
           <PaymentItem key={sub.id} sub={sub} index={index} />
         ))}
@@ -310,23 +347,33 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  billingDot: {
+  dayIconRow: {
     position: 'absolute',
-    bottom: 4,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.red,
+    bottom: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 1,
   },
-  billingDotToday: {
-    position: 'absolute',
-    bottom: 4,
-    width: 6,
-    height: 6,
+  daySubLogo: {
+    width: 12,
+    height: 12,
     borderRadius: 3,
-    backgroundColor: colors.text,
-    borderWidth: 1,
-    borderColor: colors.red,
+  },
+  daySubEmoji: {
+    fontSize: 9,
+    lineHeight: 12,
+  },
+  dayExtraBadge: {
+    paddingHorizontal: 3,
+    paddingVertical: 0,
+    borderRadius: 5,
+    minWidth: 14,
+    alignItems: 'center',
+  },
+  dayExtraBadgeText: {
+    fontSize: 7,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   sectionTitle: {
     fontSize: 18,

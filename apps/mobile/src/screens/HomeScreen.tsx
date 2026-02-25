@@ -50,7 +50,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
     calculateYearlyTotalConverted,
     getActiveSubscriptions,
   } = useSubscriptionStore();
-  const { app } = useSettingsStore();
+  const { app, setDataSeeded } = useSettingsStore();
   const { isPro } = usePlanStore();
   const { convert } = useCurrencyStore();
   const currency = app.currency;
@@ -79,10 +79,14 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
     }
   }, []);
 
-  // Seed data on first load if empty
+  // Seed data only on first-ever app launch, never again
   useEffect(() => {
-    if (subscriptions.length === 0) {
+    if (!app.dataSeeded && subscriptions.length === 0) {
       setSubscriptions(SEED_SUBSCRIPTIONS);
+      setDataSeeded(true);
+    } else if (!app.dataSeeded) {
+      // Subscriptions already exist (e.g. from persist), just mark as seeded
+      setDataSeeded(true);
     }
   }, []);
 

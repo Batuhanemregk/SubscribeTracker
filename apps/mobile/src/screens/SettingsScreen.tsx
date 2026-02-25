@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components';
 import { borderRadius, useTheme, type ThemeColors } from '../theme';
 import { useSettingsStore, usePlanStore, useSubscriptionStore, useAccountStore } from '../state';
-import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signOut as authSignOut } from '../services';
+import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signOut as authSignOut, identifyUser, logoutUser } from '../services';
 import { t } from '../i18n';
 
 
@@ -51,7 +51,7 @@ export function SettingsScreen({ navigation }: any) {
   const [themeModalVisible, setThemeModalVisible] = React.useState(false);
   const [languageModalVisible, setLanguageModalVisible] = React.useState(false);
   const themeOptions = ['dark', 'light', 'system'] as const;
-  const themeLabels = { dark: 'Dark', light: 'Light', system: 'System' };
+  const themeLabels = { dark: t('settings.dark'), light: t('settings.light'), system: t('settings.system') };
 
   const languageOptions = ['system', 'en', 'tr'] as const;
   const languageLabels: Record<string, string> = {
@@ -67,17 +67,17 @@ export function SettingsScreen({ navigation }: any) {
 
   const handleClearData = () => {
     Alert.alert(
-      'Clear All Data',
-      'This will delete all your subscriptions and settings. This action cannot be undone.',
+      t('settings.clearDataAlertTitle'),
+      t('settings.clearDataAlertMessage'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Clear',
+          text: t('settings.clearDataAlertButton'),
           style: 'destructive',
           onPress: () => {
             subscriptionStore.setSubscriptions([]);
             resetToDefaults();
-            Alert.alert('Success', 'All data has been cleared');
+            Alert.alert(t('common.success'), t('settings.dataCleared'));
           },
         },
       ]
@@ -86,12 +86,12 @@ export function SettingsScreen({ navigation }: any) {
 
   const handleDisconnectAccount = () => {
     Alert.alert(
-      'Disconnect Account',
-      'This will sign out your account and remove sync data. Your local subscriptions will remain.',
+      t('settings.disconnectAlertTitle'),
+      t('settings.disconnectAlertMessage'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Disconnect',
+          text: t('settings.disconnectAlertButton'),
           style: 'destructive',
           onPress: () => {
             // TODO: Implement disconnect
@@ -103,12 +103,12 @@ export function SettingsScreen({ navigation }: any) {
 
   const handleDeleteAccount = () => {
     Alert.alert(
-      'Delete Account & Data',
-      'This will permanently delete ALL your data including subscriptions, account connections, and settings. This action cannot be undone.',
+      t('settings.deleteAlertTitle'),
+      t('settings.deleteAlertMessage'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete Everything',
+          text: t('settings.deleteAlertButton'),
           style: 'destructive',
           onPress: async () => {
             // Clear all stores
@@ -118,7 +118,7 @@ export function SettingsScreen({ navigation }: any) {
             if (account) {
               useAccountStore.getState().clearAccount();
             }
-            Alert.alert('Account Deleted', 'All your data has been removed from this device.');
+            Alert.alert(t('settings.accountDeleted'), t('settings.accountDeletedMessage'));
           },
         },
       ]
@@ -156,15 +156,15 @@ export function SettingsScreen({ navigation }: any) {
 
   const handleResetPlan = () => {
     Alert.alert(
-      'Reset to Standard',
-      'This will downgrade your plan to Standard (Debug only).',
+      t('settings.resetPlanTitle'),
+      t('settings.resetPlanMessage'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Reset',
+          text: t('settings.resetPlanButton'),
           onPress: () => {
             downgradeToStandard();
-            Alert.alert('Done', 'Plan reset to Standard');
+            Alert.alert(t('common.done'), t('settings.resetPlanDone'));
           },
         },
       ]
@@ -237,6 +237,7 @@ export function SettingsScreen({ navigation }: any) {
                 <TouchableOpacity
                   onPress={async () => {
                     await authSignOut();
+                    await logoutUser();
                     useAccountStore.getState().clearAccount();
                   }}
                   style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: `${colors.red}15` }}
@@ -252,6 +253,8 @@ export function SettingsScreen({ navigation }: any) {
               try {
                 const result = await signInWithGoogle();
                 if (result.success && result.user) {
+                  // Link RevenueCat purchases to authenticated user
+                  await identifyUser(result.user.id);
                   useAccountStore.getState().setAccount({
                     id: result.user.id,
                     email: result.user.email,
@@ -413,7 +416,7 @@ export function SettingsScreen({ navigation }: any) {
             subtitle={t('settings.testNotifSubtitle')}
             onPress={() => {
               sendTestNotification();
-              Alert.alert('Sent!', 'Check your notifications');
+              Alert.alert(t('settings.notifSent'), t('settings.notifSentMessage'));
             }}
           />
           <View style={styles.divider} />
@@ -421,20 +424,20 @@ export function SettingsScreen({ navigation }: any) {
             icon="finger-print"
             iconColor={colors.pink}
             title={t('settings.biometricLock')}
-            subtitle={`Secure app with Face ID/Touch ID${!isPro() ? ' (Pro)' : ''}`}
+            subtitle={!isPro() ? t('settings.biometricAppSubtitlePro') : t('settings.biometricAppSubtitle')}
             rightElement={
-              <Toggle 
-                value={app.biometricLockEnabled} 
+              <Toggle
+                value={app.biometricLockEnabled}
                 onChange={async (value) => {
                   if (value) {
                     // Check Pro status first
                     if (!isPro()) {
                       Alert.alert(
-                        'Pro Feature',
-                        'Biometric lock is a Pro feature. Upgrade to unlock!',
+                        t('settings.biometricProTitle'),
+                        t('settings.biometricProMessage'),
                         [
-                          { text: 'Cancel', style: 'cancel' },
-                          { text: 'Upgrade', onPress: () => navigation.navigate('Paywall') },
+                          { text: t('common.cancel'), style: 'cancel' },
+                          { text: t('common.upgrade'), onPress: () => navigation.navigate('Paywall') },
                         ]
                       );
                       return;
@@ -456,7 +459,13 @@ export function SettingsScreen({ navigation }: any) {
             icon="moon"
             iconColor={colors.primary}
             title={t('settings.appearance')}
-            subtitle={`${themeLabels[app.theme as keyof typeof themeLabels] || 'Dark'} Mode${!canUseLight && app.theme !== 'dark' ? ' (Pro)' : ''}`}
+            subtitle={(() => {
+              const key = app.theme as 'dark' | 'light' | 'system';
+              if (!canUseLight && key !== 'dark') {
+                return key === 'light' ? t('settings.lightModePro') : t('settings.systemModePro');
+              }
+              return key === 'dark' ? t('settings.darkMode') : key === 'light' ? t('settings.lightMode') : t('settings.systemMode');
+            })()}
             onPress={() => setThemeModalVisible(true)}
           />
           <View style={styles.divider} />

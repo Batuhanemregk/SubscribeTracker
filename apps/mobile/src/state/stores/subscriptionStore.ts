@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Crypto from 'expo-crypto';
 import type { Subscription, PaymentHistoryItem } from '../../types';
 import { pushToCloud, pullFromCloud, deleteFromCloud, fullSync } from '../../services/syncService';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
@@ -39,6 +40,32 @@ interface SubscriptionState {
   syncToCloud: () => Promise<boolean>;
   syncFromCloud: () => Promise<boolean>;
   performFullSync: () => Promise<boolean>;
+}
+
+/**
+ * Get the authenticated user ID using session (cached) first, with getUser() fallback.
+ * getSession() is faster and uses cached data; getUser() makes a network call.
+ * Returns null if not authenticated.
+ */
+async function getAuthUserId(): Promise<string | null> {
+  try {
+    // First try cached session (fast, no network call)
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.user?.id) {
+      return session.user.id;
+    }
+
+    // Fallback: try getUser which triggers a token refresh if needed
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error('[Sync] Auth error:', error.message);
+      return null;
+    }
+    return user?.id || null;
+  } catch (err) {
+    console.error('[Sync] Failed to get auth user:', err);
+    return null;
+  }
 }
 
 export const useSubscriptionStore = create<SubscriptionState>()(
@@ -179,23 +206,23 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       // Push local subscriptions to cloud
       syncToCloud: async () => {
         if (!isSupabaseConfigured()) return false;
-        
+
         set({ isSyncing: true, syncError: null });
-        
+
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
+          const userId = await getAuthUserId();
+          if (!userId) {
             set({ isSyncing: false, syncError: 'Not authenticated' });
             return false;
           }
-          
-          const result = await pushToCloud(get().subscriptions, user.id);
-          
+
+          const result = await pushToCloud(get().subscriptions, userId);
+
           if (result.success) {
-            set({ 
-              isSyncing: false, 
+            set({
+              isSyncing: false,
               lastSyncedAt: new Date().toISOString(),
-              syncError: null 
+              syncError: null
             });
             return true;
           } else {
@@ -211,24 +238,24 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       // Pull subscriptions from cloud
       syncFromCloud: async () => {
         if (!isSupabaseConfigured()) return false;
-        
+
         set({ isSyncing: true, syncError: null });
-        
+
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
+          const userId = await getAuthUserId();
+          if (!userId) {
             set({ isSyncing: false, syncError: 'Not authenticated' });
             return false;
           }
-          
-          const result = await pullFromCloud(user.id);
-          
+
+          const result = await pullFromCloud(userId);
+
           if (result.success) {
-            set({ 
+            set({
               subscriptions: result.subscriptions,
-              isSyncing: false, 
+              isSyncing: false,
               lastSyncedAt: new Date().toISOString(),
-              syncError: null 
+              syncError: null
             });
             return true;
           } else {
@@ -244,24 +271,24 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       // Full sync with conflict resolution
       performFullSync: async () => {
         if (!isSupabaseConfigured()) return false;
-        
+
         set({ isSyncing: true, syncError: null });
-        
+
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (!user) {
+          const userId = await getAuthUserId();
+          if (!userId) {
             set({ isSyncing: false, syncError: 'Not authenticated' });
             return false;
           }
-          
-          const result = await fullSync(get().subscriptions, user.id);
-          
+
+          const result = await fullSync(get().subscriptions, userId);
+
           if (result.success) {
-            set({ 
+            set({
               subscriptions: result.merged,
-              isSyncing: false, 
+              isSyncing: false,
               lastSyncedAt: new Date().toISOString(),
-              syncError: null 
+              syncError: null
             });
             return true;
           } else {
@@ -281,9 +308,70 @@ export const useSubscriptionStore = create<SubscriptionState>()(
   )
 );
 
-// Helper function to generate unique ID
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * Check if a string is a valid UUID v4
+ */
+export function isValidUUID(id: string): boolean {
+  return UUID_REGEX.test(id);
+}
+
+/**
+ * Generate a proper UUID v4 for subscription IDs.
+ * Uses expo-crypto for cryptographically random UUIDs.
+ */
 export function generateId(): string {
-  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  return Crypto.randomUUID();
+}
+
+/**
+ * Migrate existing subscriptions with non-UUID IDs to proper UUIDs.
+ * Creates a mapping from old IDs to new UUIDs and updates all references.
+ * Should be called once on app startup.
+ */
+export function migrateSubscriptionIds(store: {
+  subscriptions: Subscription[];
+  paymentHistory: PaymentHistoryItem[];
+}): { subscriptions: Subscription[]; paymentHistory: PaymentHistoryItem[]; migrated: boolean } {
+  const idMap = new Map<string, string>();
+  let needsMigration = false;
+
+  // Build mapping of old non-UUID IDs to new UUIDs
+  for (const sub of store.subscriptions) {
+    if (!isValidUUID(sub.id)) {
+      needsMigration = true;
+      idMap.set(sub.id, Crypto.randomUUID());
+    }
+  }
+
+  if (!needsMigration) {
+    return { subscriptions: store.subscriptions, paymentHistory: store.paymentHistory, migrated: false };
+  }
+
+  // Migrate subscription IDs
+  const migratedSubs = store.subscriptions.map((sub) => {
+    const newId = idMap.get(sub.id);
+    if (newId) {
+      return { ...sub, id: newId, updatedAt: new Date().toISOString() };
+    }
+    return sub;
+  });
+
+  // Migrate payment history references
+  const migratedHistory = store.paymentHistory.map((payment) => {
+    const newSubId = idMap.get(payment.subscriptionId);
+    const newPaymentId = isValidUUID(payment.id) ? payment.id : Crypto.randomUUID();
+    return {
+      ...payment,
+      id: newPaymentId,
+      subscriptionId: newSubId || payment.subscriptionId,
+    };
+  });
+
+  console.log(`[Migration] Migrated ${idMap.size} subscription IDs from timestamp format to UUID`);
+  return { subscriptions: migratedSubs, paymentHistory: migratedHistory, migrated: true };
 }
 
 // Helper to create new subscription

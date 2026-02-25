@@ -56,7 +56,7 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
       <View style={styles.container}>
         <Header title={t('subscription.details')} showBack />
         <View style={styles.notFound}>
-          <Text style={styles.notFoundText}>Subscription not found</Text>
+          <Text style={styles.notFoundText}>{t('subscription.notFound')}</Text>
         </View>
       </View>
     );

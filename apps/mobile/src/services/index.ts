@@ -34,7 +34,7 @@ export {
 
 export {
   initAdManager,
-  startAppOpenAdTimer,
+  showAfterFirstSubscriptionAd,
   cancelAppOpenAdTimer,
   showPreScanAd,
   showPaywallDismissAd,

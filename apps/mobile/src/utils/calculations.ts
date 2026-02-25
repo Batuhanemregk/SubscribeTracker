@@ -184,13 +184,105 @@ export function getDaysUntilBilling(nextBillingDate: string, cycle?: BillingCycl
 }
 
 /**
- * Get billing dates for current month
+ * Get billing dates for current month (legacy - uses raw nextBillingDate only)
  */
 export function getMonthBillingDates(subscriptions: Subscription[], year: number, month: number): Date[] {
   return subscriptions
     .filter(s => s.status === 'active')
     .map(s => new Date(s.nextBillingDate))
     .filter(d => d.getFullYear() === year && d.getMonth() === month);
+}
+
+/**
+ * Project all billing dates for a subscription within a specific month.
+ * Advances the billing date forward (or backward) from nextBillingDate
+ * using the subscription's cycle to find all occurrences in the target month.
+ */
+export function getSubscriptionBillingDatesInMonth(
+  sub: Subscription,
+  year: number,
+  month: number
+): Date[] {
+  if (sub.status !== 'active') return [];
+
+  const dates: Date[] = [];
+  const billing = new Date(sub.nextBillingDate);
+  const monthStart = new Date(year, month, 1);
+  const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
+
+  // Rewind billing date to before the target month start
+  const rewound = new Date(billing);
+  while (rewound > monthStart) {
+    switch (sub.cycle) {
+      case 'weekly': rewound.setDate(rewound.getDate() - 7); break;
+      case 'monthly': rewound.setMonth(rewound.getMonth() - 1); break;
+      case 'quarterly': rewound.setMonth(rewound.getMonth() - 3); break;
+      case 'yearly': rewound.setFullYear(rewound.getFullYear() - 1); break;
+    }
+  }
+
+  // Advance through the target month collecting all dates that fall within it
+  const cursor = new Date(rewound);
+  const maxIterations = 200; // Safety limit
+  let iterations = 0;
+  while (cursor <= monthEnd && iterations < maxIterations) {
+    iterations++;
+    if (cursor >= monthStart && cursor <= monthEnd) {
+      dates.push(new Date(cursor));
+    }
+    // Advance by cycle
+    switch (sub.cycle) {
+      case 'weekly': cursor.setDate(cursor.getDate() + 7); break;
+      case 'monthly': cursor.setMonth(cursor.getMonth() + 1); break;
+      case 'quarterly': cursor.setMonth(cursor.getMonth() + 3); break;
+      case 'yearly': cursor.setFullYear(cursor.getFullYear() + 1); break;
+    }
+    // Break if we've passed the month
+    if (cursor > monthEnd) break;
+  }
+
+  return dates;
+}
+
+/**
+ * Get all subscriptions that have a billing date on a specific day.
+ * Projects recurring dates properly into any month (past or future).
+ */
+export function getSubscriptionsForDay(
+  subscriptions: Subscription[],
+  year: number,
+  month: number,
+  day: number
+): Subscription[] {
+  return subscriptions.filter(sub => {
+    if (sub.status !== 'active') return false;
+    const dates = getSubscriptionBillingDatesInMonth(sub, year, month);
+    return dates.some(d => d.getDate() === day);
+  });
+}
+
+/**
+ * Get a map of day -> subscriptions for an entire month.
+ * More efficient than calling getSubscriptionsForDay for each day.
+ */
+export function getMonthSubscriptionMap(
+  subscriptions: Subscription[],
+  year: number,
+  month: number
+): Map<number, Subscription[]> {
+  const map = new Map<number, Subscription[]>();
+
+  for (const sub of subscriptions) {
+    if (sub.status !== 'active') continue;
+    const dates = getSubscriptionBillingDatesInMonth(sub, year, month);
+    for (const d of dates) {
+      const day = d.getDate();
+      if (!map.has(day)) map.set(day, []);
+      map.get(day)!.push(sub);
+    }
+  }
+
+  return map;
 }
 
 /**

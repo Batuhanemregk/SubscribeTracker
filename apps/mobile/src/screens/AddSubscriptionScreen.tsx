@@ -19,18 +19,13 @@ import { useSubscriptionStore, useSettingsStore, createSubscription, generateId 
 import { Ionicons } from '@expo/vector-icons';
 import type { BillingCycle, Subscription } from '../types';
 import { t } from '../i18n';
-import { matchKnownService } from '../utils';
+import { matchKnownService, getCurrencySymbol } from '../utils';
+import { showAfterFirstSubscriptionAd } from '../services';
 
 interface AddSubscriptionScreenProps {
   navigation: any;
   route: any;
 }
-
-const cycleOptions = [
-  { value: 'monthly' as BillingCycle, label: t('addSubscription.monthly') },
-  { value: 'yearly' as BillingCycle, label: t('addSubscription.yearly') },
-  { value: 'weekly' as BillingCycle, label: t('addSubscription.weekly') },
-];
 
 const DEFAULT_CATEGORIES = [
   'Entertainment', 'Music', 'Development', 'Design', 
@@ -42,7 +37,13 @@ export function AddSubscriptionScreen({ navigation, route }: AddSubscriptionScre
   const styles = createStyles(colors);
   const { subscriptionId, editMode, prefillData } = route.params || {};
   const { addSubscription, updateSubscription, getSubscriptionById } = useSubscriptionStore();
-  const { customCategories, addCustomCategory } = useSettingsStore();
+  const { app, customCategories, addCustomCategory } = useSettingsStore();
+
+  const cycleOptions = [
+    { value: 'monthly' as BillingCycle, label: t('addSubscription.monthly') },
+    { value: 'yearly' as BillingCycle, label: t('addSubscription.yearly') },
+    { value: 'weekly' as BillingCycle, label: t('addSubscription.weekly') },
+  ];
 
   // Merge default + custom categories
   const allCategories = useMemo(() => {
@@ -154,7 +155,7 @@ export function AddSubscriptionScreen({ navigation, route }: AddSubscriptionScre
         const newSub = createSubscription({
           name: name.trim(),
           amount: parseFloat(amount),
-          currency: 'USD',
+          currency: app.currency,
           cycle,
           nextBillingDate: nextBillingDate.toISOString(),
           category,
@@ -163,6 +164,8 @@ export function AddSubscriptionScreen({ navigation, route }: AddSubscriptionScre
           logoUrl,
         });
         addSubscription(newSub);
+        // Show ad after first subscription added (once daily)
+        showAfterFirstSubscriptionAd().catch(() => {});
       }
 
       // After saving, return to Home screen cleanly
@@ -203,7 +206,7 @@ export function AddSubscriptionScreen({ navigation, route }: AddSubscriptionScre
           label={t('addSubscription.amount')}
           value={amount}
           onChangeText={setAmount}
-          currency="$"
+          currency={getCurrencySymbol(app.currency)}
         />
 
         <SegmentedControl

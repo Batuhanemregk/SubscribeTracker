@@ -17,7 +17,7 @@ import * as Haptics from 'expo-haptics';
 import { ThemeProvider, useTheme } from './src/theme';
 import { AnimatedTabScreen } from './src/components';
 import { initData } from './src/data/repository';
-import { useSettingsStore, useSubscriptionStore, useCurrencyStore } from './src/state';
+import { useSettingsStore, useSubscriptionStore, useCurrencyStore, usePlanStore, migrateSubscriptionIds } from './src/state';
 import { t, initLocaleFromSettings } from './src/i18n';
 import {
   requestNotificationPermission,
@@ -25,9 +25,9 @@ import {
   addNotificationResponseListener,
   loadInterstitialAd,
   initAdManager,
-  startAppOpenAdTimer,
   authenticateWithBiometrics,
   initPurchases,
+  checkProStatus,
   checkCatalogUpdate,
 } from './src/services';
 import {
@@ -176,6 +176,19 @@ function AppContent() {
     const prepare = async () => {
       await initData();
 
+      // Migrate non-UUID subscription IDs to proper UUIDs (one-time migration)
+      const subStore = useSubscriptionStore.getState();
+      const migrationResult = migrateSubscriptionIds({
+        subscriptions: subStore.subscriptions,
+        paymentHistory: subStore.paymentHistory,
+      });
+      if (migrationResult.migrated) {
+        useSubscriptionStore.setState({
+          subscriptions: migrationResult.subscriptions,
+          paymentHistory: migrationResult.paymentHistory,
+        });
+      }
+
       // Initialize locale from saved language preference
       const savedLanguage = useSettingsStore.getState().app.language;
       initLocaleFromSettings(savedLanguage || 'system');
@@ -187,8 +200,23 @@ function AppContent() {
       
       loadInterstitialAd();
       await initAdManager();
-      startAppOpenAdTimer();
+
       await initPurchases();
+
+      // Sync pro status with RevenueCat entitlements
+      try {
+        const isRevenueCatPro = await checkProStatus();
+        const localPro = usePlanStore.getState().isPro();
+        if (isRevenueCatPro && !localPro) {
+          usePlanStore.getState().upgradeToPro();
+          console.log('[App] Pro status synced: upgraded from RevenueCat');
+        } else if (!isRevenueCatPro && localPro) {
+          usePlanStore.getState().downgradeToStandard();
+          console.log('[App] Pro status synced: downgraded (subscription expired)');
+        }
+      } catch (e) {
+        console.warn('[App] Pro status sync failed:', e);
+      }
 
       // Fetch exchange rates in background
       useCurrencyStore.getState().fetchRates();

@@ -46,26 +46,46 @@ function isSimilarAmount(a: number, b: number): boolean {
 }
 
 /**
- * Deduplicate multi-month recurring charges
- * Groups by normalized name + similar amount, keeps latest date
+ * Deduplicate multi-month recurring charges.
+ * Groups by normalized service name (case-insensitive, trimmed).
+ * For duplicates: keeps the entry with highest confidence, preserves latest date.
+ * Each service appears only once in the output.
  */
 function deduplicateRecurring(subs: ExtractedSubscription[]): ExtractedSubscription[] {
   const groups = new Map<string, ExtractedSubscription[]>();
 
   for (const sub of subs) {
     const key = normalizeName(sub.merchantName || sub.name);
-    
-    let matched = false;
-    for (const [groupKey, group] of groups) {
-      // Check if name matches and amount is similar
-      if (key === groupKey && isSimilarAmount(sub.amount, group[0].amount)) {
-        group.push(sub);
-        matched = true;
-        break;
+    // Also try normalizing the clean name for matching
+    const altKey = normalizeName(sub.name);
+
+    // Check if this sub matches an existing group by name
+    let matchedKey: string | null = null;
+    if (groups.has(key)) {
+      matchedKey = key;
+    } else if (key !== altKey && groups.has(altKey)) {
+      matchedKey = altKey;
+    } else {
+      // Check for partial name matches (one contains the other)
+      for (const [groupKey] of groups) {
+        if (groupKey.length >= 4 && key.length >= 4) {
+          if (groupKey.includes(key) || key.includes(groupKey)) {
+            matchedKey = groupKey;
+            break;
+          }
+        }
+        if (groupKey.length >= 4 && altKey.length >= 4) {
+          if (groupKey.includes(altKey) || altKey.includes(groupKey)) {
+            matchedKey = groupKey;
+            break;
+          }
+        }
       }
     }
 
-    if (!matched) {
+    if (matchedKey) {
+      groups.get(matchedKey)!.push(sub);
+    } else {
       groups.set(key, [sub]);
     }
   }
@@ -79,23 +99,32 @@ function deduplicateRecurring(subs: ExtractedSubscription[]): ExtractedSubscript
       continue;
     }
 
-    // Sort by date descending, keep the latest
+    // Sort by confidence descending, then by date descending
     const sorted = group.sort((a, b) => {
+      // Primary: highest confidence
+      if (b.confidence !== a.confidence) return b.confidence - a.confidence;
+      // Secondary: latest date
       const dateA = a.lastChargeDate ? new Date(a.lastChargeDate).getTime() : 0;
       const dateB = b.lastChargeDate ? new Date(b.lastChargeDate).getTime() : 0;
       return dateB - dateA;
     });
 
-    const latest = sorted[0];
-    const allDates = sorted
+    const best = sorted[0];
+    const allDates = group
       .map((s) => s.lastChargeDate)
       .filter(Boolean) as string[];
 
+    // Use the latest date across all occurrences
+    const latestDate = allDates.length > 0
+      ? allDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0]
+      : best.lastChargeDate;
+
     // Boost confidence for recurring charges
-    const boostedConfidence = Math.min(1, latest.confidence + (group.length * 0.05));
+    const boostedConfidence = Math.min(1, best.confidence + (group.length * 0.05));
 
     deduplicated.push({
-      ...latest,
+      ...best,
+      lastChargeDate: latestDate,
       occurrenceCount: group.length,
       chargedDates: allDates,
       isRecurring: true,

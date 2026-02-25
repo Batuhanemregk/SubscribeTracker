@@ -9,18 +9,12 @@ import { SEED_SUBSCRIPTIONS } from './seed';
 const STORAGE_KEY = '@subscriptions';
 
 /**
- * Initialize data with seed if empty
+ * Initialize data with seed if empty.
+ * No-op: seeding is now handled by HomeScreen with a persisted dataSeeded flag
+ * to prevent deleted subscriptions from reappearing.
  */
 export async function initData(): Promise<void> {
-  try {
-    const existing = await AsyncStorage.getItem(STORAGE_KEY);
-    if (!existing || existing === '[]') {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(SEED_SUBSCRIPTIONS));
-      console.log('✅ Seed data loaded');
-    }
-  } catch (e) {
-    console.error('Init error:', e);
-  }
+  // Seed logic moved to HomeScreen with dataSeeded flag guard
 }
 
 /**

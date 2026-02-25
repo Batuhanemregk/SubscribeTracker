@@ -4,6 +4,7 @@
  */
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Alert } from 'react-native';
+import { t } from '../i18n';
 
 /**
  * Check if biometric authentication is available on this device
@@ -39,7 +40,7 @@ export async function getBiometricType(): Promise<string> {
  * @returns true if authentication succeeded
  */
 export async function authenticateWithBiometrics(
-  reason: string = 'Unlock SubscribeTracker'
+  reason?: string
 ): Promise<boolean> {
   try {
     const available = await isBiometricAvailable();
@@ -48,10 +49,10 @@ export async function authenticateWithBiometrics(
     }
 
     const result = await LocalAuthentication.authenticateAsync({
-      promptMessage: reason,
-      fallbackLabel: 'Use Passcode',
+      promptMessage: reason || t('biometric.unlockApp'),
+      fallbackLabel: t('biometric.usePasscode'),
       disableDeviceFallback: false,
-      cancelLabel: 'Cancel',
+      cancelLabel: t('biometric.cancel'),
     });
 
     return result.success;
@@ -72,19 +73,19 @@ export async function requestBiometricEnrollment(): Promise<boolean> {
     const compatible = await LocalAuthentication.hasHardwareAsync();
     if (!compatible) {
       Alert.alert(
-        'Not Supported',
-        'Your device does not support biometric authentication.'
+        t('biometric.notSupported'),
+        t('biometric.notSupportedMessage')
       );
     } else {
       Alert.alert(
-        'Not Set Up',
-        'Please set up Face ID, Touch ID, or Fingerprint in your device settings first.'
+        t('biometric.notSetUp'),
+        t('biometric.notSetUpMessage')
       );
     }
     return false;
   }
-  
+
   // Verify the user can authenticate before enabling
-  const success = await authenticateWithBiometrics('Verify your identity to enable biometric lock');
+  const success = await authenticateWithBiometrics(t('biometric.verifyIdentity'));
   return success;
 }

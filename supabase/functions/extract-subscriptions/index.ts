@@ -64,7 +64,8 @@ serve(async (req: Request) => {
       );
     }
 
-    const { snippets, model = 'gpt-4o-mini' } = await req.json();
+    const { snippets } = await req.json();
+    const model = 'gpt-4o-mini';
 
     if (!snippets || !Array.isArray(snippets) || snippets.length === 0) {
       return new Response(

@@ -54,6 +54,7 @@
     "goodEvening": "İyi Akşamlar",
     "listView": "Liste görünümü",
     "findSubscriptions": "Aboneliklerinizi Bulun",
+    "findTitle": "Aboneliklerinizi Bulun",
     "findSubtitle": "Banka dökümanınızı tarayın, tekrarlayan ödemelerinizi otomatik olarak tespit edelim",
     "scanStatement": "Ekstre Tara",
     "enterManually": "Manuel olarak girin"
@@ -72,6 +73,7 @@
     "subtitle": "Aboneliklerinizi PDF veya görüntüden otomatik tespit edin"
   },
   "subscription": {
+    "notFound": "Abonelik bulunamadı",
     "details": "Abonelik Detayları",
     "paymentHistory": "Ödeme Geçmişi",
     "statistics": "İstatistikler",
@@ -102,7 +104,11 @@
     "perWeek": "hafta",
     "perMonth": "ay",
     "perQuarter": "çeyrek",
-    "perYear": "yıl"
+    "perYear": "yıl",
+    "perWeekShort": "/hft",
+    "perQuarterShort": "/çyr",
+    "perWeekSlash": "/hafta",
+    "oneTime": "tek seferlik"
   },
   "addSubscription": {
     "title": "Abonelik Ekle",
@@ -157,6 +163,7 @@
     "totalThisMonth": "Bu Ayın Toplamı",
     "dueIn": "{{days}} gün içinde",
     "dueToday": "Bugün",
+    "paymentsOnDay": "{{day}}. gün ödemeleri",
     "months": {
       "january": "Ocak",
       "february": "Şubat",
@@ -271,6 +278,10 @@
     "security": "Güvenlik",
     "biometricLock": "Biyometrik Kilit",
     "biometricSubtitle": "Face ID veya parmak izi gerekli",
+    "biometricAppSubtitle": "Face ID/Touch ID ile uygulamayı kilitle",
+    "biometricAppSubtitlePro": "Face ID/Touch ID ile uygulamayı kilitle (Pro)",
+    "biometricProTitle": "Pro Özellik",
+    "biometricProMessage": "Biyometrik kilit Pro özelliğidir. Kilidini açmak için yükseltin!",
     "upgradeForBiometric": "Biyometrik kilit için Pro'ya yükseltin",
     "preferences": "Tercihler",
     "appearance": "Görünüm",
@@ -304,6 +315,29 @@
     "dark": "Koyu",
     "light": "Açık",
     "system": "Sistem",
+    "darkMode": "Koyu Mod",
+    "lightMode": "Açık Mod",
+    "systemMode": "Sistem Modu",
+    "lightModePro": "Açık Mod (Pro)",
+    "systemModePro": "Sistem Modu (Pro)",
+    "notifSent": "Gönderildi!",
+    "notifSentMessage": "Bildirimlerinizi kontrol edin",
+    "clearDataAlertTitle": "Tüm Verileri Temizle",
+    "clearDataAlertMessage": "Bu işlem tüm aboneliklerinizi ve ayarlarınızı silecektir. Bu geri alınamaz.",
+    "clearDataAlertButton": "Temizle",
+    "dataCleared": "Tüm veriler temizlendi",
+    "disconnectAlertTitle": "Hesabı Ayır",
+    "disconnectAlertMessage": "Bu işlem hesabınızı çıkış yapacak ve senkronizasyon verilerini kaldıracaktır. Yerel abonelikleriniz kalacaktır.",
+    "disconnectAlertButton": "Ayır",
+    "deleteAlertTitle": "Hesabı ve Verileri Sil",
+    "deleteAlertMessage": "Bu işlem abonelikler, hesap bağlantıları ve ayarlar dahil TÜM verilerinizi kalıcı olarak silecektir. Bu geri alınamaz.",
+    "deleteAlertButton": "Her Şeyi Sil",
+    "accountDeleted": "Hesap Silindi",
+    "accountDeletedMessage": "Tüm verileriniz bu cihazdan kaldırıldı.",
+    "resetPlanTitle": "Standart'a Sıfırla",
+    "resetPlanMessage": "Bu işlem planınızı Standart'a düşürecektir (Debug).",
+    "resetPlanButton": "Sıfırla",
+    "resetPlanDone": "Plan Standart'a sıfırlandı",
     "signedIn": "Giriş Yapıldı",
     "welcome": "Hoş geldin, {{name}}"
   },
@@ -332,7 +366,20 @@
       "customCategories": "Özel Kategoriler",
       "prioritySupport": "Öncelikli Destek"
     },
-    "dismiss": "Belki sonra"
+    "dismiss": "Belki sonra",
+    "purchaseError": "Satın Alma Başarısız",
+    "productNotAvailable": "Bu ürün şu anda mevcut değil. Lütfen daha sonra tekrar deneyin.",
+    "welcomePro": "Pro'ya Hoş Geldiniz!",
+    "welcomeProMessage": "Artık tüm premium özelliklere erişiminiz var.",
+    "alreadyOwned": "Zaten Sahipsiniz",
+    "networkError": "Bağlantı Hatası",
+    "purchaseErrorGeneric": "Bir sorun oluştu. Lütfen daha sonra tekrar deneyin.",
+    "purchasesNotConfigured": "Satın alma servisi kullanılamıyor.",
+    "restored": "Satın Almalar Geri Yüklendi!",
+    "restoredMessage": "Pro aboneliğiniz geri yüklendi.",
+    "noPurchases": "Satın Alma Bulunamadı",
+    "noPurchasesMessage": "Bu hesap için önceki satın alma bulunamadı.",
+    "restoreError": "Satın almalar geri yüklenemedi. Lütfen tekrar deneyin."
   },
   "onboarding": {
     "slide1Title": "Aboneliklerini Takip Et",
@@ -419,6 +466,16 @@
   "terms": {
     "title": "Kullanım Şartları",
     "lastUpdated": "Son güncelleme: {{date}}"
+  },
+  "biometric": {
+    "unlockApp": "SubscribeTracker Kilidini Aç",
+    "usePasscode": "Şifre Kullan",
+    "cancel": "İptal",
+    "notSupported": "Desteklenmiyor",
+    "notSupportedMessage": "Cihazınız biyometrik kimlik doğrulamayı desteklemiyor.",
+    "notSetUp": "Ayarlanmamış",
+    "notSetUpMessage": "Lütfen önce cihaz ayarlarınızdan Face ID, Touch ID veya Parmak İzi ayarlayın.",
+    "verifyIdentity": "Biyometrik kilidi etkinleştirmek için kimliğinizi doğrulayın"
   },
   "languageSelector": {
     "title": "Dil",

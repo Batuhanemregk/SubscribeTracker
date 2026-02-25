@@ -99,8 +99,8 @@ export function PlanPickerScreen({ navigation: navProp, route }: PlanPickerScree
     switch (cycle) {
       case 'monthly': return t('common.perMonth');
       case 'yearly': return t('common.perYear');
-      case 'weekly': return '/week';
-      case 'once': return ' one-time';
+      case 'weekly': return t('subscription.perWeekSlash');
+      case 'once': return ` ${t('subscription.oneTime')}`;
       default: return `/${cycle}`;
     }
   };

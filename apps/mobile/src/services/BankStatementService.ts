@@ -370,10 +370,19 @@ export async function extractSubscriptionsFromStatement(
 
     if (error) {
       console.error('Edge function error:', error);
-      return { 
-        success: false, 
-        subscriptions: [], 
-        error: `Extraction failed: ${error.message}` 
+      // Extract user-friendly error message from the Edge Function response if available
+      let errorMessage: string;
+      if (data?.error && typeof data.error === 'string') {
+        errorMessage = data.error;
+      } else if (error.message?.includes('non-2xx')) {
+        errorMessage = 'The analysis service is temporarily unavailable. Please try again later.';
+      } else {
+        errorMessage = error.message || 'Failed to analyze the document. Please try again.';
+      }
+      return {
+        success: false,
+        subscriptions: [],
+        error: errorMessage,
       };
     }
 

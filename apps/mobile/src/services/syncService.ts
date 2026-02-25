@@ -19,6 +19,24 @@ interface SyncResult {
 }
 
 /**
+ * Ensure the Supabase client has a valid session before making DB calls.
+ * Calls getSession() which triggers auto-refresh if the token is expired.
+ */
+async function ensureValidSession(): Promise<boolean> {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session) {
+      console.error('[Sync] No valid session:', error?.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('[Sync] Session check failed:', err);
+    return false;
+  }
+}
+
+/**
  * Convert local subscription format to Supabase format
  */
 function toSupabaseFormat(sub: Subscription, userId: string) {
@@ -80,13 +98,19 @@ export async function pushToCloud(
   }
 
   try {
+    // Ensure we have a valid session before making DB calls
+    const hasSession = await ensureValidSession();
+    if (!hasSession) {
+      return { success: false, syncedCount: 0, error: 'Session expired. Please sign in again.' };
+    }
+
     const supabaseData = subscriptions.map(sub => toSupabaseFormat(sub, userId));
-    
+
     const { error } = await supabase
       .from('subscriptions')
-      .upsert(supabaseData as any, { 
+      .upsert(supabaseData as any, {
         onConflict: 'id',
-        ignoreDuplicates: false 
+        ignoreDuplicates: false
       });
 
     if (error) {
@@ -115,6 +139,12 @@ export async function pullFromCloud(userId: string): Promise<{
   }
 
   try {
+    // Ensure we have a valid session before making DB calls
+    const hasSession = await ensureValidSession();
+    if (!hasSession) {
+      return { success: false, subscriptions: [], error: 'Session expired. Please sign in again.' };
+    }
+
     const { data, error } = await supabase
       .from('subscriptions')
       .select('*')
