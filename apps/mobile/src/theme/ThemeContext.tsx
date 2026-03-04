@@ -5,8 +5,9 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 import { usePlanStore, useSettingsStore } from '../state';
+import { ACCENT_COLORS, type AccentColorKey } from './colors';
 
-// Base colors that don't change between themes
+// Base colors that don't change between themes (accent primary overrides these)
 const baseColors = {
   primary: '#8B5CF6',
   primaryLight: '#A78BFA',
@@ -125,6 +126,8 @@ interface ThemeContextValue {
   isDark: boolean;
   mode: ThemeMode;
   canUseLight: boolean; // Pro only
+  accentColor: AccentColorKey;
+  amoledMode: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
@@ -132,14 +135,16 @@ const ThemeContext = createContext<ThemeContextValue>({
   isDark: true,
   mode: 'dark',
   canUseLight: false,
+  accentColor: 'purple',
+  amoledMode: false,
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemColorScheme = useColorScheme();
-  const { app } = useSettingsStore();
-  
+  const { app, accentColor, amoledMode } = useSettingsStore();
+
   const userTheme = app.theme;
-  
+
   // Determine actual theme — all users can choose
   const isDark = useMemo(() => {
     if (userTheme === 'system') {
@@ -147,16 +152,51 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
     return userTheme !== 'light';
   }, [userTheme, systemColorScheme]);
-  
-  const colors = isDark ? darkColors : lightColors;
-  
+
+  // Resolve accent primary color from user selection
+  const accentKey = (accentColor as AccentColorKey) in ACCENT_COLORS
+    ? (accentColor as AccentColorKey)
+    : 'purple';
+  const accentPrimary = ACCENT_COLORS[accentKey].primary;
+
+  // Build the final color set: base theme + accent override + AMOLED override
+  const colors = useMemo(() => {
+    const base = isDark ? darkColors : lightColors;
+    const withAccent = {
+      ...base,
+      primary: accentPrimary,
+      primaryLight: accentPrimary,
+      primaryDark: accentPrimary,
+      gradients: {
+        ...base.gradients,
+        primary: [accentPrimary, accentPrimary] as const,
+      },
+    };
+    // AMOLED: true black background only in dark mode
+    if (isDark && amoledMode) {
+      return {
+        ...withAccent,
+        bg: '#000000',
+        bgCard: '#0A0A0A',
+        bgElevated: '#111111',
+        gradients: {
+          ...withAccent.gradients,
+          card: ['#0A0A0A', '#111111'] as const,
+        },
+      };
+    }
+    return withAccent;
+  }, [isDark, accentPrimary, amoledMode]);
+
   const value: ThemeContextValue = {
     colors,
     isDark,
     mode: userTheme as ThemeMode,
     canUseLight: true,
+    accentColor: accentKey,
+    amoledMode: isDark && amoledMode,
   };
-  
+
   return (
     <ThemeContext.Provider value={value}>
       {children}

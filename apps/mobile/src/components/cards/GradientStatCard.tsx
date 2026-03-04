@@ -21,16 +21,18 @@ interface GradientStatCardProps {
   subtitle?: string;
   delay?: number;
   style?: ViewStyle;
+  accessibilityLabel?: string;
 }
 
-export function GradientStatCard({ 
-  icon, 
+export function GradientStatCard({
+  icon,
   iconColor,
-  label, 
-  value, 
+  label,
+  value,
   subtitle,
   delay = 0,
-  style 
+  style,
+  accessibilityLabel,
 }: GradientStatCardProps) {
   const { colors } = useTheme();
   const resolvedIconColor = iconColor || colors.primary;
@@ -53,7 +55,11 @@ export function GradientStatCard({
   }));
 
   return (
-    <Animated.View style={[styles.container, { borderColor: colors.border }, animatedStyle, style]}>
+    <Animated.View
+      style={[styles.container, { borderColor: colors.border }, animatedStyle, style]}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="text"
+    >
       <LinearGradient
         colors={[`${resolvedIconColor}25`, `${resolvedIconColor}08`]}
         start={{ x: 0, y: 0 }}

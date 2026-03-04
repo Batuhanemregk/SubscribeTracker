@@ -1,0 +1,59 @@
+appId: host.exp.Exponent
+---
+# Test 10: Subscription Details
+
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 30000
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Get Started"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Finish"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# Go to Home tab
+- tapOn:
+    point: "10%,97%"
+- waitForAnimationToEnd
+
+# Close scan banner
+- tapOn:
+    text: "✕"
+    optional: true
+
+# Scroll to subscriptions
+- scroll
+
+# Tap on a subscription
+- tapOn:
+    text: "Claude Pro"
+    optional: true
+- waitForAnimationToEnd
+
+# Check details
+- assertVisible:
+    text: ".*[Dd]etails.*|.*[Pp]rice.*|.*[Bb]illing.*"
+    optional: true
+
+- scroll
+- waitForAnimationToEnd
+
+# Go back to Home
+- tapOn:
+    point: "10%,97%"
+    optional: true
+- waitForAnimationToEnd

@@ -1,12 +1,14 @@
 /**
  * CatalogService - Remote service catalog auto-update
- * 
+ *
  * Checks Supabase for updated service catalog data and syncs locally.
  * Falls back to bundled known-services.json when offline.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import bundledCatalog from '../data/known-services.json';
+import type { Subscription } from '../types';
+import { logger } from './LoggerService';
 
 const CATALOG_STORAGE_KEY = 'service_catalog_cache';
 const CATALOG_VERSION_KEY = 'service_catalog_version';
@@ -53,7 +55,7 @@ export async function getServiceCatalog(): Promise<ServiceCatalog> {
       return JSON.parse(cached) as ServiceCatalog;
     }
   } catch (error) {
-    console.warn('Failed to read cached catalog:', error);
+    logger.warn('Catalog', 'Failed to read cached catalog:', error);
   }
   
   return {
@@ -100,7 +102,7 @@ export async function checkCatalogUpdate(): Promise<boolean> {
     const remoteServices = data as unknown as ServiceCatalogRow[] | null;
 
     if (error || !remoteServices || remoteServices.length === 0) {
-      console.log('Catalog: No remote data or error, using local');
+      logger.info('Catalog', 'No remote data or error, using local');
       return false;
     }
 
@@ -115,7 +117,7 @@ export async function checkCatalogUpdate(): Promise<boolean> {
     // Check if we already have this version
     const localVersion = await AsyncStorage.getItem(CATALOG_VERSION_KEY);
     if (localVersion === remoteVersion) {
-      console.log('Catalog: Already up to date');
+      logger.info('Catalog', 'Already up to date');
       return false;
     }
 
@@ -149,10 +151,10 @@ export async function checkCatalogUpdate(): Promise<boolean> {
     await AsyncStorage.setItem(CATALOG_STORAGE_KEY, JSON.stringify(updatedCatalog));
     await AsyncStorage.setItem(CATALOG_VERSION_KEY, remoteVersion);
 
-    console.log(`Catalog: Updated to version ${remoteVersion} (${updatedServices.length} remote + ${mergedServices.length - updatedServices.length} bundled)`);
+    logger.info('Catalog', `Updated to version ${remoteVersion} (${updatedServices.length} remote + ${mergedServices.length - updatedServices.length} bundled)`);
     return true;
   } catch (error) {
-    console.warn('Catalog update check failed:', error);
+    logger.warn('Catalog', 'Update check failed:', error);
     return false;
   }
 }
@@ -162,4 +164,62 @@ export async function checkCatalogUpdate(): Promise<boolean> {
  */
 export async function clearCatalogCache(): Promise<void> {
   await AsyncStorage.multiRemove([CATALOG_STORAGE_KEY, CATALOG_VERSION_KEY, LAST_CHECK_KEY]);
+}
+
+export interface PriceChangeAlert {
+  subscriptionId: string;
+  subscriptionName: string;
+  oldPrice: number;
+  newPrice: number;
+  currency: string;
+  type: 'price_increase' | 'price_decrease';
+}
+
+/**
+ * Fuzzy-match a subscription name against a catalog service name.
+ * Returns true when one string contains the other (case-insensitive).
+ */
+function fuzzyMatch(subName: string, catalogName: string): boolean {
+  const a = subName.toLowerCase().trim();
+  const b = catalogName.toLowerCase().trim();
+  return a === b || a.includes(b) || b.includes(a);
+}
+
+/**
+ * Compare active subscriptions against catalog prices.
+ * Returns an alert for each subscription whose amount differs from the
+ * first matching catalog plan price.
+ */
+export function checkPriceChanges(
+  subscriptions: Subscription[],
+  catalog: ServiceCatalog | CatalogServiceItem[]
+): PriceChangeAlert[] {
+  const services: CatalogServiceItem[] = Array.isArray(catalog)
+    ? catalog
+    : catalog.services;
+
+  const alerts: PriceChangeAlert[] = [];
+
+  for (const sub of subscriptions) {
+    if (sub.status !== 'active') continue;
+
+    const matched = services.find((s) => fuzzyMatch(sub.name, s.name));
+    if (!matched || !matched.plans || matched.plans.length === 0) continue;
+
+    // Use the first plan price as the reference catalog price
+    const catalogPrice = matched.plans[0].price;
+
+    if (catalogPrice === sub.amount) continue;
+
+    alerts.push({
+      subscriptionId: sub.id,
+      subscriptionName: sub.name,
+      oldPrice: sub.amount,
+      newPrice: catalogPrice,
+      currency: sub.currency,
+      type: catalogPrice > sub.amount ? 'price_increase' : 'price_decrease',
+    });
+  }
+
+  return alerts;
 }

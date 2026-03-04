@@ -12,23 +12,30 @@ interface SecondaryButtonProps {
   disabled?: boolean;
   fullWidth?: boolean;
   style?: ViewStyle;
+  accessibilityLabel?: string;
+  testID?: string;
 }
 
-export function SecondaryButton({ 
-  title, 
-  onPress, 
-  loading = false, 
+export function SecondaryButton({
+  title,
+  onPress,
+  loading = false,
   disabled = false,
   fullWidth = true,
-  style 
+  style,
+  accessibilityLabel,
+  testID,
 }: SecondaryButtonProps) {
   const { colors } = useTheme();
 
   return (
     <TouchableOpacity
+      testID={testID}
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.7}
+      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityRole="button"
       style={[
         styles.container,
         { borderColor: colors.border, backgroundColor: colors.bgCard },
@@ -40,7 +47,11 @@ export function SecondaryButton({
       {loading ? (
         <ActivityIndicator color={colors.primary} size="small" />
       ) : (
-        <Text style={[styles.text, { color: colors.text }, disabled && { color: colors.textMuted }]}>{title}</Text>
+        <Text
+          style={[styles.text, { color: colors.text }, disabled && { color: colors.textMuted }]}
+        >
+          {title}
+        </Text>
       )}
     </TouchableOpacity>
   );

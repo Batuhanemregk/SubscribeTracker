@@ -15,7 +15,7 @@ import * as Haptics from 'expo-haptics';
 
 // Internal imports
 import { ThemeProvider, useTheme } from './src/theme';
-import { AnimatedTabScreen } from './src/components';
+import { AnimatedTabScreen, ErrorBoundary } from './src/components';
 import { initData } from './src/data/repository';
 import { useSettingsStore, useSubscriptionStore, useCurrencyStore, usePlanStore, migrateSubscriptionIds } from './src/state';
 import { t, initLocaleFromSettings } from './src/i18n';
@@ -29,12 +29,14 @@ import {
   initPurchases,
   checkProStatus,
   checkCatalogUpdate,
+  initRatingTracking,
 } from './src/services';
 import {
   HomeScreen,
   InsightsScreen,
   BudgetScreen,
   CalendarScreen,
+  TimelineScreen,
   SettingsScreen,
   AddSubscriptionScreen,
   SubscriptionDetailsScreen,
@@ -45,6 +47,10 @@ import {
   BankStatementScanScreen,
   PrivacyPolicyScreen,
   TermsOfServiceScreen,
+  ScreenshotImportScreen,
+  BubbleViewScreen,
+  MonthlyReportScreen,
+  CategoryManagementScreen,
 } from './src/screens';
 
 // Navigation setup
@@ -54,9 +60,9 @@ const Stack = createNativeStackNavigator();
 // Tab route → icon + i18n key mapping
 const TAB_CONFIG: Record<string, { icon: keyof typeof Ionicons.glyphMap; labelKey: string }> = {
   Home: { icon: 'home', labelKey: 'tabs.home' },
+  Timeline: { icon: 'time', labelKey: 'tabs.timeline' },
   Insights: { icon: 'stats-chart', labelKey: 'tabs.insights' },
   Budget: { icon: 'wallet', labelKey: 'tabs.budget' },
-  Calendar: { icon: 'calendar', labelKey: 'tabs.calendar' },
   Settings: { icon: 'settings', labelKey: 'tabs.settings' },
 };
 
@@ -66,9 +72,9 @@ function MainTabs() {
 
   // Wrap screens with fade animation
   const AnimatedHome = (props: any) => (<AnimatedTabScreen><HomeScreen {...props} /></AnimatedTabScreen>);
+  const AnimatedTimeline = (props: any) => (<AnimatedTabScreen><TimelineScreen {...props} /></AnimatedTabScreen>);
   const AnimatedInsights = (props: any) => (<AnimatedTabScreen><InsightsScreen {...props} /></AnimatedTabScreen>);
   const AnimatedBudget = (props: any) => (<AnimatedTabScreen><BudgetScreen {...props} /></AnimatedTabScreen>);
-  const AnimatedCalendar = (props: any) => (<AnimatedTabScreen><CalendarScreen {...props} /></AnimatedTabScreen>);
   const AnimatedSettings = (props: any) => (<AnimatedTabScreen><SettingsScreen {...props} /></AnimatedTabScreen>);
 
   return (
@@ -119,6 +125,8 @@ function MainTabs() {
           tabBarActiveTintColor: colors.primary,
           tabBarInactiveTintColor: colors.textMuted,
           tabBarLabel: t(config.labelKey),
+          tabBarAccessibilityLabel: route.name,
+          tabBarTestID: `tab-${route.name.toLowerCase()}`,
           tabBarLabelStyle: {
             fontSize: 10,
             fontWeight: '600' as const,
@@ -140,9 +148,9 @@ function MainTabs() {
       }}
     >
       <Tab.Screen name="Home" component={AnimatedHome} />
+      <Tab.Screen name="Timeline" component={AnimatedTimeline} />
       <Tab.Screen name="Insights" component={AnimatedInsights} />
       <Tab.Screen name="Budget" component={AnimatedBudget} />
-      <Tab.Screen name="Calendar" component={AnimatedCalendar} />
       <Tab.Screen name="Settings" component={AnimatedSettings} />
     </Tab.Navigator>
   );
@@ -202,6 +210,7 @@ function AppContent() {
       await initAdManager();
 
       await initPurchases();
+      initRatingTracking().catch(() => {});
 
       // Sync pro status with RevenueCat entitlements
       try {
@@ -352,6 +361,26 @@ function AppContent() {
             component={TermsOfServiceScreen}
             options={{ animation: 'slide_from_right' }}
           />
+          <Stack.Screen
+            name="ScreenshotImport"
+            component={ScreenshotImportScreen}
+            options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="BubbleView"
+            component={BubbleViewScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="MonthlyReport"
+            component={MonthlyReportScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="CategoryManagement"
+            component={CategoryManagementScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
         </Stack.Navigator>
       </NavigationContainer>
     </>
@@ -364,7 +393,9 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider>
         <SafeAreaProvider>
-          <AppContent />
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
         </SafeAreaProvider>
       </ThemeProvider>
     </GestureHandlerRootView>

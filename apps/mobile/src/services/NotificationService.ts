@@ -7,6 +7,7 @@ import { Platform } from 'react-native';
 import type { Subscription } from '../types';
 import { t } from '../i18n';
 import { formatCurrency } from '../utils';
+import { logger } from './LoggerService';
 
 // Configure notification behavior
 Notifications.setNotificationHandler({
@@ -34,7 +35,7 @@ export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
  */
 export async function requestNotificationPermission(): Promise<boolean> {
   if (!Device.isDevice) {
-    console.log('Push notifications require a physical device');
+    logger.info('Notifications', 'Push notifications require a physical device');
     return false;
   }
 
@@ -47,7 +48,7 @@ export async function requestNotificationPermission(): Promise<boolean> {
   }
 
   if (finalStatus !== 'granted') {
-    console.log('Notification permission not granted');
+    logger.info('Notifications', 'Permission not granted');
     return false;
   }
 
@@ -111,6 +112,54 @@ export async function scheduleBillingReminder(
 }
 
 /**
+ * Schedule aggressive trial end reminders (3 days, 1 day, day-of)
+ */
+export async function scheduleTrialReminder(
+  subscription: Subscription,
+  daysBeforeEnd: number,
+  currency: string = 'USD'
+): Promise<string | null> {
+  if (!subscription.isTrial || !subscription.trialEndsAt) return null;
+
+  const trialEndDate = new Date(subscription.trialEndsAt);
+  const reminderDate = new Date(trialEndDate);
+  reminderDate.setDate(reminderDate.getDate() - daysBeforeEnd);
+  reminderDate.setHours(9, 0, 0, 0);
+
+  if (reminderDate <= new Date()) return null;
+
+  const formattedAmount = formatCurrency(subscription.amount, currency);
+
+  let title: string;
+  if (daysBeforeEnd === 0) {
+    title = t('notifications.trialEndsToday', { name: subscription.name });
+  } else if (daysBeforeEnd === 1) {
+    title = t('notifications.trialEndsTomorrow', { name: subscription.name });
+  } else {
+    title = t('notifications.trialEndsInDays', { name: subscription.name, days: daysBeforeEnd });
+  }
+
+  const identifier = await Notifications.scheduleNotificationAsync({
+    content: {
+      title,
+      body: t('notifications.trialChargeWarning', { amount: formattedAmount }),
+      data: {
+        subscriptionId: subscription.id,
+        type: 'trial-reminder',
+      },
+      sound: 'default',
+      categoryIdentifier: 'billing-reminders',
+    },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: reminderDate,
+    },
+  });
+
+  return identifier;
+}
+
+/**
  * Cancel all scheduled notifications for a subscription
  */
 export async function cancelSubscriptionReminders(subscriptionId: string): Promise<void> {
@@ -141,15 +190,41 @@ export async function scheduleAllReminders(
 
   // Schedule new reminders
   const activeSubscriptions = subscriptions.filter(s => s.status === 'active');
-  
+
   for (const subscription of activeSubscriptions) {
-    for (const daysBefore of settings.reminderDays) {
+    // Schedule trial reminders (aggressive: 3 days, 1 day, day-of)
+    if (subscription.isTrial && subscription.trialEndsAt) {
+      for (const daysBefore of [3, 1, 0]) {
+        await scheduleTrialReminder(subscription, daysBefore, currency);
+      }
+    }
+
+    const reminderDays = subscription.customReminderDays != null
+      ? subscription.customReminderDays
+      : settings.reminderDays;
+
+    for (const daysBefore of reminderDays) {
       await scheduleBillingReminder(subscription, daysBefore, currency);
     }
   }
 
   const count = await getScheduledNotificationCount();
-  console.log(`Scheduled ${count} billing reminders`);
+  logger.info('Notifications', `Scheduled ${count} billing reminders`);
+}
+
+/**
+ * Suggest reminder days based on monthly subscription cost
+ */
+export function getSuggestedReminderDays(monthlyAmount: number): number[] {
+  if (monthlyAmount < 5) {
+    return [1];
+  } else if (monthlyAmount < 15) {
+    return [3, 1];
+  } else if (monthlyAmount < 30) {
+    return [7, 3, 1];
+  } else {
+    return [7, 3, 1, 0];
+  }
 }
 
 /**
@@ -179,6 +254,45 @@ export function addNotificationResponseListener(
       callback(data.subscriptionId);
     }
   });
+}
+
+/**
+ * Send an immediate notification about a subscription price change
+ */
+export async function schedulePriceChangeNotification(
+  subscriptionName: string,
+  oldPrice: number,
+  newPrice: number,
+  currency: string
+): Promise<string | null> {
+  const formattedOld = formatCurrency(oldPrice, currency);
+  const formattedNew = formatCurrency(newPrice, currency);
+  const isIncrease = newPrice > oldPrice;
+
+  try {
+    const identifier = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: isIncrease
+          ? t('alerts.priceIncrease')
+          : t('alerts.priceDecrease'),
+        body: t('alerts.priceChangedFrom', {
+          name: subscriptionName,
+          old: formattedOld,
+          new: formattedNew,
+        }),
+        data: {
+          subscriptionName,
+          type: isIncrease ? 'price_increase' : 'price_decrease',
+        },
+        sound: 'default',
+      },
+      trigger: null, // Send immediately
+    });
+    return identifier;
+  } catch (error) {
+    logger.warn('Notifications', 'Failed to schedule price change notification:', error);
+    return null;
+  }
 }
 
 /**

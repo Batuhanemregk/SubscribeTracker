@@ -9,25 +9,28 @@ import { DEFAULT_STANDARD_PLAN, DEFAULT_PRO_PLAN } from '../../types';
 
 interface PlanState {
   plan: UserPlan;
-  
+
   // Getters
   isPro: () => boolean;
+  isLifetime: () => boolean;
   isTrialActive: () => boolean;
   canUseBankStatementScan: () => boolean;
   canUseCloudSync: () => boolean;
   canUseDataExport: () => boolean;
   canUseBiometricLock: () => boolean;
   shouldShowAds: () => boolean;
-  
+
   // Actions
   setPlan: (plan: UserPlan) => void;
   upgradeToPro: () => void;
+  upgradeToLifetime: () => void;
   startTrial: (durationDays?: number) => void;
   downgradeToStandard: () => void;
-  
+
   // Purchase handling (to be connected with IAP later)
   handlePurchaseSuccess: (purchaseDate: string, expiryDate: string) => void;
   handlePurchaseRestore: (purchaseDate: string, expiryDate: string) => void;
+  handleLifetimePurchaseSuccess: (purchaseDate: string) => void;
 }
 
 export const usePlanStore = create<PlanState>()(
@@ -37,7 +40,13 @@ export const usePlanStore = create<PlanState>()(
 
       // Getters
       isPro: () => get().plan.tier === 'pro',
-      
+
+      // isLifetime: pro plan with no expiry date (non-consumable purchase)
+      isLifetime: () => {
+        const { tier, expiresAt } = get().plan;
+        return tier === 'pro' && expiresAt === null;
+      },
+
       isTrialActive: () => {
         const { isTrialActive, trialEndsAt } = get().plan;
         if (!isTrialActive || !trialEndsAt) return false;
@@ -75,7 +84,29 @@ export const usePlanStore = create<PlanState>()(
         });
       },
 
+      upgradeToLifetime: () => {
+        const now = new Date().toISOString();
+        set({
+          plan: {
+            ...DEFAULT_PRO_PLAN,
+            purchasedAt: now,
+            expiresAt: null,
+          },
+        });
+      },
+
       downgradeToStandard: () => set({ plan: DEFAULT_STANDARD_PLAN }),
+
+      handleLifetimePurchaseSuccess: (purchaseDate) =>
+        set({
+          plan: {
+            ...DEFAULT_PRO_PLAN,
+            purchasedAt: purchaseDate,
+            expiresAt: null,
+            isTrialActive: false,
+            trialEndsAt: null,
+          },
+        }),
 
       handlePurchaseSuccess: (purchaseDate, expiryDate) =>
         set({

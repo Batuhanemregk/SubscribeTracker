@@ -3,17 +3,17 @@
  * Uses Zustand stores and new component library
  */
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal, Pressable, Switch } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components';
-import { borderRadius, useTheme, type ThemeColors } from '../theme';
+import { borderRadius, useTheme, type ThemeColors, ACCENT_COLORS, type AccentColorKey } from '../theme';
 import { useSettingsStore, usePlanStore, useSubscriptionStore, useAccountStore } from '../state';
-import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signOut as authSignOut, identifyUser, logoutUser } from '../services';
+import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signOut as authSignOut, identifyUser, logoutUser, requestCalendarPermission, syncSubscriptionsToCalendar, removeFinifyCalendarEvents, shareBackup, pickBackupFile, validateBackup, shareSubscriptionList } from '../services';
 import { t } from '../i18n';
 
 
 export function SettingsScreen({ navigation }: any) {
-  const { colors, canUseLight, isDark } = useTheme();
+  const { colors, canUseLight, isDark, accentColor: currentAccent, amoledMode: currentAmoled } = useTheme();
   const styles = createStyles(colors);
 
   // --- Sub-components with access to dynamic styles/colors ---
@@ -41,10 +41,29 @@ export function SettingsScreen({ navigation }: any) {
     </TouchableOpacity>
   );
 
-  const { app, setNotifications, setBiometricLock, resetToDefaults, setCurrency, setTheme, setLanguage } = useSettingsStore();
+  const { app, setNotifications, setBiometricLock, resetToDefaults, setCurrency, setTheme, setLanguage, calendarSyncEnabled, lastCalendarSync, setCalendarSync, updateLastCalendarSync, defaultReminderDays, setDefaultReminderDays, smartRemindersEnabled, setSmartRemindersEnabled, lastBackupDate, setLastBackupDate, showCurrencyConversion, setShowCurrencyConversion, accentColor, setAccentColor, amoledMode, setAmoledMode } = useSettingsStore();
   const { plan, isPro, downgradeToStandard } = usePlanStore();
   const { account, isSignedIn } = useAccountStore();
   const subscriptionStore = useSubscriptionStore();
+
+  const hasDemoData = subscriptionStore.subscriptions.some((s) => (s.source as string) === 'demo');
+
+  const handleClearDemoData = () => {
+    Alert.alert(
+      t('onboarding.clearDemo'),
+      t('onboarding.clearDemoConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            subscriptionStore.clearDemoData();
+          },
+        },
+      ]
+    );
+  };
 
   const [isSigningIn, setIsSigningIn] = React.useState(false);
 
@@ -165,6 +184,65 @@ export function SettingsScreen({ navigation }: any) {
           onPress: () => {
             downgradeToStandard();
             Alert.alert(t('common.done'), t('settings.resetPlanDone'));
+          },
+        },
+      ]
+    );
+  };
+
+  const handleBackup = async () => {
+    const settingsState = useSettingsStore.getState();
+    const success = await shareBackup(subscriptionStore.subscriptions, settingsState);
+    if (success) {
+      const now = new Date().toISOString();
+      setLastBackupDate(now);
+      Alert.alert(t('common.success'), t('backup.backupSuccess'));
+    }
+  };
+
+  const handleRestore = async () => {
+    const content = await pickBackupFile();
+    if (!content) return;
+
+    let parsed: any;
+    try {
+      parsed = JSON.parse(content);
+    } catch {
+      Alert.alert(t('backup.invalidFile'), t('backup.invalidFormat'));
+      return;
+    }
+
+    const validation = validateBackup(parsed);
+    if (!validation.valid || !validation.data) {
+      Alert.alert(t('backup.invalidFile'), validation.error || t('backup.invalidFormat'));
+      return;
+    }
+
+    const backupData = validation.data;
+    const backupDate = new Date(backupData.exportedAt).toLocaleDateString();
+    const subCount = backupData.subscriptions.length;
+
+    Alert.alert(
+      t('backup.restoreTitle'),
+      t('backup.restoreInfo', { date: backupDate, count: subCount }),
+      [
+        { text: t('backup.cancel'), style: 'cancel' },
+        {
+          text: t('backup.mergeOption'),
+          onPress: () => {
+            const existing = subscriptionStore.subscriptions;
+            const existingIds = new Set(existing.map((s) => s.id));
+            const newSubs = backupData.subscriptions.filter((s) => !existingIds.has(s.id));
+            subscriptionStore.setSubscriptions([...existing, ...newSubs]);
+            Alert.alert(t('common.success'), t('backup.mergeResult', { count: newSubs.length }));
+          },
+        },
+        {
+          text: t('backup.replaceOption'),
+          style: 'destructive',
+          onPress: () => {
+            subscriptionStore.setSubscriptions(backupData.subscriptions);
+            Alert.alert(t('common.success'), t('backup.replaceResult', { count: backupData.subscriptions.length }));
           },
         },
       ]
@@ -384,6 +462,70 @@ export function SettingsScreen({ navigation }: any) {
           />
         </View>
 
+        {/* Appearance Section */}
+        <Text style={styles.sectionTitle}>{t('themes.appearance')}</Text>
+        <View style={styles.card}>
+          {/* Accent Color Picker */}
+          <View style={styles.accentSection}>
+            <Text style={styles.accentLabel}>{t('themes.accentColor')}</Text>
+            <View style={styles.accentRow}>
+              {(Object.keys(ACCENT_COLORS) as AccentColorKey[]).map((key) => {
+                const isSelected = accentColor === key;
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    accessibilityLabel={t(`themes.${key}` as any)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: isSelected }}
+                    onPress={() => setAccentColor(key)}
+                    style={[
+                      styles.accentCircle,
+                      { backgroundColor: ACCENT_COLORS[key].primary },
+                      isSelected && styles.accentCircleSelected,
+                    ]}
+                  >
+                    {isSelected && (
+                      <Ionicons name="checkmark" size={16} color="#FFFFFF" />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+          {/* AMOLED Mode — only shown when dark mode is active */}
+          {isDark && (
+            <>
+              <View style={styles.divider} />
+              <SettingsRow
+                icon="phone-portrait"
+                iconColor={colors.textMuted}
+                title={t('themes.amoledMode')}
+                subtitle={t('themes.amoledDesc')}
+                rightElement={
+                  <Switch
+                    value={amoledMode}
+                    onValueChange={setAmoledMode}
+                    trackColor={{ false: colors.border, true: `${colors.primary}80` }}
+                    thumbColor={amoledMode ? colors.primary : '#FFFFFF'}
+                  />
+                }
+              />
+            </>
+          )}
+        </View>
+
+        {/* Categories Section */}
+        <Text style={styles.sectionTitle}>{t('categories.title')}</Text>
+        <View style={styles.card}>
+          <SettingsRow
+            icon="pricetag-outline"
+            iconColor={colors.primary}
+            title={t('categories.manageCategories')}
+            subtitle={t('categories.manageCategories')}
+            onPress={() => navigation.navigate('CategoryManagement')}
+          />
+        </View>
+
         {/* Preferences Section */}
         <Text style={styles.sectionTitle}>{t('settings.preferences')}</Text>
         <View style={styles.card}>
@@ -406,6 +548,54 @@ export function SettingsScreen({ navigation }: any) {
                   }
                 }} 
               />
+            }
+          />
+          <View style={styles.divider} />
+          {/* Default Reminder Days */}
+          {app.notificationsEnabled && (() => {
+            const REMINDER_OPTIONS = [7, 3, 1, 0];
+            const dayLabel = (day: number) => {
+              if (day === 7) return '7d';
+              if (day === 3) return '3d';
+              if (day === 1) return '1d';
+              return t('smartNotifications.days0').split(' ')[0];
+            };
+            const toggleDay = (day: number) => {
+              const next = defaultReminderDays.includes(day)
+                ? defaultReminderDays.filter(d => d !== day)
+                : [...defaultReminderDays, day].sort((a, b) => b - a);
+              setDefaultReminderDays(next);
+            };
+            return (
+              <View style={styles.reminderSection}>
+                <Text style={styles.reminderSectionTitle}>{t('smartNotifications.defaultDays')}</Text>
+                <View style={styles.reminderChips}>
+                  {REMINDER_OPTIONS.map(day => {
+                    const selected = defaultReminderDays.includes(day);
+                    return (
+                      <Pressable
+                        key={day}
+                        style={[styles.reminderChip, selected && styles.reminderChipActive]}
+                        onPress={() => toggleDay(day)}
+                      >
+                        <Text style={[styles.reminderChipText, selected && styles.reminderChipTextActive]}>
+                          {dayLabel(day)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            );
+          })()}
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="flash"
+            iconColor={colors.primary}
+            title={t('smartNotifications.smartSuggestions')}
+            subtitle={t('smartNotifications.smartDesc')}
+            rightElement={
+              <Toggle value={smartRemindersEnabled} onChange={setSmartRemindersEnabled} />
             }
           />
           <View style={styles.divider} />
@@ -456,6 +646,51 @@ export function SettingsScreen({ navigation }: any) {
           />
           <View style={styles.divider} />
           <SettingsRow
+            icon="calendar-outline"
+            iconColor={colors.primary}
+            title={t('settings.calendarSync')}
+            subtitle={
+              calendarSyncEnabled && lastCalendarSync
+                ? t('settings.lastSynced', { date: new Date(lastCalendarSync).toLocaleDateString() })
+                : t('settings.calendarSyncSubtitle')
+            }
+            rightElement={
+              <Toggle
+                value={calendarSyncEnabled}
+                onChange={async (enabled) => {
+                  if (enabled) {
+                    const granted = await requestCalendarPermission();
+                    if (!granted) {
+                      Alert.alert(t('settings.calendarSync'), t('settings.calendarPermissionDenied'));
+                      return;
+                    }
+                    try {
+                      const subs = subscriptionStore.getActiveSubscriptions();
+                      const { synced } = await syncSubscriptionsToCalendar(subs);
+                      setCalendarSync(true);
+                      updateLastCalendarSync();
+                      Alert.alert(
+                        t('settings.calendarSynced'),
+                        t('settings.calendarSyncedMessage', { count: synced })
+                      );
+                    } catch {
+                      Alert.alert(t('settings.calendarSync'), t('settings.calendarPermissionDenied'));
+                    }
+                  } else {
+                    try {
+                      await removeFinifyCalendarEvents();
+                    } catch {
+                      // ignore removal errors
+                    }
+                    setCalendarSync(false);
+                    Alert.alert(t('settings.calendarSync'), t('settings.calendarCleared'));
+                  }
+                }}
+              />
+            }
+          />
+          <View style={styles.divider} />
+          <SettingsRow
             icon="moon"
             iconColor={colors.primary}
             title={t('settings.appearance')}
@@ -478,6 +713,16 @@ export function SettingsScreen({ navigation }: any) {
           />
           <View style={styles.divider} />
           <SettingsRow
+            icon="swap-horizontal"
+            iconColor={colors.cyan}
+            title={t('currency.showConversions')}
+            subtitle={t('currency.showConversionsDesc')}
+            rightElement={
+              <Toggle value={showCurrencyConversion} onChange={setShowCurrencyConversion} />
+            }
+          />
+          <View style={styles.divider} />
+          <SettingsRow
             icon="language"
             iconColor={colors.amber}
             title={t('languageSelector.title')}
@@ -486,15 +731,72 @@ export function SettingsScreen({ navigation }: any) {
           />
         </View>
 
+        {/* Data Management Section */}
+        <Text style={styles.sectionTitle}>{t('backup.dataManagement')}</Text>
+        <View style={styles.card}>
+          <SettingsRow
+            icon="cloud-upload-outline"
+            iconColor={colors.primary}
+            title={t('backup.backup')}
+            subtitle={
+              lastBackupDate
+                ? t('backup.lastBackup', { date: new Date(lastBackupDate).toLocaleDateString() })
+                : t('backup.neverBacked')
+            }
+            onPress={handleBackup}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="cloud-download-outline"
+            iconColor={colors.emerald}
+            title={t('backup.restore')}
+            subtitle={t('backup.restoreDesc')}
+            onPress={handleRestore}
+          />
+        </View>
+
         {/* Data Section */}
         <Text style={styles.sectionTitle}>{t('settings.data')}</Text>
         <View style={styles.card}>
+          {hasDemoData && (
+            <>
+              <SettingsRow
+                icon="flask-outline"
+                iconColor={colors.amber}
+                title={t('onboarding.clearDemo')}
+                subtitle={t('onboarding.clearDemoDesc')}
+                destructive
+                onPress={handleClearDemoData}
+              />
+              <View style={styles.divider} />
+            </>
+          )}
           <SettingsRow
             icon="download"
             iconColor={colors.cyan}
             title={t('settings.exportData')}
             subtitle={t('settings.exportDataSubtitle')}
             onPress={() => {/* TODO: Export */}}
+          />
+          <View style={styles.divider} />
+          <SettingsRow
+            icon="share-social-outline"
+            iconColor={colors.primary}
+            title={t('share.shareList')}
+            subtitle={t('share.shareListDesc')}
+            onPress={() => {
+              const activeSubs = subscriptionStore.getActiveSubscriptions();
+              const total = activeSubs.reduce((sum, s) => {
+                const monthly = s.cycle === 'monthly' ? s.amount
+                  : s.cycle === 'weekly' ? s.amount * 4.33
+                  : s.cycle === 'quarterly' ? s.amount / 3
+                  : s.amount / 12;
+                return sum + monthly;
+              }, 0);
+              shareSubscriptionList(activeSubs, app.currency, total).catch(() => {
+                // user dismissed share sheet — no action needed
+              });
+            }}
           />
           <View style={styles.divider} />
           <SettingsRow
@@ -879,6 +1181,72 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+  reminderSection: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  reminderSectionTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 10,
+  },
+  reminderChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  reminderChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: borderRadius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.bgElevated,
+  },
+  reminderChipActive: {
+    backgroundColor: `${colors.primary}20`,
+    borderColor: colors.primary,
+  },
+  reminderChipText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  reminderChipTextActive: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  accentSection: {
+    padding: 16,
+  },
+  accentLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.text,
+    marginBottom: 14,
+  },
+  accentRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  accentCircle: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  accentCircleSelected: {
+    borderWidth: 2.5,
+    borderColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
 });
 

@@ -1,0 +1,63 @@
+appId: host.exp.Exponent
+---
+# Test 02: Add Subscription Flow
+
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 30000
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Get Started"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Finish"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# Go to Home tab
+- tapOn:
+    point: "10%,97%"
+- waitForAnimationToEnd
+
+# Tap FAB (+) button - bottom right area
+- tapOn:
+    point: "88%,88%"
+- waitForAnimationToEnd
+
+# Choose manual if sheet appears
+- tapOn:
+    text: ".*[Mm]anual.*"
+    optional: true
+- tapOn:
+    text: "Add Manually"
+    optional: true
+- waitForAnimationToEnd
+
+# Fill name
+- tapOn:
+    text: ".*[Nn]ame.*|.*[Ss]ubscription.*"
+    optional: true
+- inputText: "Test Sub"
+
+# Fill amount
+- tapOn:
+    text: ".*[Aa]mount.*|.*[Pp]rice.*"
+    optional: true
+- inputText: "9.99"
+
+# Save
+- tapOn:
+    text: ".*[Ss]ave.*|.*[Aa]dd.*|.*[Cc]reate.*"
+    optional: true
+- waitForAnimationToEnd

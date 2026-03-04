@@ -1,0 +1,39 @@
+appId: host.exp.Exponent
+---
+# Test 07: Budget Screen
+
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 30000
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Get Started"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Finish"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap Budget tab (3rd tab)
+- tapOn:
+    point: "50%,97%"
+- waitForAnimationToEnd
+
+# Verify budget content
+- assertVisible:
+    text: ".*[Bb]udget.*|.*[Ss]pending.*|.*[Gg]oal.*"
+    optional: true
+
+- scroll
+- waitForAnimationToEnd

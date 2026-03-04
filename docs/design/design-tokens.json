@@ -1,0 +1,116 @@
+{
+  "color": {
+    "primary": {
+      "default": "#8B5CF6",
+      "light": "#A78BFA",
+      "dark": "#7C3AED"
+    },
+    "success": { "default": "#10B981", "dark": "#059669" },
+    "warning": { "default": "#F59E0B" },
+    "danger": { "default": "#EF4444" },
+    "info": { "default": "#06B6D4" },
+    "accent": {
+      "pink": "#EC4899",
+      "orange": "#F97316"
+    },
+    "background": {
+      "dark": {
+        "primary": "#0D0D12",
+        "card": "#1A1A24",
+        "elevated": "#252532"
+      },
+      "light": {
+        "primary": "#FFFFFF",
+        "card": "#F9FAFB",
+        "elevated": "#F3F4F6"
+      }
+    },
+    "border": {
+      "dark": { "default": "#2D2D3A", "light": "#3D3D4A" },
+      "light": { "default": "#E5E7EB", "light": "#F3F4F6" }
+    },
+    "text": {
+      "dark": {
+        "primary": "#FFFFFF",
+        "secondary": "#E5E5E5",
+        "muted": "#9CA3AF",
+        "disabled": "#6B7280"
+      },
+      "light": {
+        "primary": "#111827",
+        "secondary": "#374151",
+        "muted": "#6B7280",
+        "disabled": "#9CA3AF"
+      }
+    },
+    "category": {
+      "Entertainment": "#EC4899",
+      "Development": "#8B5CF6",
+      "Design": "#F59E0B",
+      "Productivity": "#10B981",
+      "Music": "#06B6D4",
+      "Storage": "#3B82F6",
+      "Finance": "#F97316",
+      "Health": "#22C55E",
+      "Education": "#A855F7",
+      "Other": "#6B7280"
+    }
+  },
+  "gradient": {
+    "primary": ["#8B5CF6", "#6366F1"],
+    "emerald": ["#10B981", "#059669"],
+    "sunset": ["#F59E0B", "#EC4899"],
+    "ocean": ["#06B6D4", "#3B82F6"],
+    "card": ["#1A1A24", "#252532"]
+  },
+  "typography": {
+    "fontFamily": {
+      "primary": "System",
+      "mono": "System"
+    },
+    "fontSize": {
+      "xs": 10, "sm": 12, "md": 14, "lg": 16, "xl": 18,
+      "2xl": 20, "3xl": 24, "4xl": 28, "5xl": 32, "6xl": 40
+    },
+    "fontWeight": {
+      "regular": "400", "medium": "500", "semibold": "600", "bold": "700", "extrabold": "800"
+    },
+    "lineHeight": {
+      "tight": 1.1, "normal": 1.4, "relaxed": 1.6
+    },
+    "letterSpacing": {
+      "tight": -0.5, "normal": 0, "wide": 0.5, "wider": 1
+    }
+  },
+  "spacing": {
+    "unit": 4,
+    "scale": {
+      "0": 0, "1": 4, "2": 8, "3": 12, "4": 16, "5": 20,
+      "6": 24, "7": 28, "8": 32, "10": 40, "12": 48,
+      "14": 56, "16": 64, "20": 80, "24": 96
+    }
+  },
+  "borderRadius": {
+    "none": 0, "sm": 4, "md": 8, "lg": 12, "xl": 16,
+    "2xl": 20, "3xl": 24, "full": 9999
+  },
+  "layout": {
+    "screenPadding": 16,
+    "cardPadding": 16,
+    "cardRadius": 20,
+    "listItemGap": 12,
+    "sectionGap": 24,
+    "tabBarHeight": 80,
+    "headerHeight": 56,
+    "iconSizes": { "sm": 16, "md": 20, "lg": 24, "xl": 32 },
+    "avatarSizes": { "sm": 32, "md": 44, "lg": 56 },
+    "minTouchTarget": 44
+  },
+  "animation": {
+    "duration": { "fast": 150, "normal": 250, "slow": 400 },
+    "easing": {
+      "ease": "cubic-bezier(0.4, 0, 0.2, 1)",
+      "bounce": "cubic-bezier(0.68, -0.55, 0.265, 1.55)"
+    }
+  }
+}

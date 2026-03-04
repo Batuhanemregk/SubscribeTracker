@@ -1,0 +1,25 @@
+appId: com.subssentry.app
+---
+# Sprint 1 — FEAT-02: Timeline E2E Tests
+# E2E-TL-01: Happy Path - Grouped payments with urgency
+# E2E-TL-02: Empty State
+
+- launchApp
+
+# Skip onboarding if shown
+- runFlow:
+    when:
+      visible: "Get Started"
+    commands:
+      - tapOn: "Get Started"
+
+# Navigate to Timeline tab
+- tapOn:
+    id: "tab-timeline"
+
+# E2E-TL-01: Timeline shows upcoming payments
+- assertVisible:
+    id: "timeline-screen"
+- assertVisible:
+    id: "timeline-total"
+- assertVisible: "Upcoming Payments"

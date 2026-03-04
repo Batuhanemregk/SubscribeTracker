@@ -11,6 +11,7 @@
  */
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import type { Subscription } from '../types';
+import { logger } from './LoggerService';
 
 interface SyncResult {
   success: boolean;
@@ -26,12 +27,12 @@ async function ensureValidSession(): Promise<boolean> {
   try {
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error || !session) {
-      console.error('[Sync] No valid session:', error?.message);
+      logger.error('Sync', 'No valid session:', error?.message);
       return false;
     }
     return true;
   } catch (err) {
-    console.error('[Sync] Session check failed:', err);
+    logger.error('Sync', 'Session check failed:', err);
     return false;
   }
 }
@@ -80,6 +81,8 @@ function toLocalFormat(row: any): Subscription {
     cancelUrl: null,
     manageUrl: null,
     notes: row.notes || '',
+    isTrial: row.is_trial ?? false,
+    trialEndsAt: row.trial_ends_at ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -114,13 +117,13 @@ export async function pushToCloud(
       });
 
     if (error) {
-      console.error('Push to cloud failed:', error);
+      logger.error('Sync', 'Push to cloud failed:', error);
       return { success: false, syncedCount: 0, error: error.message };
     }
 
     return { success: true, syncedCount: subscriptions.length };
   } catch (err: any) {
-    console.error('Push to cloud error:', err);
+    logger.error('Sync', 'Push to cloud error:', err);
     return { success: false, syncedCount: 0, error: err.message };
   }
 }
@@ -152,14 +155,14 @@ export async function pullFromCloud(userId: string): Promise<{
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Pull from cloud failed:', error);
+      logger.error('Sync', 'Pull from cloud failed:', error);
       return { success: false, subscriptions: [], error: error.message };
     }
 
     const subscriptions = (data || []).map(toLocalFormat);
     return { success: true, subscriptions };
   } catch (err: any) {
-    console.error('Pull from cloud error:', err);
+    logger.error('Sync', 'Pull from cloud error:', err);
     return { success: false, subscriptions: [], error: err.message };
   }
 }
@@ -177,13 +180,13 @@ export async function deleteFromCloud(subscriptionId: string): Promise<boolean> 
       .eq('id', subscriptionId);
 
     if (error) {
-      console.error('Delete from cloud failed:', error);
+      logger.error('Sync', 'Delete from cloud failed:', error);
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error('Delete from cloud error:', err);
+    logger.error('Sync', 'Delete from cloud error:', err);
     return false;
   }
 }
@@ -225,7 +228,7 @@ export async function fullSync(
 
     return { success: true, merged };
   } catch (err: any) {
-    console.error('Full sync error:', err);
+    logger.error('Sync', 'Full sync error:', err);
     return { success: false, merged: localSubscriptions, error: err.message };
   }
 }

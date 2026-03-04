@@ -3,6 +3,7 @@
  * Gracefully no-ops in Expo Go where native modules are unavailable.
  */
 import { Platform } from 'react-native';
+import { logger } from './LoggerService';
 
 // Dynamic import to avoid crash in Expo Go
 let InterstitialAd: any = null;
@@ -26,7 +27,7 @@ try {
   BannerAdSize = adModule.BannerAdSize;
   adsAvailable = true;
 } catch {
-  console.log('AdMob: Native module not available (Expo Go mode)');
+  logger.info('AdMob', 'Native module not available (Expo Go mode)');
 }
 
 import { getAdMobIds } from '../config';
@@ -55,7 +56,7 @@ export function loadInterstitialAd(): void {
   // Set up event listeners
   interstitialAd.addAdEventListener(AdEventType.LOADED, () => {
     isInterstitialLoaded = true;
-    console.log('Interstitial ad loaded');
+    logger.debug('AdMob', 'Interstitial ad loaded');
   });
 
   interstitialAd.addAdEventListener(AdEventType.CLOSED, () => {
@@ -66,7 +67,7 @@ export function loadInterstitialAd(): void {
 
   interstitialAd.addAdEventListener(AdEventType.ERROR, (error: any) => {
     isInterstitialLoaded = false;
-    console.error('Interstitial ad error:', error);
+    logger.error('AdMob', 'Interstitial ad error:', error);
   });
 
   // Start loading
@@ -78,7 +79,7 @@ export function loadInterstitialAd(): void {
  */
 export async function showInterstitialAd(): Promise<boolean> {
   if (!adsAvailable || !isInterstitialLoaded || !interstitialAd) {
-    console.log('Interstitial ad not ready');
+    logger.debug('AdMob', 'Interstitial ad not ready');
     return false;
   }
 
@@ -86,7 +87,7 @@ export async function showInterstitialAd(): Promise<boolean> {
     await interstitialAd.show();
     return true;
   } catch (error) {
-    console.error('Failed to show interstitial:', error);
+    logger.error('AdMob', 'Failed to show interstitial:', error);
     return false;
   }
 }

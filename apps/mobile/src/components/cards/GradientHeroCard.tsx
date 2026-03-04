@@ -14,7 +14,7 @@ interface GradientHeroCardProps {
   name: string;
   amount: number;
   currency: string;
-  cycle: 'monthly' | 'yearly' | 'weekly' | 'quarterly';
+  cycle: 'monthly' | 'yearly' | 'weekly' | 'quarterly' | 'custom';
   category: string;
   colorKey: string;
   style?: ViewStyle;
@@ -34,12 +34,13 @@ export function GradientHeroCard({
   const { colors } = useTheme();
   const [logoError, setLogoError] = useState(false);
 
-  const cycleLabel = {
+  const cycleLabel = ({
     weekly: t('subscription.perWeek'),
     monthly: t('subscription.perMonth'),
     quarterly: t('subscription.perQuarter'),
     yearly: t('subscription.perYear'),
-  }[cycle];
+    custom: t('subscription.perMonth'),
+  } as Record<string, string>)[cycle];
 
   return (
     <LinearGradient

@@ -6,6 +6,7 @@
  * Gracefully no-ops in Expo Go where native modules are unavailable.
  */
 import { Platform } from 'react-native';
+import { logger } from './LoggerService';
 
 // Dynamic import to avoid crash in Expo Go
 let Purchases: any = null;
@@ -18,7 +19,7 @@ try {
   LOG_LEVEL = purchasesModule.LOG_LEVEL || LOG_LEVEL;
   purchasesAvailable = true;
 } catch {
-  console.log('RevenueCat: Native module not available (Expo Go mode)');
+  logger.info('Purchases', 'Native module not available (Expo Go mode)');
 }
 
 // RevenueCat API Keys
@@ -32,6 +33,7 @@ const PREMIUM_ENTITLEMENT_ID = 'premium';
 export const PRODUCT_IDS = {
   MONTHLY: 'finify_premium_monthly',
   YEARLY: 'finify_premium_yearly',
+  LIFETIME: 'finify_premium_lifetime',
 };
 
 /**
@@ -40,16 +42,16 @@ export const PRODUCT_IDS = {
  */
 export async function initPurchases(userId?: string): Promise<void> {
   if (!purchasesAvailable || !Purchases) {
-    console.log('RevenueCat: Skipping init (native module unavailable)');
+    logger.info('Purchases', 'Skipping init (native module unavailable)');
     return;
   }
 
-  const apiKey = Platform.OS === 'ios' 
-    ? REVENUECAT_API_KEY_IOS 
+  const apiKey = Platform.OS === 'ios'
+    ? REVENUECAT_API_KEY_IOS
     : REVENUECAT_API_KEY_ANDROID;
 
   if (!apiKey) {
-    console.warn('RevenueCat: API key not configured. Purchases disabled.');
+    logger.warn('Purchases', 'API key not configured. Purchases disabled.');
     return;
   }
 
@@ -63,9 +65,9 @@ export async function initPurchases(userId?: string): Promise<void> {
       appUserID: userId || undefined, // null = anonymous user
     });
 
-    console.log('RevenueCat initialized successfully');
+    logger.info('Purchases', 'RevenueCat initialized successfully');
   } catch (error) {
-    console.error('Failed to initialize RevenueCat:', error);
+    logger.error('Purchases', 'Failed to initialize RevenueCat:', error);
   }
 }
 
@@ -84,11 +86,11 @@ export function isPurchasesConfigured(): boolean {
  * Get current customer info including entitlements
  */
 export async function getCustomerInfo(): Promise<any | null> {
-  if (!purchasesAvailable || !Purchases) return null;
+  if (!purchasesAvailable || !Purchases || !isPurchasesConfigured()) return null;
   try {
     return await Purchases.getCustomerInfo();
   } catch (error) {
-    console.error('Failed to get customer info:', error);
+    logger.error('Purchases', 'Failed to get customer info:', error);
     return null;
   }
 }
@@ -97,12 +99,12 @@ export async function getCustomerInfo(): Promise<any | null> {
  * Check if user has Pro entitlement
  */
 export async function checkProStatus(): Promise<boolean> {
-  if (!purchasesAvailable || !Purchases) return false;
+  if (!purchasesAvailable || !Purchases || !isPurchasesConfigured()) return false;
   try {
     const customerInfo = await Purchases.getCustomerInfo();
     return customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined;
   } catch (error) {
-    console.error('Failed to check Pro status:', error);
+    logger.error('Purchases', 'Failed to check Pro status:', error);
     return false;
   }
 }
@@ -111,12 +113,12 @@ export async function checkProStatus(): Promise<boolean> {
  * Get available offerings (products)
  */
 export async function getOfferings(): Promise<any | null> {
-  if (!purchasesAvailable || !Purchases) return null;
+  if (!purchasesAvailable || !Purchases || !isPurchasesConfigured()) return null;
   try {
     const offerings = await Purchases.getOfferings();
     return offerings.current;
   } catch (error) {
-    console.error('Failed to get offerings:', error);
+    logger.error('Purchases', 'Failed to get offerings:', error);
     return null;
   }
 }
@@ -206,7 +208,7 @@ export async function purchasePackage(pkg: any): Promise<PurchaseResult> {
       errorType: isPro ? undefined : 'store_error',
     };
   } catch (error: any) {
-    console.error('Purchase error details:', JSON.stringify({
+    logger.error('Purchases', 'Purchase error details:', JSON.stringify({
       code: error.code,
       message: error.message,
       userCancelled: error.userCancelled,
@@ -214,7 +216,7 @@ export async function purchasePackage(pkg: any): Promise<PurchaseResult> {
       readableCode: error.readableErrorCode,
     }, null, 2));
     const classified = classifyPurchaseError(error);
-    console.error(`Purchase failed [${classified.errorType}]:`, classified.message);
+    logger.error('Purchases', `Purchase failed [${classified.errorType}]:`, classified.message);
     return {
       success: false,
       error: classified.message,
@@ -240,7 +242,7 @@ export async function restorePurchases(): Promise<{
 
     return { success: true, isPro };
   } catch (error: any) {
-    console.error('Restore failed:', error);
+    logger.error('Purchases', 'Restore failed:', error);
     const classified = classifyPurchaseError(error);
     return { success: false, isPro: false, error: classified.message };
   }
@@ -253,9 +255,9 @@ export async function identifyUser(userId: string): Promise<void> {
   if (!purchasesAvailable || !Purchases) return;
   try {
     await Purchases.logIn(userId);
-    console.log('User identified:', userId);
+    logger.info('Purchases', 'User identified:', userId);
   } catch (error) {
-    console.error('Failed to identify user:', error);
+    logger.error('Purchases', 'Failed to identify user:', error);
   }
 }
 
@@ -266,9 +268,9 @@ export async function logoutUser(): Promise<void> {
   if (!purchasesAvailable || !Purchases) return;
   try {
     await Purchases.logOut();
-    console.log('User logged out from RevenueCat');
+    logger.info('Purchases', 'User logged out from RevenueCat');
   } catch (error) {
-    console.error('Failed to logout user:', error);
+    logger.error('Purchases', 'Failed to logout user:', error);
   }
 }
 
@@ -289,8 +291,9 @@ export function formatPackagePrice(pkg: any): string {
 /**
  * Get package identifier
  */
-export function getPackageType(pkg: any): 'monthly' | 'yearly' | 'unknown' {
+export function getPackageType(pkg: any): 'monthly' | 'yearly' | 'lifetime' | 'unknown' {
   const id = pkg?.identifier || '';
+  if (id.includes('lifetime')) return 'lifetime';
   if (id.includes('monthly') || id === '$rc_monthly') return 'monthly';
   if (id.includes('yearly') || id.includes('annual') || id === '$rc_annual') return 'yearly';
   return 'unknown';

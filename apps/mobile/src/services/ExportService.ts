@@ -9,6 +9,7 @@ const { cacheDirectory, writeAsStringAsync, EncodingType } = FileSystem as any;
 import * as Sharing from 'expo-sharing';
 import type { Subscription } from '../types';
 import { t } from '../i18n';
+import { logger } from './LoggerService';
 
 /**
  * Format currency amount
@@ -223,7 +224,7 @@ export async function exportToCSV(
 
     return { success: true };
   } catch (error: any) {
-    console.error('CSV export failed:', error);
+    logger.error('Export', 'CSV export failed:', error);
     return { success: false, error: error.message };
   }
 }
@@ -253,7 +254,7 @@ export async function exportToPDF(
 
     return { success: true };
   } catch (error: any) {
-    console.error('PDF export failed:', error);
+    logger.error('Export', 'PDF export failed:', error);
     return { success: false, error: error.message };
   }
 }

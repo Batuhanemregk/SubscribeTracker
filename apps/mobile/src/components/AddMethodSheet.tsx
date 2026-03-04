@@ -28,6 +28,7 @@ interface AddMethodSheetProps {
   onScan: () => void;
   onBrowse: () => void;
   onCustom: () => void;
+  onMagicImport?: () => void;
 }
 
 interface MethodOption {
@@ -39,12 +40,19 @@ interface MethodOption {
   isPro?: boolean;
 }
 
-export function AddMethodSheet({ visible, onClose, onScan, onBrowse, onCustom }: AddMethodSheetProps) {
+export function AddMethodSheet({ visible, onClose, onScan, onBrowse, onCustom, onMagicImport }: AddMethodSheetProps) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const { isPro } = usePlanStore();
 
   const options: MethodOption[] = [
+    {
+      icon: 'camera',
+      iconColor: colors.pink,
+      title: t('addMethod.magicImport'),
+      subtitle: t('addMethod.magicSubtitle'),
+      onPress: onMagicImport || (() => {}),
+    },
     {
       icon: 'document-text',
       iconColor: colors.primary,

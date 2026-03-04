@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "skills": {
+    "api-routes": {
+      "source": "gigs-slc/react-native-skills",
+      "sourceType": "github",
+      "computedHash": "066598bd91f0cc6cfde5f9d2bdeb260d6952df55f9bca0d5091e8283ee4d5db7"
+    },
+    "building-native-ui": {
+      "source": "expo/skills",
+      "sourceType": "github",
+      "computedHash": "342df93f481a0dba919f372d6c7b40d2b4bf5b51dd24363aea2e5d0bae27a6fa"
+    },
+    "building-ui": {
+      "source": "gigs-slc/react-native-skills",
+      "sourceType": "github",
+      "computedHash": "29df2ff4bd4a03e1c1b8236594846a2cb6fbeecdf6e1c0822880a8d3eacd2ad5"
+    },
+    "data-fetching": {
+      "source": "gigs-slc/react-native-skills",
+      "sourceType": "github",
+      "computedHash": "cb8a369ac9b8d9a513b32a58880e64926d41b2ae6558d9860039ef8a1dca2808"
+    },
+    "dev-client": {
+      "source": "gigs-slc/react-native-skills",
+      "sourceType": "github",
+      "computedHash": "92ac0be1c494f2739d7f0fb04de7dc9e0058c63a782e7eaeb7e6d3678219e6a4"
+    },
+    "expo-api-routes": {
+      "source": "expo/skills",
+      "sourceType": "github",
+      "computedHash": "015c6b849507fda73fcc32d2448f033aaaaa21f5229085342b8421727a90cafb"
+    },
+    "expo-cicd-workflows": {
+      "source": "expo/skills",
+      "sourceType": "github",
+      "computedHash": "700b20b575fcbe75ad238b41a0bd57938abe495e62dc53e05400712ab01ee7c0"
+    },
+    "expo-deployment": {
+      "source": "expo/skills",
+      "sourceType": "github",
+      "computedHash": "9ea9f16374765c1b16764a51bd43a64098921b33f48e94d9c5c1cce24b335c10"
+    },
+    "expo-dev-client": {
+      "source": "expo/skills",
+      "sourceType": "github",
+      "computedHash": "234e2633b7fbcef2d479f8fe8ab20d53d08ed3e4beec7c965da4aff5b43affe7"
+    },
+    "expo-tailwind-setup": {
+      "source": "expo/skills",
+      "sourceType": "github",
+      "computedHash": "d39e806942fe880347f161056729b588a3cb0f1796270eebf52633fe11cfdce1"
+    },
+    "github": {
+      "source": "callstackincubator/agent-skills",
+      "sourceType": "github",
+      "computedHash": "93dad759c9f1be2cbcfb597904ccde3a73a73088e236f9960a52798febb4782a"
+    },
+    "native-data-fetching": {
+      "source": "expo/skills",
+      "sourceType": "github",
+      "computedHash": "6c14e4efb34a9c4759e8b959f82dec328f87dd89a022957c6737086984b9b106"
+    },
+    "react-native": {
+      "source": "gigs-slc/react-native-skills",
+      "sourceType": "github",
+      "computedHash": "8fdae4bb03e870e2e7b9c90973eaa4b9ce1d87816a1733507aa69ac8ae7627e4"
+    },
+    "react-native-best-practices": {
+      "source": "callstackincubator/agent-skills",
+      "sourceType": "github",
+      "computedHash": "cc54bc37531c0221b2bfde241ef18c5f6e22423665955587f6dd63b0454355d8"
+    },
+    "supabase-postgres-best-practices": {
+      "source": "supabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "9c87c315aed143ee3b34bec8117100f5035e0df09e6b23e1ecc772cff434c9ad"
+    },
+    "tailwind-setup": {
+      "source": "gigs-slc/react-native-skills",
+      "sourceType": "github",
+      "computedHash": "b19fa9dc81c98490ac526aa1a59ba800b0980107342ef133f3082a805a66b536"
+    },
+    "upgrading-expo": {
+      "source": "gigs-slc/react-native-skills",
+      "sourceType": "github",
+      "computedHash": "3a4f0c2e300b15853ab6c9aefefb984fcfd3a1dfa7cebf9d4b805d7e8876ba3c"
+    },
+    "upgrading-react-native": {
+      "source": "callstackincubator/agent-skills",
+      "sourceType": "github",
+      "computedHash": "3a0fba5f03d67fbea03a915e34f2cee1397fb2968e7273dd3a5b4391df4250a6"
+    },
+    "use-dom": {
+      "source": "gigs-slc/react-native-skills",
+      "sourceType": "github",
+      "computedHash": "8eca0e229f16e3499e5dbf791a79f5a5cba1e98b4af88ca495c903930d7f1ba0"
+    },
+    "validate-skills": {
+      "source": "callstackincubator/agent-skills",
+      "sourceType": "github",
+      "computedHash": "aff52c5f1470ceedfa83c6bd7936b5bf70d347d72724585e3a2911d6d009caf4"
+    },
+    "vercel-composition-patterns": {
+      "source": "gigs-slc/react-native-skills",
+      "sourceType": "github",
+      "computedHash": "ba1ab5ee1c804d690d7bb77eaabfc62f11824bcbaf1d127acd94f7b138476ca1"
+    },
+    "vercel-react-best-practices": {
+      "source": "gigs-slc/react-native-skills",
+      "sourceType": "github",
+      "computedHash": "4365be772fd3b41994a72ad478472c6d680678e7f3859860ab010e9c46e48ee0"
+    },
+    "zafer-skills": {
+      "source": "zaferayan/skills",
+      "sourceType": "github",
+      "computedHash": "5f92b45c646b654e90ca81606a515d78c5a49551eff298e1f8dc0f330463e3e6"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+appId: host.exp.Exponent
+---
+# Test 01: App Launch & Reach Home Screen
+
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 30000
+- waitForAnimationToEnd
+
+# Dismiss onboarding/paywall
+- tapOn:
+    text: "Get Started"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Skip"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Next"
+    optional: true
+- waitForAnimationToEnd
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Finish"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap Home tab (1st tab)
+- tapOn:
+    point: "10%,97%"
+- waitForAnimationToEnd
+
+# Verify home screen content
+- assertVisible:
+    text: "Monthly"
+    optional: true

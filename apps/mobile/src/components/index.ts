@@ -13,7 +13,7 @@ export { PrimaryButton, SecondaryButton, IconButton, FAB } from './buttons';
 export { LoadingSpinner, EmptyState } from './feedback';
 
 // Cards
-export { GradientStatCard, GradientHeroCard, SavingsCard } from './cards';
+export { GradientStatCard, GradientHeroCard, SavingsCard, HealthScoreCard, BundleSuggestionCard } from './cards';
 
 // Inputs
 export { TextInput, AmountInput, SegmentedControl, IconGrid, ColorGrid } from './inputs';
@@ -34,6 +34,13 @@ export { GradientCard } from './GradientCard';
 export { StatCard } from './StatCard';
 export { SwipeableSubscriptionCard } from './SwipeableSubscriptionCard';
 export { CompactSubscriptionCard } from './CompactSubscriptionCard';
+export { AnimatedSubscriptionCard } from './AnimatedSubscriptionCard';
 export { AnimatedTabScreen } from './AnimatedTabScreen';
 export { AddMethodSheet } from './AddMethodSheet';
 export { ScanBanner, markScanCompleted } from './ScanBanner';
+export { LifecycleTimeline } from './LifecycleTimeline';
+export { AlternativeSuggestionCard } from './AlternativeSuggestionCard';
+
+export { GoalProgressCard } from './GoalProgressCard';
+export { ErrorBoundary } from './ErrorBoundary';
+export { CancellationGuide } from './CancellationGuide';

@@ -31,16 +31,18 @@ interface PremiumSubscriptionCardProps {
   onPress: () => void;
   onEdit: () => void;
   onDelete: () => void;
+  onPause: () => void;
   onSwipeOpen?: () => void;
   swipeableRef?: (ref: Swipeable | null) => void;
 }
 
-export function PremiumSubscriptionCard({ 
-  item, 
-  index, 
-  onPress, 
-  onEdit, 
+export function PremiumSubscriptionCard({
+  item,
+  index,
+  onPress,
+  onEdit,
   onDelete,
+  onPause,
   onSwipeOpen,
   swipeableRef: registerRef
 }: PremiumSubscriptionCardProps) {
@@ -85,6 +87,22 @@ export function PremiumSubscriptionCard({
     day: 'numeric',
   });
 
+  // Left swipe: Pause / Resume
+  const renderLeftActions = () => (
+    <TouchableOpacity
+      style={[styles.actionButton, item.status === 'paused' ? styles.resumeButton : styles.pauseButton]}
+      onPress={() => {
+        swipeableRef.current?.close();
+        onPause();
+      }}
+    >
+      <Ionicons name={item.status === 'paused' ? 'play' : 'pause'} size={20} color="#FFF" />
+      <Text style={styles.actionText}>
+        {item.status === 'paused' ? t('subscription.resume') : t('subscription.pause')}
+      </Text>
+    </TouchableOpacity>
+  );
+
   // Swipe action buttons
   const renderRightActions = () => (
     <View style={styles.actionsContainer}>
@@ -122,7 +140,9 @@ export function PremiumSubscriptionCard({
       <Swipeable
         ref={handleRef}
         renderRightActions={renderRightActions}
+        renderLeftActions={renderLeftActions}
         overshootRight={false}
+        overshootLeft={false}
         friction={2}
         onSwipeableOpen={onSwipeOpen}
         activeOffsetX={[-20, 20]}
@@ -175,7 +195,17 @@ export function PremiumSubscriptionCard({
 
                   {/* Name & Category */}
                   <View style={styles.info}>
-                    <Text style={[styles.name, { color: colors.text }]}>{item.name}</Text>
+                    <View style={styles.nameRow}>
+                      <Text style={[styles.name, { color: colors.text }]}>{item.name}</Text>
+                      {item.status === 'paused' && (
+                        <View style={[styles.pausedBadge, { backgroundColor: `${colors.amber}20` }]}>
+                          <Ionicons name="pause-circle" size={11} color={colors.amber} />
+                          <Text style={[styles.pausedBadgeText, { color: colors.amber }]}>
+                            {t('subscription.pausedLabel')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                     <Text style={[styles.category, { color: colors.textMuted }]}>{t(`categories.${item.category}`, { defaultValue: item.category }).toUpperCase()}</Text>
                   </View>
 
@@ -230,6 +260,16 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  pauseButton: {
+    backgroundColor: '#8B5CF6', // purple for pause
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+  },
+  resumeButton: {
+    backgroundColor: '#10B981', // emerald for resume
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
   },
   editButton: {
     backgroundColor: '#8B5CF6', // primary - same in both themes
@@ -299,10 +339,28 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 14,
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   name: {
     fontSize: 18,
     fontWeight: '700',
     // color set dynamically via inline style
+  },
+  pausedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  pausedBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   category: {
     fontSize: 11,

@@ -1,0 +1,43 @@
+appId: com.subssentry.app
+---
+# Sprint 1 — FEAT-03: Quick Add E2E Tests
+# E2E-QA-01: Happy Path - Add subscription
+# E2E-QA-02: Validation Error
+# E2E-QA-03: Cancel Flow
+
+- launchApp
+
+# Skip onboarding if shown
+- runFlow:
+    when:
+      visible: "Get Started"
+    commands:
+      - tapOn: "Get Started"
+
+# Navigate to Add Subscription (via FAB → Custom Entry)
+- tapOn:
+    id: "dashboard-fab"
+- tapOn: "Custom Entry"
+
+# E2E-QA-02: Validation - Submit with empty name
+- assertVisible:
+    id: "add-subscription-screen"
+- tapOn:
+    id: "add-submit-btn"
+- assertVisible: "This field is required"
+
+# E2E-QA-01: Fill valid data and submit
+- tapOn:
+    id: "add-service-name"
+- inputText: "Netflix"
+- tapOn: "Amount"
+- inputText: "15.99"
+- tapOn:
+    id: "add-date-today"
+- tapOn:
+    id: "add-submit-btn"
+
+# Verify modal closes and dashboard updates
+- assertVisible:
+    id: "dashboard-screen"
+- assertVisible: "Netflix"

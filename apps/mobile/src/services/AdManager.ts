@@ -11,6 +11,7 @@
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { showInterstitialAd, isInterstitialReady } from './AdMobService';
+import { logger } from './LoggerService';
 
 const STORAGE_KEY = 'ad_manager_state';
 const MIN_COOLDOWN_MS = 3 * 60 * 1000; // 3 minutes
@@ -55,7 +56,7 @@ export async function initAdManager(): Promise<void> {
     // Set app open time for 30-second timer
     appOpenTime = Date.now();
   } catch (error) {
-    console.error('AdManager init error:', error);
+    logger.error('AdManager', 'Init error:', error);
   }
 }
 
@@ -66,7 +67,7 @@ async function saveState(): Promise<void> {
   try {
     await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   } catch (error) {
-    console.error('AdManager save error:', error);
+    logger.error('AdManager', 'Save error:', error);
   }
 }
 
@@ -78,19 +79,19 @@ function canShowAd(): boolean {
   
   // Check cooldown
   if (now - state.lastAdShownAt < MIN_COOLDOWN_MS) {
-    console.log('AdManager: Cooldown active, skipping ad');
+    logger.debug('AdManager', 'Cooldown active, skipping ad');
     return false;
   }
   
   // Check daily limit
   if (state.dailyAdCount >= DAILY_MAX_ADS) {
-    console.log('AdManager: Daily limit reached');
+    logger.debug('AdManager', 'Daily limit reached');
     return false;
   }
   
   // Check if ad is loaded
   if (!isInterstitialReady()) {
-    console.log('AdManager: Interstitial not ready');
+    logger.debug('AdManager', 'Interstitial not ready');
     return false;
   }
   
@@ -111,7 +112,7 @@ async function showAdAndUpdateState(): Promise<boolean> {
     state.lastAdShownAt = Date.now();
     state.dailyAdCount++;
     await saveState();
-    console.log(`AdManager: Ad shown (${state.dailyAdCount}/${DAILY_MAX_ADS} today)`);
+    logger.info('AdManager', `Ad shown (${state.dailyAdCount}/${DAILY_MAX_ADS} today)`);
   }
   
   return shown;
@@ -122,7 +123,7 @@ async function showAdAndUpdateState(): Promise<boolean> {
  */
 export async function showAfterFirstSubscriptionAd(): Promise<boolean> {
   if (state.dailyOpenAdShown) {
-    console.log('AdManager: Daily first-subscription ad already shown');
+    logger.debug('AdManager', 'Daily first-subscription ad already shown');
     return false;
   }
   
@@ -130,7 +131,7 @@ export async function showAfterFirstSubscriptionAd(): Promise<boolean> {
   if (shown) {
     state.dailyOpenAdShown = true;
     await saveState();
-    console.log('AdManager: First-subscription ad shown');
+    logger.info('AdManager', 'First-subscription ad shown');
   }
   return shown;
 }
@@ -146,7 +147,7 @@ export function cancelAppOpenAdTimer(): void {
  * Show ad before scan starts
  */
 export async function showPreScanAd(): Promise<boolean> {
-  console.log('AdManager: Pre-scan ad requested');
+  logger.debug('AdManager', 'Pre-scan ad requested');
   return showAdAndUpdateState();
 }
 
@@ -154,7 +155,7 @@ export async function showPreScanAd(): Promise<boolean> {
  * Show ad when paywall is dismissed without purchase
  */
 export async function showPaywallDismissAd(): Promise<boolean> {
-  console.log('AdManager: Paywall dismiss ad requested');
+  logger.debug('AdManager', 'Paywall dismiss ad requested');
   return showAdAndUpdateState();
 }
 

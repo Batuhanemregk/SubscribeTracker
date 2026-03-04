@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unescaped-entities */
 /**
  * Terms of Service Screen
  * Required for App Store and Google Play submission

@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { logger } from '../../services/LoggerService';
 
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const EXCHANGE_RATES_URL = `${SUPABASE_URL}/functions/v1/exchange-rates`;
@@ -80,7 +81,7 @@ export const useCurrencyStore = create<CurrencyState>()(
             throw new Error('Invalid response format');
           }
         } catch (error: any) {
-          console.warn('Exchange rate fetch failed, using cached/fallback rates:', error.message);
+          logger.warn('Currency', 'Exchange rate fetch failed, using cached/fallback rates:', error.message);
           set({
             isLoading: false,
             error: error.message,
@@ -97,7 +98,7 @@ export const useCurrencyStore = create<CurrencyState>()(
         const toRate = rates[to];
 
         if (!fromRate || !toRate) {
-          console.warn(`Missing rate for ${from} or ${to}, returning original amount`);
+          logger.warn('Currency', `Missing rate for ${from} or ${to}, returning original amount`);
           return amount;
         }
 

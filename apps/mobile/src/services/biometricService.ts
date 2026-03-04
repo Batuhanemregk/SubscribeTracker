@@ -5,6 +5,7 @@
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Alert } from 'react-native';
 import { t } from '../i18n';
+import { logger } from './LoggerService';
 
 /**
  * Check if biometric authentication is available on this device
@@ -57,7 +58,7 @@ export async function authenticateWithBiometrics(
 
     return result.success;
   } catch (error) {
-    console.error('Biometric authentication error:', error);
+    logger.error('Biometric', 'Authentication error:', error);
     return false;
   }
 }

@@ -1,0 +1,31 @@
+appId: com.subssentry.app
+---
+# Sprint 1 — FEAT-01: Dashboard E2E Tests
+# E2E-DB-01: Happy Path - Total spend + subscription list
+# E2E-DB-02: Empty State
+# E2E-DB-03: Navigation to Quick Add
+
+- launchApp:
+    clearState: true
+
+# Skip onboarding if shown
+- runFlow:
+    when:
+      visible: "Get Started"
+    commands:
+      - tapOn: "Get Started"
+
+# E2E-DB-01: Dashboard shows subscriptions and total
+- assertVisible:
+    id: "dashboard-screen"
+- assertVisible:
+    id: "dashboard-summary-card"
+- assertVisible:
+    id: "dashboard-total-monthly"
+- assertVisible:
+    id: "dashboard-list"
+
+# E2E-DB-03: FAB navigates to Add Subscription
+- tapOn:
+    id: "dashboard-fab"
+- assertVisible: "Add Subscription"

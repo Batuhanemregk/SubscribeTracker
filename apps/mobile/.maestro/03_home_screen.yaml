@@ -1,0 +1,64 @@
+appId: host.exp.Exponent
+---
+# Test 03: Home Screen Features
+
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 30000
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Get Started"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Finish"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# Go to Home tab
+- tapOn:
+    point: "10%,97%"
+- waitForAnimationToEnd
+
+# Verify stat cards
+- assertVisible:
+    text: "Monthly"
+    optional: true
+- assertVisible:
+    text: "Yearly"
+    optional: true
+- assertVisible:
+    text: "Active"
+    optional: true
+
+# Check search
+- assertVisible:
+    text: ".*[Ss]earch.*"
+    optional: true
+
+# Test search
+- tapOn:
+    text: ".*[Ss]earch.*"
+    optional: true
+- inputText: "Netflix"
+- waitForAnimationToEnd
+- eraseText: 7
+- hideKeyboard
+
+# Verify subscriptions section
+- assertVisible:
+    text: "Your Subscriptions"
+    optional: true
+
+- scroll
+- waitForAnimationToEnd

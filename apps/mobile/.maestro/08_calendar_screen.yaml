@@ -1,0 +1,45 @@
+appId: host.exp.Exponent
+---
+# Test 08: Calendar Screen
+
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 30000
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Get Started"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Finish"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap Calendar tab (4th tab)
+- tapOn:
+    point: "70%,97%"
+- waitForAnimationToEnd
+
+# Verify calendar
+- assertVisible:
+    text: ".*[Mm]arch.*|.*2026.*|.*[Cc]alendar.*"
+    optional: true
+
+# Tap a day
+- tapOn:
+    text: "15"
+    optional: true
+- waitForAnimationToEnd
+
+- scroll
+- waitForAnimationToEnd

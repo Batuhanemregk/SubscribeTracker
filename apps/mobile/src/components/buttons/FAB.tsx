@@ -11,21 +11,23 @@ interface FABProps {
   icon?: string;
   onPress: () => void;
   style?: ViewStyle;
+  accessibilityLabel?: string;
+  testID?: string;
 }
 
-export function FAB({ icon = 'add', onPress, style }: FABProps) {
+export function FAB({ icon = 'add', onPress, style, accessibilityLabel, testID }: FABProps) {
   const { colors } = useTheme();
 
   return (
     <TouchableOpacity
+      testID={testID}
       onPress={onPress}
       activeOpacity={0.8}
       style={[styles.container, createGlow(colors.primary, 'md'), style]}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityRole="button"
     >
-      <LinearGradient
-        colors={[colors.primary, colors.primaryDark]}
-        style={styles.gradient}
-      >
+      <LinearGradient colors={[colors.primary, colors.primaryDark]} style={styles.gradient}>
         <Ionicons name={icon as any} size={28} color="#FFFFFF" />
       </LinearGradient>
     </TouchableOpacity>

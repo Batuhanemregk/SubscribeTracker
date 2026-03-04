@@ -1,0 +1,61 @@
+appId: host.exp.Exponent
+---
+# Screenshot all screens
+
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 30000
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Get Started"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Finish"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# Home tab
+- tapOn:
+    point: "10%,97%"
+- waitForAnimationToEnd
+- takeScreenshot: home_screen
+
+# Insights tab
+- tapOn:
+    point: "30%,97%"
+- waitForAnimationToEnd
+- takeScreenshot: insights_screen
+
+# Budget tab
+- tapOn:
+    point: "50%,97%"
+- waitForAnimationToEnd
+- takeScreenshot: budget_screen
+
+# Calendar tab
+- tapOn:
+    point: "70%,97%"
+- waitForAnimationToEnd
+- takeScreenshot: calendar_screen
+
+# Settings tab
+- tapOn:
+    point: "90%,97%"
+- waitForAnimationToEnd
+- takeScreenshot: settings_screen
+
+# Settings scrolled
+- scroll
+- waitForAnimationToEnd
+- takeScreenshot: settings_scrolled

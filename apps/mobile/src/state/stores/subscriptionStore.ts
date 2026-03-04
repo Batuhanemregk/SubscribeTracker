@@ -6,9 +6,11 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Crypto from 'expo-crypto';
-import type { Subscription, PaymentHistoryItem } from '../../types';
+import type { Subscription, PaymentHistoryItem, LifecycleEvent } from '../../types';
 import { pushToCloud, pullFromCloud, deleteFromCloud, fullSync } from '../../services/syncService';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { getSuggestedReminderDays } from '../../services/NotificationService';
+import { logger } from '../../services/LoggerService';
 
 interface SubscriptionState {
   subscriptions: Subscription[];
@@ -17,19 +19,29 @@ interface SubscriptionState {
   isSyncing: boolean;
   lastSyncedAt: string | null;
   syncError: string | null;
-  
+
   // Actions
   setSubscriptions: (subs: Subscription[]) => void;
   addSubscription: (sub: Subscription) => void;
+  loadDemoData: () => void;
+  clearDemoData: () => void;
   updateSubscription: (id: string, updates: Partial<Subscription>) => void;
+  updateNotes: (id: string, notes: string) => void;
   deleteSubscription: (id: string) => void;
-  
+  pauseSubscription: (id: string) => void;
+  resumeSubscription: (id: string) => void;
+  addLifecycleEvent: (subscriptionId: string, event: Omit<LifecycleEvent, 'id'>) => void;
+  updateUsageRating: (id: string, rating: number) => void;
+  logUsage: (id: string) => void;
+
   // Payment history
   addPaymentHistory: (payment: PaymentHistoryItem) => void;
   getPaymentHistory: (subscriptionId: string) => PaymentHistoryItem[];
-  
+
   // Computed helpers
   getActiveSubscriptions: () => Subscription[];
+  getPausedSubscriptions: () => Subscription[];
+  getTrialSubscriptions: () => Subscription[];
   getSubscriptionById: (id: string) => Subscription | undefined;
   calculateMonthlyTotal: () => number;
   calculateYearlyTotal: () => number;
@@ -58,12 +70,12 @@ async function getAuthUserId(): Promise<string | null> {
     // Fallback: try getUser which triggers a token refresh if needed
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error) {
-      console.error('[Sync] Auth error:', error.message);
+      logger.error('Sync', 'Auth error:', error.message);
       return null;
     }
     return user?.id || null;
   } catch (err) {
-    console.error('[Sync] Failed to get auth user:', err);
+    logger.error('Sync', 'Failed to get auth user:', err);
     return null;
   }
 }
@@ -80,10 +92,169 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
       setSubscriptions: (subscriptions) => set({ subscriptions }),
 
-      addSubscription: (sub) =>
+      loadDemoData: () => {
+        const now = new Date();
+        const daysFromNow = (days: number) => {
+          const d = new Date(now);
+          d.setDate(d.getDate() + days);
+          return d.toISOString();
+        };
+
+        const demoSubs: Subscription[] = [
+          {
+            id: Crypto.randomUUID(),
+            name: 'Netflix',
+            amount: 22.99,
+            currency: 'USD',
+            cycle: 'monthly',
+            nextBillingDate: daysFromNow(12),
+            category: 'Entertainment',
+            iconKey: '🎬',
+            colorKey: '#E50914',
+            status: 'active',
+            source: 'demo' as any,
+            detection: null,
+            cancelUrl: null,
+            manageUrl: null,
+            notes: '',
+            isTrial: false,
+            trialEndsAt: null,
+            lifecycle: [],
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: Crypto.randomUUID(),
+            name: 'Spotify Family',
+            amount: 16.99,
+            currency: 'USD',
+            cycle: 'monthly',
+            nextBillingDate: daysFromNow(8),
+            category: 'Music',
+            iconKey: '🎵',
+            colorKey: '#1DB954',
+            status: 'active',
+            source: 'demo' as any,
+            detection: null,
+            cancelUrl: null,
+            manageUrl: null,
+            notes: '',
+            isTrial: false,
+            trialEndsAt: null,
+            lifecycle: [],
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: Crypto.randomUUID(),
+            name: 'iCloud+ 200GB',
+            amount: 2.99,
+            currency: 'USD',
+            cycle: 'monthly',
+            nextBillingDate: daysFromNow(22),
+            category: 'Storage',
+            iconKey: '☁️',
+            colorKey: '#3B82F6',
+            status: 'active',
+            source: 'demo' as any,
+            detection: null,
+            cancelUrl: null,
+            manageUrl: null,
+            notes: '',
+            isTrial: false,
+            trialEndsAt: null,
+            lifecycle: [],
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: Crypto.randomUUID(),
+            name: 'ChatGPT Plus',
+            amount: 20.00,
+            currency: 'USD',
+            cycle: 'monthly',
+            nextBillingDate: daysFromNow(5),
+            category: 'Productivity',
+            iconKey: '🤖',
+            colorKey: '#10A37F',
+            status: 'active',
+            source: 'demo' as any,
+            detection: null,
+            cancelUrl: null,
+            manageUrl: null,
+            notes: '',
+            isTrial: true,
+            trialEndsAt: daysFromNow(5),
+            lifecycle: [],
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+          {
+            id: Crypto.randomUUID(),
+            name: 'Adobe Creative Cloud',
+            amount: 54.99,
+            currency: 'USD',
+            cycle: 'monthly',
+            nextBillingDate: daysFromNow(18),
+            category: 'Design',
+            iconKey: '🎨',
+            colorKey: '#FF0000',
+            status: 'paused',
+            source: 'demo' as any,
+            detection: null,
+            cancelUrl: null,
+            manageUrl: null,
+            notes: '',
+            isTrial: false,
+            trialEndsAt: null,
+            lifecycle: [],
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+          },
+        ];
+
         set((state) => ({
-          subscriptions: [...state.subscriptions, sub],
-        })),
+          subscriptions: [
+            ...state.subscriptions.filter((s) => (s.source as string) !== 'demo'),
+            ...demoSubs,
+          ],
+        }));
+      },
+
+      clearDemoData: () => {
+        set((state) => ({
+          subscriptions: state.subscriptions.filter((s) => (s.source as string) !== 'demo'),
+        }));
+      },
+
+      addSubscription: (sub) => {
+        const subscribedEvent: LifecycleEvent = {
+          id: Crypto.randomUUID(),
+          type: 'subscribed',
+          date: sub.createdAt,
+        };
+        // Apply smart reminder suggestions if enabled and no custom days already set
+        let customReminderDays = sub.customReminderDays;
+        if (customReminderDays == null) {
+          const { useSettingsStore } = require('../stores/settingsStore');
+          const settingsState = useSettingsStore.getState();
+          if (settingsState.smartRemindersEnabled) {
+            const monthlyAmount = sub.cycle === 'monthly' ? sub.amount
+              : sub.cycle === 'weekly' ? sub.amount * 4.33
+              : sub.cycle === 'quarterly' ? sub.amount / 3
+              : sub.cycle === 'yearly' ? sub.amount / 12
+              : sub.amount;
+            customReminderDays = getSuggestedReminderDays(monthlyAmount);
+          }
+        }
+        set((state) => ({
+          subscriptions: [...state.subscriptions, { ...sub, customReminderDays, lifecycle: [subscribedEvent] }],
+        }));
+        // Trigger rating prompt on 3rd subscription (fire-and-forget)
+        const { onSubscriptionAdded } = require('../../services/RatingService');
+        const newCount = get().subscriptions.length;
+        onSubscriptionAdded(newCount).catch(() => {});
+      },
 
       updateSubscription: (id, updates) =>
         set((state) => ({
@@ -92,10 +263,85 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           ),
         })),
 
+      updateNotes: (id, notes) =>
+        set((state) => ({
+          subscriptions: state.subscriptions.map((sub) =>
+            sub.id === id ? { ...sub, notes, updatedAt: new Date().toISOString() } : sub
+          ),
+        })),
+
+      pauseSubscription: (id) => {
+        const now = new Date().toISOString();
+        const pausedEvent: LifecycleEvent = { id: Crypto.randomUUID(), type: 'paused', date: now };
+        set((state) => ({
+          subscriptions: state.subscriptions.map((sub) =>
+            sub.id === id
+              ? { ...sub, status: 'paused', updatedAt: now, lifecycle: [...(sub.lifecycle || []), pausedEvent] }
+              : sub
+          ),
+        }));
+      },
+
+      resumeSubscription: (id) => {
+        const now = new Date().toISOString();
+        const resumedEvent: LifecycleEvent = { id: Crypto.randomUUID(), type: 'resumed', date: now };
+        set((state) => ({
+          subscriptions: state.subscriptions.map((sub) =>
+            sub.id === id
+              ? { ...sub, status: 'active', updatedAt: now, lifecycle: [...(sub.lifecycle || []), resumedEvent] }
+              : sub
+          ),
+        }));
+      },
+
+      addLifecycleEvent: (subscriptionId, event) => {
+        const newEvent: LifecycleEvent = { ...event, id: Crypto.randomUUID() };
+        set((state) => ({
+          subscriptions: state.subscriptions.map((sub) =>
+            sub.id === subscriptionId
+              ? { ...sub, lifecycle: [...(sub.lifecycle || []), newEvent] }
+              : sub
+          ),
+        }));
+      },
+
+      updateUsageRating: (id, rating) => {
+        const now = new Date().toISOString();
+        const ratingEvent: Omit<LifecycleEvent, 'id'> = {
+          type: 'rating_changed',
+          date: now,
+          details: `Usage rating set to ${rating}/5`,
+        };
+        const newEvent: LifecycleEvent = { ...ratingEvent, id: Crypto.randomUUID() };
+        set((state) => ({
+          subscriptions: state.subscriptions.map((sub) =>
+            sub.id === id
+              ? {
+                  ...sub,
+                  usageRating: rating,
+                  updatedAt: now,
+                  lifecycle: [...(sub.lifecycle || []), newEvent],
+                }
+              : sub
+          ),
+        }));
+      },
+
+      logUsage: (id) => {
+        const now = new Date().toISOString();
+        set((state) => ({
+          subscriptions: state.subscriptions.map((sub) =>
+            sub.id === id
+              ? { ...sub, lastUsedAt: now, updatedAt: now }
+              : sub
+          ),
+        }));
+      },
+
       deleteSubscription: (id) => {
         // Also delete from cloud if configured
         if (isSupabaseConfigured()) {
-          deleteFromCloud(id).catch(console.error);
+          deleteFromCloud(id).catch((e) => logger.error('SubscriptionStore', 'Cloud delete failed:', e));
         }
         set((state) => ({
           subscriptions: state.subscriptions.filter((sub) => sub.id !== id),
@@ -114,6 +360,12 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       getActiveSubscriptions: () =>
         get().subscriptions.filter((sub) => sub.status === 'active'),
 
+      getPausedSubscriptions: () =>
+        get().subscriptions.filter((sub) => sub.status === 'paused'),
+
+      getTrialSubscriptions: () =>
+        get().subscriptions.filter((sub) => sub.isTrial && sub.trialEndsAt && sub.status === 'active'),
+
       getSubscriptionById: (id) =>
         get().subscriptions.find((sub) => sub.id === id),
 
@@ -129,6 +381,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               return total + sub.amount / 3;
             case 'yearly':
               return total + sub.amount / 12;
+            case 'custom':
+              return total + sub.amount * (30.44 / (sub.customDays || 30));
             default:
               return total;
           }
@@ -147,6 +401,8 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               return total + sub.amount * 4;
             case 'yearly':
               return total + sub.amount;
+            case 'custom':
+              return total + sub.amount * (365.25 / (sub.customDays || 365));
             default:
               return total;
           }
@@ -170,6 +426,9 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               break;
             case 'yearly':
               monthlyAmount = sub.amount / 12;
+              break;
+            case 'custom':
+              monthlyAmount = sub.amount * (30.44 / (sub.customDays || 30));
               break;
             default:
               monthlyAmount = sub.amount;
@@ -195,6 +454,9 @@ export const useSubscriptionStore = create<SubscriptionState>()(
               break;
             case 'yearly':
               yearlyAmount = sub.amount;
+              break;
+            case 'custom':
+              yearlyAmount = sub.amount * (365.25 / (sub.customDays || 365));
               break;
             default:
               yearlyAmount = sub.amount;
@@ -370,13 +632,13 @@ export function migrateSubscriptionIds(store: {
     };
   });
 
-  console.log(`[Migration] Migrated ${idMap.size} subscription IDs from timestamp format to UUID`);
+  logger.info('Migration', `Migrated ${idMap.size} subscription IDs from timestamp format to UUID`);
   return { subscriptions: migratedSubs, paymentHistory: migratedHistory, migrated: true };
 }
 
 // Helper to create new subscription
 export function createSubscription(
-  data: Omit<Subscription, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'source' | 'detection' | 'cancelUrl' | 'manageUrl' | 'notes'>
+  data: Omit<Subscription, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'source' | 'detection' | 'cancelUrl' | 'manageUrl' | 'notes' | 'isTrial' | 'trialEndsAt'> & { isTrial?: boolean; trialEndsAt?: string | null }
 ): Subscription {
   const now = new Date().toISOString();
   return {
@@ -388,6 +650,8 @@ export function createSubscription(
     cancelUrl: null,
     manageUrl: null,
     notes: '',
+    isTrial: data.isTrial ?? false,
+    trialEndsAt: data.trialEndsAt ?? null,
     createdAt: now,
     updatedAt: now,
   };

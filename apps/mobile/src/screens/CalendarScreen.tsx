@@ -229,7 +229,7 @@ export function CalendarScreen() {
         {selectedDaySubs && selectedDaySubs.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>
-              {t('calendar.paymentsOnDay', { day: selectedDay })}
+              {t('calendar.paymentsOnDay', { day: selectedDay ?? 0 })}
             </Text>
             {selectedDaySubs.map((sub) => (
               <PaymentItem key={sub.id} sub={sub} index={0} />

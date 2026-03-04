@@ -7,17 +7,72 @@
       "name": "Netflix",
       "domain": "netflix.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=netflix.com&sz=128",
-      "senderPatterns": ["netflix.com", "mailer.netflix.com"],
-      "subjectPatterns": ["payment", "receipt", "bill", "invoice", "subscription"],
+      "senderPatterns": [
+        "netflix.com",
+        "mailer.netflix.com"
+      ],
+      "subjectPatterns": [
+        "payment",
+        "receipt",
+        "bill",
+        "invoice",
+        "subscription"
+      ],
       "category": "Entertainment",
       "icon": "🎬",
       "color": "#E50914",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.netflix.com/YourAccount",
+      "cancelUrl": "https://www.netflix.com/cancelplan",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to netflix.com and sign in",
+        "Click your profile icon > Account",
+        "Under Membership & Billing, select Cancel Membership",
+        "Confirm cancellation — access continues until billing period ends"
+      ],
       "plans": [
-        { "id": "basic", "name": "Standard with ads", "price": 6.99, "cycle": "monthly" },
-        { "id": "standard", "name": "Standard", "price": 15.49, "cycle": "monthly" },
-        { "id": "premium", "name": "Premium", "price": 22.99, "cycle": "monthly" }
+        {
+          "id": "basic",
+          "name": "Standard with ads",
+          "price": 6.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "standard",
+          "name": "Standard",
+          "price": 15.49,
+          "cycle": "monthly"
+        },
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 22.99,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Disney+",
+          "price": 7.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Family-friendly content, Marvel & Star Wars"
+        },
+        {
+          "name": "Tubi",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free with ads — thousands of movies & shows"
+        },
+        {
+          "name": "Pluto TV",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free live TV and on-demand content"
+        }
       ]
     },
     {
@@ -25,18 +80,77 @@
       "name": "Spotify",
       "domain": "spotify.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=spotify.com&sz=128",
-      "senderPatterns": ["spotify.com", "email.spotify.com"],
-      "subjectPatterns": ["receipt", "payment", "premium", "subscription"],
+      "senderPatterns": [
+        "spotify.com",
+        "email.spotify.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "premium",
+        "subscription"
+      ],
       "category": "Music",
       "icon": "🎵",
       "color": "#1DB954",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.spotify.com/us/account/",
+      "cancelUrl": "https://www.spotify.com/account/subscription/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to spotify.com and log in to your account",
+        "Click your name > Account > Subscription",
+        "Scroll down and select Cancel Premium",
+        "Follow the prompts to confirm cancellation"
+      ],
       "plans": [
-        { "id": "individual", "name": "Individual", "price": 10.99, "cycle": "monthly" },
-        { "id": "duo", "name": "Duo", "price": 14.99, "cycle": "monthly" },
-        { "id": "family", "name": "Family", "price": 16.99, "cycle": "monthly" },
-        { "id": "student", "name": "Student", "price": 5.99, "cycle": "monthly" }
+        {
+          "id": "individual",
+          "name": "Individual",
+          "price": 10.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "duo",
+          "name": "Duo",
+          "price": 14.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "family",
+          "name": "Family",
+          "price": 16.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "student",
+          "name": "Student",
+          "price": 5.99,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "YouTube Music",
+          "price": 10.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Included with YouTube Premium"
+        },
+        {
+          "name": "Amazon Music Unlimited",
+          "price": 9.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Prime members get a discount"
+        },
+        {
+          "name": "Spotify Free",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free tier with ads and shuffle-only on mobile"
+        }
       ]
     },
     {
@@ -44,17 +158,49 @@
       "name": "Apple One",
       "domain": "apple.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=apple.com&sz=128",
-      "senderPatterns": ["apple.com", "email.apple.com", "itunes"],
-      "subjectPatterns": ["receipt", "subscription", "icloud", "apple one"],
+      "senderPatterns": [
+        "apple.com",
+        "email.apple.com",
+        "itunes"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "subscription",
+        "icloud",
+        "apple one"
+      ],
       "category": "Productivity",
       "icon": "🍎",
       "color": "#000000",
       "defaultCycle": "monthly",
       "manageUrl": "https://support.apple.com/en-us/HT202039",
+      "cancelUrl": "https://support.apple.com/en-us/HT202039",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Open Settings on your iPhone or iPad",
+        "Tap your Apple ID name > Subscriptions",
+        "Select Apple One and tap Cancel Subscription",
+        "Confirm cancellation — access continues until period ends"
+      ],
       "plans": [
-        { "id": "individual", "name": "Individual", "price": 19.95, "cycle": "monthly" },
-        { "id": "family", "name": "Family", "price": 25.95, "cycle": "monthly" },
-        { "id": "premier", "name": "Premier", "price": 37.95, "cycle": "monthly" }
+        {
+          "id": "individual",
+          "name": "Individual",
+          "price": 19.95,
+          "cycle": "monthly"
+        },
+        {
+          "id": "family",
+          "name": "Family",
+          "price": 25.95,
+          "cycle": "monthly"
+        },
+        {
+          "id": "premier",
+          "name": "Premier",
+          "price": 37.95,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -62,17 +208,63 @@
       "name": "YouTube Premium",
       "domain": "youtube.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=youtube.com&sz=128",
-      "senderPatterns": ["youtube.com", "google.com"],
-      "subjectPatterns": ["youtube premium", "receipt", "subscription"],
+      "senderPatterns": [
+        "youtube.com",
+        "google.com"
+      ],
+      "subjectPatterns": [
+        "youtube premium",
+        "receipt",
+        "subscription"
+      ],
       "category": "Entertainment",
       "icon": "📺",
       "color": "#FF0000",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.youtube.com/paid_memberships",
+      "cancelUrl": "https://www.youtube.com/paid_memberships",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to youtube.com and sign in",
+        "Click your profile > Paid memberships",
+        "Select YouTube Premium and click Deactivate",
+        "Confirm — you keep access until the billing period ends"
+      ],
       "plans": [
-        { "id": "individual", "name": "Individual", "price": 13.99, "cycle": "monthly" },
-        { "id": "family", "name": "Family", "price": 22.99, "cycle": "monthly" },
-        { "id": "student", "name": "Student", "price": 7.99, "cycle": "monthly" }
+        {
+          "id": "individual",
+          "name": "Individual",
+          "price": 13.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "family",
+          "name": "Family",
+          "price": 22.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "student",
+          "name": "Student",
+          "price": 7.99,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Brave Browser",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free built-in ad blocker — blocks YouTube ads"
+        },
+        {
+          "name": "Revanced",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free open-source YouTube mod with ad blocking"
+        }
       ]
     },
     {
@@ -80,17 +272,63 @@
       "name": "Disney+",
       "domain": "disneyplus.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=disneyplus.com&sz=128",
-      "senderPatterns": ["disneyplus.com", "disney.com"],
-      "subjectPatterns": ["receipt", "payment", "subscription"],
+      "senderPatterns": [
+        "disneyplus.com",
+        "disney.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "subscription"
+      ],
       "category": "Entertainment",
       "icon": "✨",
       "color": "#113CCF",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.disneyplus.com/account",
+      "cancelUrl": "https://www.disneyplus.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to disneyplus.com and log in",
+        "Click your profile icon > Account",
+        "Under Subscription, select Cancel Subscription",
+        "Follow the prompts to confirm — access remains until end of billing period"
+      ],
       "plans": [
-        { "id": "basic", "name": "Basic (with ads)", "price": 7.99, "cycle": "monthly" },
-        { "id": "premium", "name": "Premium", "price": 13.99, "cycle": "monthly" },
-        { "id": "bundle", "name": "Trio Bundle", "price": 24.99, "cycle": "monthly" }
+        {
+          "id": "basic",
+          "name": "Basic (with ads)",
+          "price": 7.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 13.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "bundle",
+          "name": "Trio Bundle",
+          "price": 24.99,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Netflix",
+          "price": 6.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Wider library with original series & films"
+        },
+        {
+          "name": "Tubi",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free with ads — thousands of titles"
+        }
       ]
     },
     {
@@ -98,17 +336,63 @@
       "name": "Max (HBO)",
       "domain": "max.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=max.com&sz=128",
-      "senderPatterns": ["hbomax.com", "max.com"],
-      "subjectPatterns": ["receipt", "payment", "subscription"],
+      "senderPatterns": [
+        "hbomax.com",
+        "max.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "subscription"
+      ],
       "category": "Entertainment",
       "icon": "🎭",
       "color": "#5B21B6",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.max.com/settings",
+      "cancelUrl": "https://www.max.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to max.com and sign in",
+        "Click your profile > Account",
+        "Under Subscription, select Cancel Plan",
+        "Confirm cancellation — access continues until billing period ends"
+      ],
       "plans": [
-        { "id": "with-ads", "name": "With Ads", "price": 9.99, "cycle": "monthly" },
-        { "id": "ad-free", "name": "Ad-Free", "price": 15.99, "cycle": "monthly" },
-        { "id": "ultimate", "name": "Ultimate Ad-Free", "price": 19.99, "cycle": "monthly" }
+        {
+          "id": "with-ads",
+          "name": "With Ads",
+          "price": 9.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "ad-free",
+          "name": "Ad-Free",
+          "price": 15.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "ultimate",
+          "name": "Ultimate Ad-Free",
+          "price": 19.99,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Amazon Prime Video",
+          "price": 8.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Large on-demand library plus originals"
+        },
+        {
+          "name": "Tubi",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free with ads — no subscription needed"
+        }
       ]
     },
     {
@@ -116,17 +400,63 @@
       "name": "Amazon Prime",
       "domain": "amazon.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=amazon.com&sz=128",
-      "senderPatterns": ["amazon.com", "amazon.co.uk"],
-      "subjectPatterns": ["prime membership", "prime video", "subscription"],
+      "senderPatterns": [
+        "amazon.com",
+        "amazon.co.uk"
+      ],
+      "subjectPatterns": [
+        "prime membership",
+        "prime video",
+        "subscription"
+      ],
       "category": "Entertainment",
       "icon": "📦",
       "color": "#FF9900",
       "defaultCycle": "yearly",
       "manageUrl": "https://www.amazon.com/gp/primecentral",
+      "cancelUrl": "https://www.amazon.com/mc/pipelines/cancel",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to amazon.com and sign in",
+        "Go to Account & Lists > Prime Membership",
+        "Click Manage membership > End Membership",
+        "Choose End Now or End on Renewal Date, then confirm"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 14.99, "cycle": "monthly" },
-        { "id": "yearly", "name": "Yearly", "price": 139.00, "cycle": "yearly" },
-        { "id": "student", "name": "Student Monthly", "price": 7.49, "cycle": "monthly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 14.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "yearly",
+          "name": "Yearly",
+          "price": 139.0,
+          "cycle": "yearly"
+        },
+        {
+          "id": "student",
+          "name": "Student Monthly",
+          "price": 7.49,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Prime Video Only",
+          "price": 8.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Just the streaming — no shipping perks"
+        },
+        {
+          "name": "Peacock",
+          "price": 5.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "NBC, sports, and original content"
+        }
       ]
     },
     {
@@ -134,17 +464,71 @@
       "name": "Adobe Creative Cloud",
       "domain": "adobe.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=adobe.com&sz=128",
-      "senderPatterns": ["adobe.com", "mail.adobe.com"],
-      "subjectPatterns": ["invoice", "payment", "creative cloud", "subscription"],
+      "senderPatterns": [
+        "adobe.com",
+        "mail.adobe.com"
+      ],
+      "subjectPatterns": [
+        "invoice",
+        "payment",
+        "creative cloud",
+        "subscription"
+      ],
       "category": "Design",
       "icon": "🎨",
       "color": "#FF0000",
       "defaultCycle": "monthly",
       "manageUrl": "https://account.adobe.com/plans",
+      "cancelUrl": "https://account.adobe.com/plans",
+      "cancelDifficulty": "hard",
+      "cancelSteps": [
+        "Go to account.adobe.com and sign in",
+        "Click Plans & Payment > Manage plan",
+        "Select Cancel plan and choose a reason",
+        "Confirm cancellation (note: early cancellation may incur a fee)"
+      ],
       "plans": [
-        { "id": "photography", "name": "Photography (20GB)", "price": 9.99, "cycle": "monthly" },
-        { "id": "single-app", "name": "Single App", "price": 22.99, "cycle": "monthly" },
-        { "id": "all-apps", "name": "All Apps", "price": 59.99, "cycle": "monthly" }
+        {
+          "id": "photography",
+          "name": "Photography (20GB)",
+          "price": 9.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "single-app",
+          "name": "Single App",
+          "price": 22.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "all-apps",
+          "name": "All Apps",
+          "price": 59.99,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Canva Pro",
+          "price": 14.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Great for design without learning curve"
+        },
+        {
+          "name": "Figma",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free tier covers most design needs"
+        },
+        {
+          "name": "Affinity Suite",
+          "price": 16.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "One-time purchase alternative to Adobe apps"
+        }
       ]
     },
     {
@@ -152,16 +536,40 @@
       "name": "Figma",
       "domain": "figma.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=figma.com&sz=128",
-      "senderPatterns": ["figma.com"],
-      "subjectPatterns": ["invoice", "receipt", "subscription"],
+      "senderPatterns": [
+        "figma.com"
+      ],
+      "subjectPatterns": [
+        "invoice",
+        "receipt",
+        "subscription"
+      ],
       "category": "Design",
       "icon": "🖼️",
       "color": "#F24E1E",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.figma.com/settings",
+      "cancelUrl": "https://www.figma.com/settings",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to figma.com and sign in",
+        "Click your profile icon > Settings > Plans",
+        "Select Downgrade to Starter (free)",
+        "Confirm — paid features removed at end of billing period"
+      ],
       "plans": [
-        { "id": "professional", "name": "Professional", "price": 15.00, "cycle": "monthly" },
-        { "id": "organization", "name": "Organization", "price": 45.00, "cycle": "monthly" }
+        {
+          "id": "professional",
+          "name": "Professional",
+          "price": 15.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "organization",
+          "name": "Organization",
+          "price": 45.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -169,16 +577,58 @@
       "name": "Notion",
       "domain": "notion.so",
       "logoUrl": "https://www.google.com/s2/favicons?domain=notion.so&sz=128",
-      "senderPatterns": ["notion.so", "makenotion.com"],
-      "subjectPatterns": ["invoice", "receipt", "subscription", "payment"],
+      "senderPatterns": [
+        "notion.so",
+        "makenotion.com"
+      ],
+      "subjectPatterns": [
+        "invoice",
+        "receipt",
+        "subscription",
+        "payment"
+      ],
       "category": "Productivity",
       "icon": "📝",
       "color": "#000000",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.notion.so/my-account",
+      "cancelUrl": "https://www.notion.so/my-account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to notion.so and log in",
+        "Click Settings > Plans",
+        "Select Downgrade to Free",
+        "Confirm downgrade — you lose paid features at the end of the billing period"
+      ],
       "plans": [
-        { "id": "plus", "name": "Plus", "price": 10.00, "cycle": "monthly" },
-        { "id": "business", "name": "Business", "price": 18.00, "cycle": "monthly" }
+        {
+          "id": "plus",
+          "name": "Plus",
+          "price": 10.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business",
+          "name": "Business",
+          "price": 18.0,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Obsidian",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free local-first note-taking with plugins"
+        },
+        {
+          "name": "Google Keep",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free simple notes synced with Google account"
+        }
       ]
     },
     {
@@ -186,16 +636,56 @@
       "name": "Slack",
       "domain": "slack.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=slack.com&sz=128",
-      "senderPatterns": ["slack.com"],
-      "subjectPatterns": ["invoice", "receipt", "subscription"],
+      "senderPatterns": [
+        "slack.com"
+      ],
+      "subjectPatterns": [
+        "invoice",
+        "receipt",
+        "subscription"
+      ],
       "category": "Productivity",
       "icon": "💬",
       "color": "#4A154B",
       "defaultCycle": "monthly",
       "manageUrl": "https://slack.com/account/settings",
+      "cancelUrl": "https://slack.com/intl/en-us/help/articles/214908388-Downgrade-or-cancel-your-Slack-plan",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to slack.com and sign in to your workspace",
+        "Click your workspace name > Settings & administration > Billing",
+        "Select Downgrade or Cancel plan",
+        "Confirm the cancellation to revert to free plan"
+      ],
       "plans": [
-        { "id": "pro", "name": "Pro", "price": 8.75, "cycle": "monthly" },
-        { "id": "business", "name": "Business+", "price": 15.00, "cycle": "monthly" }
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 8.75,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business",
+          "name": "Business+",
+          "price": 15.0,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Discord",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free messaging, voice & channels for teams"
+        },
+        {
+          "name": "Microsoft Teams Free",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free tier with chat and video calls"
+        }
       ]
     },
     {
@@ -203,17 +693,65 @@
       "name": "Dropbox",
       "domain": "dropbox.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=dropbox.com&sz=128",
-      "senderPatterns": ["dropbox.com", "dropboxmail.com"],
-      "subjectPatterns": ["receipt", "payment", "subscription", "plus", "professional"],
+      "senderPatterns": [
+        "dropbox.com",
+        "dropboxmail.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "subscription",
+        "plus",
+        "professional"
+      ],
       "category": "Storage",
       "icon": "☁️",
       "color": "#0061FF",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.dropbox.com/account",
+      "cancelUrl": "https://www.dropbox.com/account/plan",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to dropbox.com and sign in",
+        "Click your avatar > Settings > Plan",
+        "Select Downgrade or Cancel plan",
+        "Follow prompts to confirm — data remains accessible on Basic plan"
+      ],
       "plans": [
-        { "id": "plus", "name": "Plus (2TB)", "price": 11.99, "cycle": "monthly" },
-        { "id": "essentials", "name": "Essentials (3TB)", "price": 22.00, "cycle": "monthly" },
-        { "id": "business", "name": "Business", "price": 20.00, "cycle": "monthly" }
+        {
+          "id": "plus",
+          "name": "Plus (2TB)",
+          "price": 11.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "essentials",
+          "name": "Essentials (3TB)",
+          "price": 22.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business",
+          "name": "Business",
+          "price": 20.0,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Google Drive",
+          "price": 2.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "200 GB for less — great cross-platform support"
+        },
+        {
+          "name": "iCloud+",
+          "price": 2.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "200 GB — seamless on Apple devices"
+        }
       ]
     },
     {
@@ -221,17 +759,47 @@
       "name": "Google One",
       "domain": "google.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=google.com&sz=128",
-      "senderPatterns": ["google.com", "googlemail.com"],
-      "subjectPatterns": ["google one", "storage", "receipt"],
+      "senderPatterns": [
+        "google.com",
+        "googlemail.com"
+      ],
+      "subjectPatterns": [
+        "google one",
+        "storage",
+        "receipt"
+      ],
       "category": "Storage",
       "icon": "🌐",
       "color": "#4285F4",
       "defaultCycle": "monthly",
       "manageUrl": "https://one.google.com/settings",
+      "cancelUrl": "https://one.google.com/settings",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to one.google.com and sign in",
+        "Click Settings > Cancel membership",
+        "Review what you'll lose and confirm",
+        "Storage reverts to 15 GB free after the paid period ends"
+      ],
       "plans": [
-        { "id": "100gb", "name": "100 GB", "price": 1.99, "cycle": "monthly" },
-        { "id": "200gb", "name": "200 GB", "price": 2.99, "cycle": "monthly" },
-        { "id": "2tb", "name": "2 TB", "price": 9.99, "cycle": "monthly" }
+        {
+          "id": "100gb",
+          "name": "100 GB",
+          "price": 1.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "200gb",
+          "name": "200 GB",
+          "price": 2.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "2tb",
+          "name": "2 TB",
+          "price": 9.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -239,17 +807,47 @@
       "name": "iCloud+",
       "domain": "apple.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=icloud.com&sz=128",
-      "senderPatterns": ["apple.com", "icloud.com"],
-      "subjectPatterns": ["icloud", "storage", "receipt"],
+      "senderPatterns": [
+        "apple.com",
+        "icloud.com"
+      ],
+      "subjectPatterns": [
+        "icloud",
+        "storage",
+        "receipt"
+      ],
       "category": "Storage",
       "icon": "☁️",
       "color": "#3395FF",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.icloud.com/settings",
+      "cancelUrl": "https://support.apple.com/en-us/HT207269",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Open Settings on your iPhone > tap your Apple ID name",
+        "Tap iCloud > iCloud+ or Manage Storage",
+        "Select Change Storage Plan > Downgrade Options",
+        "Choose the Free 5 GB plan and confirm"
+      ],
       "plans": [
-        { "id": "50gb", "name": "50 GB", "price": 0.99, "cycle": "monthly" },
-        { "id": "200gb", "name": "200 GB", "price": 2.99, "cycle": "monthly" },
-        { "id": "2tb", "name": "2 TB", "price": 10.99, "cycle": "monthly" }
+        {
+          "id": "50gb",
+          "name": "50 GB",
+          "price": 0.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "200gb",
+          "name": "200 GB",
+          "price": 2.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "2tb",
+          "name": "2 TB",
+          "price": 10.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -257,17 +855,49 @@
       "name": "GitHub",
       "domain": "github.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=github.com&sz=128",
-      "senderPatterns": ["github.com", "noreply.github.com"],
-      "subjectPatterns": ["receipt", "invoice", "pro", "team", "subscription"],
+      "senderPatterns": [
+        "github.com",
+        "noreply.github.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "invoice",
+        "pro",
+        "team",
+        "subscription"
+      ],
       "category": "Development",
       "icon": "💻",
       "color": "#181717",
       "defaultCycle": "monthly",
       "manageUrl": "https://github.com/settings/billing",
+      "cancelUrl": "https://github.com/settings/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to github.com and sign in",
+        "Click your profile > Settings > Billing and plans",
+        "Select Downgrade to Free",
+        "Confirm — Pro features removed at end of billing period"
+      ],
       "plans": [
-        { "id": "pro", "name": "Pro", "price": 4.00, "cycle": "monthly" },
-        { "id": "team", "name": "Team", "price": 4.00, "cycle": "monthly" },
-        { "id": "enterprise", "name": "Enterprise", "price": 21.00, "cycle": "monthly" }
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 4.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "team",
+          "name": "Team",
+          "price": 4.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "enterprise",
+          "name": "Enterprise",
+          "price": 21.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -275,16 +905,64 @@
       "name": "ChatGPT Plus",
       "domain": "openai.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=openai.com&sz=128",
-      "senderPatterns": ["openai.com"],
-      "subjectPatterns": ["receipt", "payment", "chatgpt", "subscription"],
+      "senderPatterns": [
+        "openai.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "chatgpt",
+        "subscription"
+      ],
       "category": "Productivity",
       "icon": "🤖",
       "color": "#10A37F",
       "defaultCycle": "monthly",
       "manageUrl": "https://chat.openai.com/#settings",
+      "cancelUrl": "https://chat.openai.com/#settings",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to chat.openai.com and sign in",
+        "Click your profile > Settings > Subscription",
+        "Select Manage Subscription > Cancel Plan",
+        "Confirm cancellation — Plus access continues until end of billing period"
+      ],
       "plans": [
-        { "id": "plus", "name": "Plus", "price": 20.00, "cycle": "monthly" },
-        { "id": "pro", "name": "Pro", "price": 200.00, "cycle": "monthly" }
+        {
+          "id": "plus",
+          "name": "Plus",
+          "price": 20.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 200.0,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Claude Pro",
+          "price": 20.0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Comparable AI — great for longer conversations"
+        },
+        {
+          "name": "Gemini Advanced",
+          "price": 19.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Google's AI with Workspace integration"
+        },
+        {
+          "name": "ChatGPT Free",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free tier available with limited access"
+        }
       ]
     },
     {
@@ -292,16 +970,41 @@
       "name": "Claude Pro",
       "domain": "anthropic.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=anthropic.com&sz=128",
-      "senderPatterns": ["anthropic.com"],
-      "subjectPatterns": ["receipt", "payment", "claude", "subscription"],
+      "senderPatterns": [
+        "anthropic.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "claude",
+        "subscription"
+      ],
       "category": "Productivity",
       "icon": "🧠",
       "color": "#8B5CF6",
       "defaultCycle": "monthly",
       "manageUrl": "https://claude.ai/settings",
+      "cancelUrl": "https://claude.ai/settings",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to claude.ai and sign in",
+        "Click your profile > Settings > Billing",
+        "Select Cancel Plan",
+        "Confirm cancellation — access continues until end of billing period"
+      ],
       "plans": [
-        { "id": "pro", "name": "Pro", "price": 20.00, "cycle": "monthly" },
-        { "id": "max", "name": "Max", "price": 100.00, "cycle": "monthly" }
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 20.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "max",
+          "name": "Max",
+          "price": 100.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -309,17 +1012,64 @@
       "name": "Microsoft 365",
       "domain": "microsoft.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=microsoft.com&sz=128",
-      "senderPatterns": ["microsoft.com", "office.com"],
-      "subjectPatterns": ["microsoft 365", "office", "receipt", "subscription"],
+      "senderPatterns": [
+        "microsoft.com",
+        "office.com"
+      ],
+      "subjectPatterns": [
+        "microsoft 365",
+        "office",
+        "receipt",
+        "subscription"
+      ],
       "category": "Productivity",
       "icon": "📊",
       "color": "#0078D4",
       "defaultCycle": "yearly",
       "manageUrl": "https://account.microsoft.com/services",
+      "cancelUrl": "https://account.microsoft.com/services",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to account.microsoft.com/services and sign in",
+        "Find Microsoft 365 and click Manage",
+        "Select Cancel subscription",
+        "Choose a reason and confirm cancellation"
+      ],
       "plans": [
-        { "id": "personal", "name": "Personal", "price": 6.99, "cycle": "monthly" },
-        { "id": "family", "name": "Family", "price": 9.99, "cycle": "monthly" },
-        { "id": "business-basic", "name": "Business Basic", "price": 6.00, "cycle": "monthly" }
+        {
+          "id": "personal",
+          "name": "Personal",
+          "price": 6.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "family",
+          "name": "Family",
+          "price": 9.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business-basic",
+          "name": "Business Basic",
+          "price": 6.0,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Google Workspace",
+          "price": 6.0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Docs, Sheets, and Meet for teams"
+        },
+        {
+          "name": "LibreOffice",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free desktop office suite — no subscription"
+        }
       ]
     },
     {
@@ -327,16 +1077,41 @@
       "name": "Grammarly",
       "domain": "grammarly.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=grammarly.com&sz=128",
-      "senderPatterns": ["grammarly.com"],
-      "subjectPatterns": ["receipt", "payment", "premium", "subscription"],
+      "senderPatterns": [
+        "grammarly.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "premium",
+        "subscription"
+      ],
       "category": "Productivity",
       "icon": "✍️",
       "color": "#15C39A",
       "defaultCycle": "monthly",
       "manageUrl": "https://account.grammarly.com/subscription",
+      "cancelUrl": "https://account.grammarly.com/subscription",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to account.grammarly.com and sign in",
+        "Click Subscription > Cancel Plan",
+        "Select a reason and confirm",
+        "Premium features remain until end of billing period"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 12.00, "cycle": "monthly" },
-        { "id": "business", "name": "Business", "price": 15.00, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 12.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business",
+          "name": "Business",
+          "price": 15.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -344,17 +1119,46 @@
       "name": "Headspace",
       "domain": "headspace.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=headspace.com&sz=128",
-      "senderPatterns": ["headspace.com"],
-      "subjectPatterns": ["receipt", "payment", "subscription"],
+      "senderPatterns": [
+        "headspace.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "subscription"
+      ],
       "category": "Health",
       "icon": "🧘",
       "color": "#F47D31",
       "defaultCycle": "yearly",
       "manageUrl": "https://www.headspace.com/settings",
+      "cancelUrl": "https://www.headspace.com/settings",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to headspace.com and sign in",
+        "Click your profile > Settings > Subscription",
+        "Select Cancel Subscription",
+        "Complete the cancellation survey and confirm"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 12.99, "cycle": "monthly" },
-        { "id": "yearly", "name": "Yearly", "price": 69.99, "cycle": "yearly" },
-        { "id": "family", "name": "Family (6 users)", "price": 99.99, "cycle": "yearly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 12.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "yearly",
+          "name": "Yearly",
+          "price": 69.99,
+          "cycle": "yearly"
+        },
+        {
+          "id": "family",
+          "name": "Family (6 users)",
+          "price": 99.99,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -362,17 +1166,46 @@
       "name": "Calm",
       "domain": "calm.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=calm.com&sz=128",
-      "senderPatterns": ["calm.com"],
-      "subjectPatterns": ["receipt", "payment", "subscription"],
+      "senderPatterns": [
+        "calm.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "subscription"
+      ],
       "category": "Health",
       "icon": "🌙",
       "color": "#7FBFFF",
       "defaultCycle": "yearly",
       "manageUrl": "https://www.calm.com/account",
+      "cancelUrl": "https://www.calm.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to calm.com and sign in",
+        "Click your profile > Account Settings",
+        "Select Manage Subscription > Cancel Plan",
+        "Confirm — access remains until end of billing period"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 14.99, "cycle": "monthly" },
-        { "id": "yearly", "name": "Yearly", "price": 69.99, "cycle": "yearly" },
-        { "id": "lifetime", "name": "Lifetime", "price": 399.99, "cycle": "once" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 14.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "yearly",
+          "name": "Yearly",
+          "price": 69.99,
+          "cycle": "yearly"
+        },
+        {
+          "id": "lifetime",
+          "name": "Lifetime",
+          "price": 399.99,
+          "cycle": "once"
+        }
       ]
     },
     {
@@ -380,16 +1213,41 @@
       "name": "Peloton",
       "domain": "onepeloton.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=onepeloton.com&sz=128",
-      "senderPatterns": ["onepeloton.com"],
-      "subjectPatterns": ["receipt", "payment", "subscription", "membership"],
+      "senderPatterns": [
+        "onepeloton.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "subscription",
+        "membership"
+      ],
       "category": "Health",
       "icon": "🏋️",
       "color": "#FF0000",
       "defaultCycle": "monthly",
       "manageUrl": "https://members.onepeloton.com/settings",
+      "cancelUrl": "https://members.onepeloton.com/settings",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to onepeloton.com and log in",
+        "Click your profile > Settings > Membership",
+        "Select Cancel Membership",
+        "Follow the prompts and confirm cancellation"
+      ],
       "plans": [
-        { "id": "app", "name": "App Only", "price": 12.99, "cycle": "monthly" },
-        { "id": "all-access", "name": "All-Access", "price": 44.00, "cycle": "monthly" }
+        {
+          "id": "app",
+          "name": "App Only",
+          "price": 12.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "all-access",
+          "name": "All-Access",
+          "price": 44.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -397,17 +1255,46 @@
       "name": "LinkedIn Premium",
       "domain": "linkedin.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=linkedin.com&sz=128",
-      "senderPatterns": ["linkedin.com"],
-      "subjectPatterns": ["premium", "receipt", "subscription"],
+      "senderPatterns": [
+        "linkedin.com"
+      ],
+      "subjectPatterns": [
+        "premium",
+        "receipt",
+        "subscription"
+      ],
       "category": "Productivity",
       "icon": "💼",
       "color": "#0A66C2",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.linkedin.com/psettings/",
+      "cancelUrl": "https://www.linkedin.com/psettings/premium/cancel",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to linkedin.com and sign in",
+        "Click your profile photo > Settings > Subscriptions",
+        "Select Cancel Subscription under Premium",
+        "Choose a reason and confirm cancellation"
+      ],
       "plans": [
-        { "id": "career", "name": "Career", "price": 29.99, "cycle": "monthly" },
-        { "id": "business", "name": "Business", "price": 59.99, "cycle": "monthly" },
-        { "id": "sales", "name": "Sales Navigator", "price": 99.99, "cycle": "monthly" }
+        {
+          "id": "career",
+          "name": "Career",
+          "price": 29.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business",
+          "name": "Business",
+          "price": 59.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "sales",
+          "name": "Sales Navigator",
+          "price": 99.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -415,16 +1302,41 @@
       "name": "Canva Pro",
       "domain": "canva.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=canva.com&sz=128",
-      "senderPatterns": ["canva.com"],
-      "subjectPatterns": ["receipt", "payment", "pro", "subscription"],
+      "senderPatterns": [
+        "canva.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "pro",
+        "subscription"
+      ],
       "category": "Design",
       "icon": "🎯",
       "color": "#00C4CC",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.canva.com/settings/billing",
+      "cancelUrl": "https://www.canva.com/settings/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to canva.com and sign in",
+        "Click your profile > Account settings > Billing & plans",
+        "Select Cancel plan under Canva Pro",
+        "Confirm — free features remain after cancellation"
+      ],
       "plans": [
-        { "id": "pro", "name": "Pro", "price": 14.99, "cycle": "monthly" },
-        { "id": "teams", "name": "Teams", "price": 10.00, "cycle": "monthly" }
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 14.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "teams",
+          "name": "Teams",
+          "price": 10.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -432,17 +1344,47 @@
       "name": "Duolingo Super",
       "domain": "duolingo.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=duolingo.com&sz=128",
-      "senderPatterns": ["duolingo.com"],
-      "subjectPatterns": ["receipt", "payment", "plus", "subscription"],
+      "senderPatterns": [
+        "duolingo.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "plus",
+        "subscription"
+      ],
       "category": "Education",
       "icon": "🦉",
       "color": "#58CC02",
       "defaultCycle": "monthly",
       "manageUrl": "https://www.duolingo.com/settings/subscription",
+      "cancelUrl": "https://www.duolingo.com/settings/subscription",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Open the Duolingo app and go to your profile",
+        "Tap Settings > Super Duolingo or Manage Subscription",
+        "Select Cancel Subscription",
+        "Confirm — you'll revert to the free plan at period end"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 12.99, "cycle": "monthly" },
-        { "id": "yearly", "name": "Yearly", "price": 83.99, "cycle": "yearly" },
-        { "id": "family", "name": "Family (6 users)", "price": 119.99, "cycle": "yearly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 12.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "yearly",
+          "name": "Yearly",
+          "price": 83.99,
+          "cycle": "yearly"
+        },
+        {
+          "id": "family",
+          "name": "Family (6 users)",
+          "price": 119.99,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -450,17 +1392,47 @@
       "name": "MasterClass",
       "domain": "masterclass.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=masterclass.com&sz=128",
-      "senderPatterns": ["masterclass.com"],
-      "subjectPatterns": ["receipt", "payment", "subscription", "membership"],
+      "senderPatterns": [
+        "masterclass.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "subscription",
+        "membership"
+      ],
       "category": "Education",
       "icon": "🎓",
       "color": "#000000",
       "defaultCycle": "yearly",
       "manageUrl": "https://www.masterclass.com/account",
+      "cancelUrl": "https://www.masterclass.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to masterclass.com and sign in",
+        "Click your profile > Account > Membership",
+        "Select Cancel Membership",
+        "Confirm — you keep access until the end of your subscription term"
+      ],
       "plans": [
-        { "id": "individual", "name": "Individual", "price": 10.00, "cycle": "monthly" },
-        { "id": "duo", "name": "Duo", "price": 15.00, "cycle": "monthly" },
-        { "id": "family", "name": "Family", "price": 20.00, "cycle": "monthly" }
+        {
+          "id": "individual",
+          "name": "Individual",
+          "price": 10.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "duo",
+          "name": "Duo",
+          "price": 15.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "family",
+          "name": "Family",
+          "price": 20.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -468,17 +1440,55 @@
       "name": "1Password",
       "domain": "1password.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=1password.com&sz=128",
-      "senderPatterns": ["1password.com"],
-      "subjectPatterns": ["receipt", "invoice", "subscription"],
+      "senderPatterns": [
+        "1password.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "invoice",
+        "subscription"
+      ],
       "category": "Productivity",
       "icon": "🔐",
       "color": "#0094F5",
       "defaultCycle": "yearly",
       "manageUrl": "https://my.1password.com/profile",
+      "cancelUrl": "https://my.1password.com/profile",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to my.1password.com and sign in",
+        "Click Billing > Cancel Account",
+        "Confirm cancellation — your data remains exportable",
+        "Download a backup before cancelling"
+      ],
       "plans": [
-        { "id": "individual", "name": "Individual", "price": 2.99, "cycle": "monthly" },
-        { "id": "families", "name": "Families (5 users)", "price": 4.99, "cycle": "monthly" },
-        { "id": "teams", "name": "Teams", "price": 7.99, "cycle": "monthly" }
+        {
+          "id": "individual",
+          "name": "Individual",
+          "price": 2.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "families",
+          "name": "Families (5 users)",
+          "price": 4.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "teams",
+          "name": "Teams",
+          "price": 7.99,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Bitwarden",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free open-source password manager — highly trusted"
+        }
       ]
     },
     {
@@ -486,17 +1496,47 @@
       "name": "NordVPN",
       "domain": "nordvpn.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=nordvpn.com&sz=128",
-      "senderPatterns": ["nordvpn.com", "nordaccount.com"],
-      "subjectPatterns": ["receipt", "payment", "subscription"],
+      "senderPatterns": [
+        "nordvpn.com",
+        "nordaccount.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "subscription"
+      ],
       "category": "Productivity",
       "icon": "🔒",
       "color": "#4687FF",
       "defaultCycle": "yearly",
       "manageUrl": "https://my.nordaccount.com/dashboard/",
+      "cancelUrl": "https://my.nordaccount.com/dashboard/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to my.nordaccount.com and sign in",
+        "Click Billing > Manage Subscription",
+        "Select Cancel Subscription",
+        "Confirm — your subscription remains active until expiry"
+      ],
       "plans": [
-        { "id": "basic", "name": "Basic (1 year)", "price": 4.59, "cycle": "monthly" },
-        { "id": "plus", "name": "Plus (1 year)", "price": 5.49, "cycle": "monthly" },
-        { "id": "complete", "name": "Complete (1 year)", "price": 6.49, "cycle": "monthly" }
+        {
+          "id": "basic",
+          "name": "Basic (1 year)",
+          "price": 4.59,
+          "cycle": "monthly"
+        },
+        {
+          "id": "plus",
+          "name": "Plus (1 year)",
+          "price": 5.49,
+          "cycle": "monthly"
+        },
+        {
+          "id": "complete",
+          "name": "Complete (1 year)",
+          "price": 6.49,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -504,17 +1544,46 @@
       "name": "ExpressVPN",
       "domain": "expressvpn.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=expressvpn.com&sz=128",
-      "senderPatterns": ["expressvpn.com"],
-      "subjectPatterns": ["receipt", "payment", "subscription"],
+      "senderPatterns": [
+        "expressvpn.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "subscription"
+      ],
       "category": "Productivity",
       "icon": "🛡️",
       "color": "#DA3940",
       "defaultCycle": "yearly",
       "manageUrl": "https://www.expressvpn.com/subscriptions",
+      "cancelUrl": "https://www.expressvpn.com/subscriptions",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to expressvpn.com and sign in",
+        "Click your account > Subscriptions",
+        "Select Turn Off Auto-Renewal",
+        "Confirm — VPN access continues until expiry"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 12.95, "cycle": "monthly" },
-        { "id": "6months", "name": "6 Months", "price": 9.99, "cycle": "monthly" },
-        { "id": "yearly", "name": "1 Year", "price": 8.32, "cycle": "monthly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 12.95,
+          "cycle": "monthly"
+        },
+        {
+          "id": "6months",
+          "name": "6 Months",
+          "price": 9.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "yearly",
+          "name": "1 Year",
+          "price": 8.32,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -522,17 +1591,63 @@
       "name": "Hulu",
       "domain": "hulu.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=hulu.com&sz=128",
-      "senderPatterns": ["hulu.com", "hulumail.com"],
-      "subjectPatterns": ["receipt", "payment", "subscription"],
+      "senderPatterns": [
+        "hulu.com",
+        "hulumail.com"
+      ],
+      "subjectPatterns": [
+        "receipt",
+        "payment",
+        "subscription"
+      ],
       "category": "Entertainment",
       "icon": "📺",
       "color": "#1CE783",
       "defaultCycle": "monthly",
       "manageUrl": "https://secure.hulu.com/account",
+      "cancelUrl": "https://secure.hulu.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to hulu.com and log in",
+        "Click your profile > Account",
+        "Under Your Subscription, select Cancel",
+        "Confirm cancellation — streaming continues until billing period ends"
+      ],
       "plans": [
-        { "id": "basic", "name": "Basic (with ads)", "price": 7.99, "cycle": "monthly" },
-        { "id": "no-ads", "name": "No Ads", "price": 17.99, "cycle": "monthly" },
-        { "id": "live-tv", "name": "Hulu + Live TV", "price": 76.99, "cycle": "monthly" }
+        {
+          "id": "basic",
+          "name": "Basic (with ads)",
+          "price": 7.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "no-ads",
+          "name": "No Ads",
+          "price": 17.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "live-tv",
+          "name": "Hulu + Live TV",
+          "price": 76.99,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Peacock",
+          "price": 5.99,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "NBC originals, sports and movies"
+        },
+        {
+          "name": "Tubi",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free with ads — large library"
+        }
       ]
     },
     {
@@ -544,10 +1659,33 @@
       "icon": "🎵",
       "color": "#FA243C",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://support.apple.com/en-us/HT202039",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Open Settings on your iPhone > tap your Apple ID name",
+        "Tap Subscriptions",
+        "Select Apple Music",
+        "Tap Cancel Subscription and confirm"
+      ],
       "plans": [
-        { "id": "voice", "name": "Voice", "price": 4.99, "cycle": "monthly" },
-        { "id": "individual", "name": "Individual", "price": 10.99, "cycle": "monthly" },
-        { "id": "family", "name": "Family", "price": 16.99, "cycle": "monthly" }
+        {
+          "id": "voice",
+          "name": "Voice",
+          "price": 4.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "individual",
+          "name": "Individual",
+          "price": 10.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "family",
+          "name": "Family",
+          "price": 16.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -559,9 +1697,27 @@
       "icon": "🎧",
       "color": "#000000",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://listen.tidal.com/my-account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to tidal.com and sign in",
+        "Click your profile > My Account > Subscription",
+        "Select Cancel Subscription",
+        "Confirm — HiFi access continues until period ends"
+      ],
       "plans": [
-        { "id": "hifi", "name": "HiFi", "price": 10.99, "cycle": "monthly" },
-        { "id": "hifi-plus", "name": "HiFi Plus", "price": 19.99, "cycle": "monthly" }
+        {
+          "id": "hifi",
+          "name": "HiFi",
+          "price": 10.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "hifi-plus",
+          "name": "HiFi Plus",
+          "price": 19.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -573,9 +1729,27 @@
       "icon": "🎶",
       "color": "#FEAA2D",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.deezer.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to deezer.com and sign in",
+        "Click your profile > Account",
+        "Under Subscription, select Cancel Subscription",
+        "Confirm — you revert to the free plan at period end"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 10.99, "cycle": "monthly" },
-        { "id": "family", "name": "Family", "price": 17.99, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 10.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "family",
+          "name": "Family",
+          "price": 17.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -587,10 +1761,33 @@
       "icon": "🎮",
       "color": "#107C10",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://account.microsoft.com/services",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to account.microsoft.com/services and sign in",
+        "Find Xbox Game Pass and click Manage",
+        "Select Cancel subscription",
+        "Confirm cancellation — access continues until end of billing period"
+      ],
       "plans": [
-        { "id": "core", "name": "Core", "price": 9.99, "cycle": "monthly" },
-        { "id": "standard", "name": "Standard", "price": 14.99, "cycle": "monthly" },
-        { "id": "ultimate", "name": "Ultimate", "price": 19.99, "cycle": "monthly" }
+        {
+          "id": "core",
+          "name": "Core",
+          "price": 9.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "standard",
+          "name": "Standard",
+          "price": 14.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "ultimate",
+          "name": "Ultimate",
+          "price": 19.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -602,10 +1799,33 @@
       "icon": "🎮",
       "color": "#003791",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.playstation.com/en-us/support/account/cancel-ps-plus/",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to playstation.com and sign in to your account",
+        "Go to Settings > Account Management > PlayStation Subscriptions",
+        "Select PlayStation Plus > Turn Off Auto-Renew",
+        "Confirm — you keep access until the subscription period ends"
+      ],
       "plans": [
-        { "id": "essential", "name": "Essential", "price": 9.99, "cycle": "monthly" },
-        { "id": "extra", "name": "Extra", "price": 14.99, "cycle": "monthly" },
-        { "id": "premium", "name": "Premium", "price": 17.99, "cycle": "monthly" }
+        {
+          "id": "essential",
+          "name": "Essential",
+          "price": 9.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "extra",
+          "name": "Extra",
+          "price": 14.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 17.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -617,9 +1837,27 @@
       "icon": "🎮",
       "color": "#E60012",
       "defaultCycle": "yearly",
+      "cancelUrl": "https://accounts.nintendo.com/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to accounts.nintendo.com and sign in",
+        "Click your profile > Nintendo Switch Online",
+        "Select Renewal Settings > Do Not Renew",
+        "Confirm — service continues until the subscription period ends"
+      ],
       "plans": [
-        { "id": "individual", "name": "Individual", "price": 3.99, "cycle": "monthly" },
-        { "id": "family", "name": "Family", "price": 34.99, "cycle": "yearly" }
+        {
+          "id": "individual",
+          "name": "Individual",
+          "price": 3.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "family",
+          "name": "Family",
+          "price": 34.99,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -631,8 +1869,21 @@
       "icon": "📺",
       "color": "#9146FF",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.twitch.tv/settings/subscriptions",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to twitch.tv and sign in",
+        "Click your profile > Settings > Subscriptions",
+        "Find Turbo and select Cancel",
+        "Confirm — ad-free experience continues until period ends"
+      ],
       "plans": [
-        { "id": "turbo", "name": "Turbo", "price": 11.99, "cycle": "monthly" }
+        {
+          "id": "turbo",
+          "name": "Turbo",
+          "price": 11.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -644,10 +1895,33 @@
       "icon": "🍥",
       "color": "#F47521",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.crunchyroll.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to crunchyroll.com and sign in",
+        "Click your profile > Account Settings",
+        "Select Your Membership > Cancel Premium",
+        "Confirm cancellation — access continues until period ends"
+      ],
       "plans": [
-        { "id": "fan", "name": "Fan", "price": 7.99, "cycle": "monthly" },
-        { "id": "mega-fan", "name": "Mega Fan", "price": 9.99, "cycle": "monthly" },
-        { "id": "ultimate", "name": "Ultimate Fan", "price": 14.99, "cycle": "monthly" }
+        {
+          "id": "fan",
+          "name": "Fan",
+          "price": 7.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "mega-fan",
+          "name": "Mega Fan",
+          "price": 9.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "ultimate",
+          "name": "Ultimate Fan",
+          "price": 14.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -659,9 +1933,27 @@
       "icon": "⛰️",
       "color": "#0064FF",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.paramountplus.com/account/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to paramountplus.com and sign in",
+        "Click your profile > Account",
+        "Under Subscription, select Cancel Subscription",
+        "Confirm cancellation — streaming continues until billing period ends"
+      ],
       "plans": [
-        { "id": "essential", "name": "Essential", "price": 5.99, "cycle": "monthly" },
-        { "id": "showtime", "name": "With Showtime", "price": 11.99, "cycle": "monthly" }
+        {
+          "id": "essential",
+          "name": "Essential",
+          "price": 5.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "showtime",
+          "name": "With Showtime",
+          "price": 11.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -673,9 +1965,27 @@
       "icon": "🦚",
       "color": "#000000",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.peacocktv.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to peacocktv.com and sign in",
+        "Click your profile > Account",
+        "Under Subscription, select Cancel Plan",
+        "Confirm — streaming continues until the billing period ends"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 5.99, "cycle": "monthly" },
-        { "id": "premium-plus", "name": "Premium Plus", "price": 11.99, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 5.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "premium-plus",
+          "name": "Premium Plus",
+          "price": 11.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -687,9 +1997,27 @@
       "icon": "🌍",
       "color": "#0033A1",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.discoveryplus.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to discoveryplus.com and sign in",
+        "Click your profile > Account > Subscription",
+        "Select Cancel Subscription",
+        "Confirm — streaming continues until billing period ends"
+      ],
       "plans": [
-        { "id": "ad-lite", "name": "Ad-Lite", "price": 4.99, "cycle": "monthly" },
-        { "id": "ad-free", "name": "Ad-Free", "price": 8.99, "cycle": "monthly" }
+        {
+          "id": "ad-lite",
+          "name": "Ad-Lite",
+          "price": 4.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "ad-free",
+          "name": "Ad-Free",
+          "price": 8.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -701,8 +2029,21 @@
       "icon": "⭐",
       "color": "#000000",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.starz.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to starz.com and sign in",
+        "Click your profile > Manage Account",
+        "Select Cancel Subscription",
+        "Confirm — access continues until billing period ends"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 9.99, "cycle": "monthly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 9.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -714,9 +2055,28 @@
       "icon": "📰",
       "color": "#000000",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.nytimes.com/subscription/cancel.html",
+      "cancelDifficulty": "hard",
+      "cancelSteps": [
+        "Go to nytimes.com and sign in",
+        "Click your account > Manage Account > Cancel Subscription",
+        "Navigate the retention offers and choose to continue cancellation",
+        "Call 1-800-698-4637 if online cancellation fails",
+        "Confirm cancellation — access remains until end of billing period"
+      ],
       "plans": [
-        { "id": "basic", "name": "Basic Digital", "price": 4.00, "cycle": "monthly" },
-        { "id": "all-access", "name": "All Access", "price": 25.00, "cycle": "monthly" }
+        {
+          "id": "basic",
+          "name": "Basic Digital",
+          "price": 4.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "all-access",
+          "name": "All Access",
+          "price": 25.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -728,8 +2088,22 @@
       "icon": "📈",
       "color": "#0274B6",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://customercenter.wsj.com/",
+      "cancelDifficulty": "hard",
+      "cancelSteps": [
+        "Go to customercenter.wsj.com and sign in",
+        "Find your subscription and select Manage",
+        "Call 1-800-JOURNAL if online cancellation is unavailable",
+        "Navigate retention offers to reach the Cancel option",
+        "Confirm cancellation and note your access end date"
+      ],
       "plans": [
-        { "id": "digital", "name": "Digital", "price": 12.99, "cycle": "monthly" }
+        {
+          "id": "digital",
+          "name": "Digital",
+          "price": 12.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -741,8 +2115,21 @@
       "icon": "📰",
       "color": "#000000",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://account.washingtonpost.com/",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to account.washingtonpost.com and sign in",
+        "Click Subscription > Cancel Subscription",
+        "Complete the cancellation flow",
+        "Confirm — access continues until end of billing period"
+      ],
       "plans": [
-        { "id": "digital", "name": "Digital", "price": 10.00, "cycle": "monthly" }
+        {
+          "id": "digital",
+          "name": "Digital",
+          "price": 10.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -754,8 +2141,21 @@
       "icon": "📝",
       "color": "#000000",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://medium.com/me/membership",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to medium.com and sign in",
+        "Click your profile > Settings > Membership",
+        "Select Cancel Membership",
+        "Confirm — you retain access until the billing period ends"
+      ],
       "plans": [
-        { "id": "member", "name": "Member", "price": 5.00, "cycle": "monthly" }
+        {
+          "id": "member",
+          "name": "Member",
+          "price": 5.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -767,9 +2167,27 @@
       "icon": "⚽",
       "color": "#000000",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://theathletic.com/account/subscription",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to theathletic.com and sign in",
+        "Click your profile > Account > Subscription",
+        "Select Cancel Subscription",
+        "Confirm — access continues until end of billing period"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 9.99, "cycle": "monthly" },
-        { "id": "yearly", "name": "Annual", "price": 71.99, "cycle": "yearly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 9.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "yearly",
+          "name": "Annual",
+          "price": 71.99,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -781,8 +2199,21 @@
       "icon": "🏃",
       "color": "#FC4C02",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.strava.com/settings/subscription",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to strava.com and sign in",
+        "Click your profile > Settings > Subscription",
+        "Select Cancel Subscription",
+        "Confirm — you revert to free plan at end of billing period"
+      ],
       "plans": [
-        { "id": "summit", "name": "Summit", "price": 11.99, "cycle": "monthly" }
+        {
+          "id": "summit",
+          "name": "Summit",
+          "price": 11.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -794,8 +2225,21 @@
       "icon": "🥗",
       "color": "#0066CC",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.myfitnesspal.com/account/subscription",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to myfitnesspal.com and sign in",
+        "Click your username > Settings > Subscription",
+        "Select Cancel Premium",
+        "Confirm — you revert to the free plan at period end"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 19.99, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 19.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -807,8 +2251,22 @@
       "icon": "🍎",
       "color": "#F05B4B",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.noom.com/account/settings/",
+      "cancelDifficulty": "hard",
+      "cancelSteps": [
+        "Go to noom.com and sign in",
+        "Tap Settings > Account > Cancel Program",
+        "Navigate multiple retention screens",
+        "Call or chat support if app cancellation fails",
+        "Confirm — no refund for partial months"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 59.00, "cycle": "monthly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 59.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -820,9 +2278,27 @@
       "icon": "⌚",
       "color": "#2DFFB3",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://app.whoop.com/profile",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to app.whoop.com and sign in",
+        "Tap Profile > Membership",
+        "Select Cancel Membership",
+        "Confirm — device still works but you lose analytics features"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 30.00, "cycle": "monthly" },
-        { "id": "yearly", "name": "Annual", "price": 239.00, "cycle": "yearly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 30.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "yearly",
+          "name": "Annual",
+          "price": 239.0,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -834,8 +2310,21 @@
       "icon": "💪",
       "color": "#00B0B9",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.fitbit.com/settings/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to fitbit.com and sign in",
+        "Click your profile > Manage > Manage Membership",
+        "Select Cancel Premium",
+        "Confirm — basic tracking features remain free"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 9.99, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 9.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -847,9 +2336,27 @@
       "icon": "🦈",
       "color": "#178BF1",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://my.surfshark.com/account/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to my.surfshark.com and sign in",
+        "Click Billing > Cancel Subscription",
+        "Confirm cancellation",
+        "VPN access continues until the end of your paid period"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 15.45, "cycle": "monthly" },
-        { "id": "yearly", "name": "1 Year", "price": 47.88, "cycle": "yearly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 15.45,
+          "cycle": "monthly"
+        },
+        {
+          "id": "yearly",
+          "name": "1 Year",
+          "price": 47.88,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -861,9 +2368,27 @@
       "icon": "🛡️",
       "color": "#6D4AFF",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://account.proton.me/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to account.proton.me and sign in",
+        "Click Dashboard > Your Plan > Cancel Subscription",
+        "Select a reason and confirm",
+        "You revert to Proton Free plan at period end"
+      ],
       "plans": [
-        { "id": "plus", "name": "Plus", "price": 9.99, "cycle": "monthly" },
-        { "id": "unlimited", "name": "Unlimited", "price": 12.99, "cycle": "monthly" }
+        {
+          "id": "plus",
+          "name": "Plus",
+          "price": 9.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "unlimited",
+          "name": "Unlimited",
+          "price": 12.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -875,9 +2400,27 @@
       "icon": "🔐",
       "color": "#0E6B76",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://app.dashlane.com/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to app.dashlane.com and sign in",
+        "Click your plan > Downgrade to Free",
+        "Confirm — passwords remain accessible on free plan",
+        "Export your vault before downgrading"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 4.99, "cycle": "monthly" },
-        { "id": "family", "name": "Family", "price": 7.49, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 4.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "family",
+          "name": "Family",
+          "price": 7.49,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -889,9 +2432,27 @@
       "icon": "🔑",
       "color": "#D32D27",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://lastpass.com/subscriptions.php",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to lastpass.com and sign in",
+        "Click your email > Account Settings > Subscriptions",
+        "Select Cancel Subscription",
+        "Confirm — you revert to the free tier"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 3.00, "cycle": "monthly" },
-        { "id": "family", "name": "Families", "price": 4.00, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 3.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "family",
+          "name": "Families",
+          "price": 4.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -903,9 +2464,27 @@
       "icon": "🔒",
       "color": "#175DDC",
       "defaultCycle": "yearly",
+      "cancelUrl": "https://vault.bitwarden.com/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to vault.bitwarden.com and sign in",
+        "Click Settings > Billing > Cancel Subscription",
+        "Confirm — your vault remains on the free plan",
+        "All passwords stay safe and accessible"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 10.00, "cycle": "yearly" },
-        { "id": "family", "name": "Family", "price": 40.00, "cycle": "yearly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 10.0,
+          "cycle": "yearly"
+        },
+        {
+          "id": "family",
+          "name": "Family",
+          "price": 40.0,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -917,8 +2496,21 @@
       "icon": "🎨",
       "color": "#00FF84",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.skillshare.com/settings/membership",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to skillshare.com and sign in",
+        "Click your profile > Account > Membership",
+        "Select Cancel Membership",
+        "Confirm — access continues until the billing period ends"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 13.99, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 13.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -930,9 +2522,27 @@
       "icon": "🎓",
       "color": "#0056D2",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.coursera.org/account-settings",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to coursera.org and sign in",
+        "Click your name > Settings > Subscriptions and Payments",
+        "Select Cancel Subscription next to Coursera Plus",
+        "Confirm — access continues until end of billing period"
+      ],
       "plans": [
-        { "id": "plus-monthly", "name": "Plus Monthly", "price": 59.00, "cycle": "monthly" },
-        { "id": "plus-yearly", "name": "Plus Annual", "price": 399.00, "cycle": "yearly" }
+        {
+          "id": "plus-monthly",
+          "name": "Plus Monthly",
+          "price": 59.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "plus-yearly",
+          "name": "Plus Annual",
+          "price": 399.0,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -944,8 +2554,21 @@
       "icon": "📚",
       "color": "#A435F0",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.udemy.com/user/edit-account/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to udemy.com and sign in",
+        "Click your profile > Payment methods > Subscriptions",
+        "Select Cancel Subscription",
+        "Confirm — you retain access to purchased courses"
+      ],
       "plans": [
-        { "id": "personal", "name": "Personal Plan", "price": 16.58, "cycle": "monthly" }
+        {
+          "id": "personal",
+          "name": "Personal Plan",
+          "price": 16.58,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -957,8 +2580,21 @@
       "icon": "🧠",
       "color": "#000000",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://brilliant.org/account/settings/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to brilliant.org and sign in",
+        "Click your profile > Account Settings",
+        "Select Cancel Subscription",
+        "Confirm — you revert to limited free access at period end"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 24.99, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 24.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -970,8 +2606,21 @@
       "icon": "📖",
       "color": "#00A650",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.blinkist.com/en/app/settings/subscription",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to blinkist.com and sign in",
+        "Click Settings > Subscription > Cancel Premium",
+        "Choose a reason and confirm",
+        "Free plan access continues after period ends"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 12.99, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 12.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -983,9 +2632,27 @@
       "icon": "🎧",
       "color": "#F7991C",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.audible.com/account/cancel-membership",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to audible.com and sign in",
+        "Click Account & Lists > Membership Details",
+        "Select Cancel Membership",
+        "Keep your credits — they remain even after cancellation"
+      ],
       "plans": [
-        { "id": "plus", "name": "Plus", "price": 7.95, "cycle": "monthly" },
-        { "id": "premium-plus", "name": "Premium Plus", "price": 14.95, "cycle": "monthly" }
+        {
+          "id": "plus",
+          "name": "Plus",
+          "price": 7.95,
+          "cycle": "monthly"
+        },
+        {
+          "id": "premium-plus",
+          "name": "Premium Plus",
+          "price": 14.95,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -997,8 +2664,21 @@
       "icon": "📱",
       "color": "#FF9900",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.amazon.com/manageykindle",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to amazon.com and sign in",
+        "Go to Account & Lists > Memberships & Subscriptions",
+        "Find Kindle Unlimited and select Cancel Kindle Unlimited",
+        "Confirm — borrowed books are returned but purchases stay"
+      ],
       "plans": [
-        { "id": "unlimited", "name": "Unlimited", "price": 11.99, "cycle": "monthly" }
+        {
+          "id": "unlimited",
+          "name": "Unlimited",
+          "price": 11.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1010,9 +2690,27 @@
       "icon": "🐘",
       "color": "#00A82D",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.evernote.com/Settings.action",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to evernote.com and sign in",
+        "Click your profile > Settings > Billing",
+        "Select Cancel Subscription",
+        "Confirm — notes remain on the free plan with limits"
+      ],
       "plans": [
-        { "id": "personal", "name": "Personal", "price": 14.99, "cycle": "monthly" },
-        { "id": "professional", "name": "Professional", "price": 17.99, "cycle": "monthly" }
+        {
+          "id": "personal",
+          "name": "Personal",
+          "price": 14.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "professional",
+          "name": "Professional",
+          "price": 17.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1024,9 +2722,27 @@
       "icon": "✅",
       "color": "#E44332",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://app.todoist.com/app/settings/subscription",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to todoist.com and sign in",
+        "Click Settings > Subscription",
+        "Select Cancel Subscription",
+        "Confirm — you revert to the free plan"
+      ],
       "plans": [
-        { "id": "pro", "name": "Pro", "price": 4.00, "cycle": "monthly" },
-        { "id": "business", "name": "Business", "price": 6.00, "cycle": "monthly" }
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 4.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business",
+          "name": "Business",
+          "price": 6.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1038,9 +2754,27 @@
       "icon": "📋",
       "color": "#F06A6A",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://app.asana.com/-/admin_console/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to asana.com and sign in as workspace admin",
+        "Go to Admin Console > Billing",
+        "Select Cancel Plan",
+        "Confirm — workspace reverts to free tier"
+      ],
       "plans": [
-        { "id": "premium", "name": "Premium", "price": 10.99, "cycle": "monthly" },
-        { "id": "business", "name": "Business", "price": 24.99, "cycle": "monthly" }
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 10.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business",
+          "name": "Business",
+          "price": 24.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1052,10 +2786,33 @@
       "icon": "📊",
       "color": "#FF3D57",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://auth.monday.com/users/sign_in",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to monday.com and sign in as admin",
+        "Click your workspace name > Admin > Billing",
+        "Select Downgrade or Cancel plan",
+        "Confirm — you may need to chat with support"
+      ],
       "plans": [
-        { "id": "basic", "name": "Basic", "price": 9.00, "cycle": "monthly" },
-        { "id": "standard", "name": "Standard", "price": 12.00, "cycle": "monthly" },
-        { "id": "pro", "name": "Pro", "price": 19.00, "cycle": "monthly" }
+        {
+          "id": "basic",
+          "name": "Basic",
+          "price": 9.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "standard",
+          "name": "Standard",
+          "price": 12.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 19.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1067,9 +2824,27 @@
       "icon": "📝",
       "color": "#0079BF",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://trello.com/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to trello.com and sign in",
+        "Click your profile > Power-Ups & Billing",
+        "Select Manage Billing > Cancel",
+        "Confirm — workspace reverts to free plan"
+      ],
       "plans": [
-        { "id": "standard", "name": "Standard", "price": 5.00, "cycle": "monthly" },
-        { "id": "premium", "name": "Premium", "price": 10.00, "cycle": "monthly" }
+        {
+          "id": "standard",
+          "name": "Standard",
+          "price": 5.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 10.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1081,9 +2856,27 @@
       "icon": "✨",
       "color": "#7B68EE",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://app.clickup.com/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to clickup.com and sign in",
+        "Click your workspace avatar > Settings > Billing",
+        "Select Downgrade to Free",
+        "Confirm — free plan features apply at period end"
+      ],
       "plans": [
-        { "id": "unlimited", "name": "Unlimited", "price": 7.00, "cycle": "monthly" },
-        { "id": "business", "name": "Business", "price": 12.00, "cycle": "monthly" }
+        {
+          "id": "unlimited",
+          "name": "Unlimited",
+          "price": 7.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business",
+          "name": "Business",
+          "price": 12.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1095,9 +2888,27 @@
       "icon": "📐",
       "color": "#5E6AD2",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://linear.app/settings/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to linear.app and sign in",
+        "Click Settings > Billing > Downgrade to Free",
+        "Confirm — workspace reverts to free tier",
+        "Free tier supports up to 250 issues"
+      ],
       "plans": [
-        { "id": "standard", "name": "Standard", "price": 8.00, "cycle": "monthly" },
-        { "id": "plus", "name": "Plus", "price": 14.00, "cycle": "monthly" }
+        {
+          "id": "standard",
+          "name": "Standard",
+          "price": 8.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "plus",
+          "name": "Plus",
+          "price": 14.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1109,8 +2920,21 @@
       "icon": "▲",
       "color": "#000000",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://vercel.com/account/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to vercel.com and sign in",
+        "Click your profile > Settings > Billing",
+        "Select Downgrade to Hobby",
+        "Confirm — project limits apply on free tier"
+      ],
       "plans": [
-        { "id": "pro", "name": "Pro", "price": 20.00, "cycle": "monthly" }
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 20.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1122,8 +2946,21 @@
       "icon": "🌐",
       "color": "#00C7B7",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://app.netlify.com/teams",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to netlify.com and sign in",
+        "Click your team > Team settings > Billing",
+        "Select Downgrade to Starter (free)",
+        "Confirm — site limits apply on the free tier"
+      ],
       "plans": [
-        { "id": "pro", "name": "Pro", "price": 19.00, "cycle": "monthly" }
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 19.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1135,9 +2972,27 @@
       "icon": "☁️",
       "color": "#430098",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://dashboard.heroku.com/account/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to heroku.com and sign in",
+        "Click your account > Billing > Cancel account or downgrade dyno",
+        "Delete or scale down paid dynos and add-ons first",
+        "Confirm cancellation"
+      ],
       "plans": [
-        { "id": "basic", "name": "Basic", "price": 5.00, "cycle": "monthly" },
-        { "id": "standard", "name": "Standard", "price": 25.00, "cycle": "monthly" }
+        {
+          "id": "basic",
+          "name": "Basic",
+          "price": 5.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "standard",
+          "name": "Standard",
+          "price": 25.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1149,9 +3004,27 @@
       "icon": "🌊",
       "color": "#0080FF",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://cloud.digitalocean.com/account/billing",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to cloud.digitalocean.com and sign in",
+        "Destroy all Droplets, Volumes, and other resources first",
+        "Go to Settings > Billing > Deactivate account",
+        "Confirm — unused credits are forfeited"
+      ],
       "plans": [
-        { "id": "basic-droplet", "name": "Basic Droplet", "price": 4.00, "cycle": "monthly" },
-        { "id": "general-droplet", "name": "General Purpose", "price": 63.00, "cycle": "monthly" }
+        {
+          "id": "basic-droplet",
+          "name": "Basic Droplet",
+          "price": 4.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "general-droplet",
+          "name": "General Purpose",
+          "price": 63.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1163,8 +3036,21 @@
       "icon": "☁️",
       "color": "#FF9900",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://console.aws.amazon.com/billing/",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Sign in to AWS console and terminate all running services",
+        "Go to Account > Close Account in the console",
+        "Delete all S3 buckets, RDS instances, and other resources first",
+        "Submit account closure request — takes up to 90 days"
+      ],
       "plans": [
-        { "id": "usage", "name": "Pay as you go", "price": 0.00, "cycle": "monthly" }
+        {
+          "id": "usage",
+          "name": "Pay as you go",
+          "price": 0.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1176,8 +3062,21 @@
       "icon": "💳",
       "color": "#635BFF",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://dashboard.stripe.com/settings/account",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to dashboard.stripe.com and sign in",
+        "Click Settings > Account > Close account",
+        "Resolve all outstanding balances first",
+        "Confirm account closure"
+      ],
       "plans": [
-        { "id": "usage", "name": "Pay as you go", "price": 0.00, "cycle": "monthly" }
+        {
+          "id": "usage",
+          "name": "Pay as you go",
+          "price": 0.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1189,10 +3088,33 @@
       "icon": "📒",
       "color": "#2CA01C",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://quickbooks.intuit.com/app/qbo/billingmanager",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to quickbooks.intuit.com and sign in",
+        "Click the Gear icon > Account and Settings > Billing & Subscription",
+        "Select Cancel (next to QuickBooks)",
+        "Complete the cancellation survey and confirm"
+      ],
       "plans": [
-        { "id": "simple-start", "name": "Simple Start", "price": 30.00, "cycle": "monthly" },
-        { "id": "essentials", "name": "Essentials", "price": 60.00, "cycle": "monthly" },
-        { "id": "plus", "name": "Plus", "price": 90.00, "cycle": "monthly" }
+        {
+          "id": "simple-start",
+          "name": "Simple Start",
+          "price": 30.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "essentials",
+          "name": "Essentials",
+          "price": 60.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "plus",
+          "name": "Plus",
+          "price": 90.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1204,10 +3126,33 @@
       "icon": "📗",
       "color": "#0075DD",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://my.freshbooks.com/#/settings",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to freshbooks.com and sign in",
+        "Click your name > Account Settings > Billing Information",
+        "Select Cancel Subscription",
+        "Confirm — data export recommended before cancellation"
+      ],
       "plans": [
-        { "id": "lite", "name": "Lite", "price": 17.00, "cycle": "monthly" },
-        { "id": "plus", "name": "Plus", "price": 30.00, "cycle": "monthly" },
-        { "id": "premium", "name": "Premium", "price": 55.00, "cycle": "monthly" }
+        {
+          "id": "lite",
+          "name": "Lite",
+          "price": 17.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "plus",
+          "name": "Plus",
+          "price": 30.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 55.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1219,10 +3164,33 @@
       "icon": "📘",
       "color": "#13B5EA",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://go.xero.com/organisationlogin",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to xero.com and sign in as admin",
+        "Click your organization > Settings > Subscription",
+        "Select Cancel Subscription",
+        "Confirm — you can export data for 30 days after cancellation"
+      ],
       "plans": [
-        { "id": "starter", "name": "Starter", "price": 29.00, "cycle": "monthly" },
-        { "id": "standard", "name": "Standard", "price": 46.00, "cycle": "monthly" },
-        { "id": "premium", "name": "Premium", "price": 62.00, "cycle": "monthly" }
+        {
+          "id": "starter",
+          "name": "Starter",
+          "price": 29.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "standard",
+          "name": "Standard",
+          "price": 46.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "premium",
+          "name": "Premium",
+          "price": 62.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1234,9 +3202,27 @@
       "icon": "💰",
       "color": "#85C0FA",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://app.youneedabudget.com/settings",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to app.youneedabudget.com and sign in",
+        "Click Account Settings > Billing",
+        "Select Cancel Subscription",
+        "Confirm — read-only access for 30 days, then data deletion"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 14.99, "cycle": "monthly" },
-        { "id": "yearly", "name": "Annual", "price": 99.00, "cycle": "yearly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 14.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "yearly",
+          "name": "Annual",
+          "price": 99.0,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -1248,9 +3234,43 @@
       "icon": "📹",
       "color": "#2D8CFF",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://zoom.us/account/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to zoom.us and sign in",
+        "Go to Account Management > Billing",
+        "Select Current Plans > Cancel Plan",
+        "Confirm cancellation — you revert to Basic (free) plan"
+      ],
       "plans": [
-        { "id": "pro", "name": "Pro", "price": 15.99, "cycle": "monthly" },
-        { "id": "business", "name": "Business", "price": 21.99, "cycle": "monthly" }
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 15.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business",
+          "name": "Business",
+          "price": 21.99,
+          "cycle": "monthly"
+        }
+      ],
+      "alternatives": [
+        {
+          "name": "Google Meet",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free for up to 100 participants, 60 min"
+        },
+        {
+          "name": "Jitsi Meet",
+          "price": 0,
+          "currency": "USD",
+          "cycle": "monthly",
+          "note": "Free open-source video conferencing, no account needed"
+        }
       ]
     },
     {
@@ -1262,8 +3282,21 @@
       "icon": "🎥",
       "color": "#625DF5",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.loom.com/settings",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to loom.com and sign in",
+        "Click Settings > Plans",
+        "Select Downgrade to Starter (free)",
+        "Confirm — older recordings may be restricted on free plan"
+      ],
       "plans": [
-        { "id": "business", "name": "Business", "price": 12.50, "cycle": "monthly" }
+        {
+          "id": "business",
+          "name": "Business",
+          "price": 12.5,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1275,9 +3308,27 @@
       "icon": "📅",
       "color": "#006BFF",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://calendly.com/app/admin/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to calendly.com and sign in",
+        "Click Admin > Billing",
+        "Select Downgrade to Free",
+        "Confirm — limited to 1 active event type on free plan"
+      ],
       "plans": [
-        { "id": "standard", "name": "Standard", "price": 10.00, "cycle": "monthly" },
-        { "id": "teams", "name": "Teams", "price": 16.00, "cycle": "monthly" }
+        {
+          "id": "standard",
+          "name": "Standard",
+          "price": 10.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "teams",
+          "name": "Teams",
+          "price": 16.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1289,9 +3340,27 @@
       "icon": "📧",
       "color": "#FFE01B",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://us1.admin.mailchimp.com/account/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to mailchimp.com and sign in",
+        "Click your profile > Account & Billing > Billing",
+        "Select Pause or Cancel Account",
+        "Choose Cancel and confirm"
+      ],
       "plans": [
-        { "id": "essentials", "name": "Essentials", "price": 13.00, "cycle": "monthly" },
-        { "id": "standard", "name": "Standard", "price": 20.00, "cycle": "monthly" }
+        {
+          "id": "essentials",
+          "name": "Essentials",
+          "price": 13.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "standard",
+          "name": "Standard",
+          "price": 20.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1303,9 +3372,27 @@
       "icon": "🧲",
       "color": "#FF7A59",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://app.hubspot.com/",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to app.hubspot.com and sign in as admin",
+        "Click Settings > Account > Billing",
+        "Contact HubSpot sales to downgrade or cancel",
+        "Confirm — free CRM tools remain available"
+      ],
       "plans": [
-        { "id": "starter", "name": "Starter", "price": 20.00, "cycle": "monthly" },
-        { "id": "professional", "name": "Professional", "price": 890.00, "cycle": "monthly" }
+        {
+          "id": "starter",
+          "name": "Starter",
+          "price": 20.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "professional",
+          "name": "Professional",
+          "price": 890.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1317,9 +3404,27 @@
       "icon": "📱",
       "color": "#2C4BFF",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://account.buffer.com/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to buffer.com and sign in",
+        "Click your name > Billing",
+        "Select Downgrade to Free",
+        "Confirm — limited to 3 social channels on free plan"
+      ],
       "plans": [
-        { "id": "essentials", "name": "Essentials", "price": 6.00, "cycle": "monthly" },
-        { "id": "team", "name": "Team", "price": 12.00, "cycle": "monthly" }
+        {
+          "id": "essentials",
+          "name": "Essentials",
+          "price": 6.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "team",
+          "name": "Team",
+          "price": 12.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1331,9 +3436,27 @@
       "icon": "🦉",
       "color": "#143059",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://app.hootsuite.com/billing",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to hootsuite.com and sign in",
+        "Click your profile > Account > Billing",
+        "Select Downgrade or Cancel Plan",
+        "Confirm — account reverts to limited free access"
+      ],
       "plans": [
-        { "id": "professional", "name": "Professional", "price": 99.00, "cycle": "monthly" },
-        { "id": "team", "name": "Team", "price": 249.00, "cycle": "monthly" }
+        {
+          "id": "professional",
+          "name": "Professional",
+          "price": 99.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "team",
+          "name": "Team",
+          "price": 249.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1345,9 +3468,27 @@
       "icon": "📊",
       "color": "#FF622D",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.semrush.com/billing/",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Go to semrush.com and sign in",
+        "Click your profile > Subscription Info",
+        "Select Cancel Subscription",
+        "Confirm — you revert to a free account with limited queries"
+      ],
       "plans": [
-        { "id": "pro", "name": "Pro", "price": 129.95, "cycle": "monthly" },
-        { "id": "guru", "name": "Guru", "price": 249.95, "cycle": "monthly" }
+        {
+          "id": "pro",
+          "name": "Pro",
+          "price": 129.95,
+          "cycle": "monthly"
+        },
+        {
+          "id": "guru",
+          "name": "Guru",
+          "price": 249.95,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1359,9 +3500,27 @@
       "icon": "🔗",
       "color": "#FF6F00",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://app.ahrefs.com/billing",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to ahrefs.com and sign in",
+        "Click your email > Billing",
+        "Select Cancel Subscription",
+        "Confirm — access ends immediately or at period end"
+      ],
       "plans": [
-        { "id": "lite", "name": "Lite", "price": 99.00, "cycle": "monthly" },
-        { "id": "standard", "name": "Standard", "price": 199.00, "cycle": "monthly" }
+        {
+          "id": "lite",
+          "name": "Lite",
+          "price": 99.0,
+          "cycle": "monthly"
+        },
+        {
+          "id": "standard",
+          "name": "Standard",
+          "price": 199.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1373,8 +3532,21 @@
       "icon": "☁️",
       "color": "#0078D4",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://account.microsoft.com/services",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to account.microsoft.com/services and sign in",
+        "Find OneDrive and click Manage",
+        "Select Cancel subscription",
+        "Storage reverts to 5GB free after the billing period ends"
+      ],
       "plans": [
-        { "id": "basic", "name": "100GB", "price": 1.99, "cycle": "monthly" }
+        {
+          "id": "basic",
+          "name": "100GB",
+          "price": 1.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1386,9 +3558,27 @@
       "icon": "📦",
       "color": "#0061D5",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.box.com/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to box.com and sign in",
+        "Click your profile > Account Settings",
+        "Select Downgrade Account or Cancel Subscription",
+        "Confirm — files accessible on free plan (10GB limit)"
+      ],
       "plans": [
-        { "id": "personal-pro", "name": "Personal Pro", "price": 11.50, "cycle": "monthly" },
-        { "id": "business", "name": "Business", "price": 15.00, "cycle": "monthly" }
+        {
+          "id": "personal-pro",
+          "name": "Personal Pro",
+          "price": 11.5,
+          "cycle": "monthly"
+        },
+        {
+          "id": "business",
+          "name": "Business",
+          "price": 15.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1400,9 +3590,27 @@
       "icon": "☁️",
       "color": "#20CEFF",
       "defaultCycle": "yearly",
+      "cancelUrl": "https://my.pcloud.com/",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to my.pcloud.com and sign in",
+        "Click Settings > Account > Cancel Subscription",
+        "Confirm — files remain on the free 10GB plan",
+        "Download files before expiry to avoid loss"
+      ],
       "plans": [
-        { "id": "premium-500", "name": "Premium 500GB", "price": 49.99, "cycle": "yearly" },
-        { "id": "premium-2tb", "name": "Premium Plus 2TB", "price": 99.99, "cycle": "yearly" }
+        {
+          "id": "premium-500",
+          "name": "Premium 500GB",
+          "price": 49.99,
+          "cycle": "yearly"
+        },
+        {
+          "id": "premium-2tb",
+          "name": "Premium Plus 2TB",
+          "price": 99.99,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -1414,8 +3622,21 @@
       "icon": "🎮",
       "color": "#7B61FF",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://parsec.app/account",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to parsec.app and sign in",
+        "Click your account > Billing",
+        "Select Cancel Subscription",
+        "Confirm — you revert to the free plan"
+      ],
       "plans": [
-        { "id": "warp", "name": "Warp", "price": 9.99, "cycle": "monthly" }
+        {
+          "id": "warp",
+          "name": "Warp",
+          "price": 9.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1427,9 +3648,27 @@
       "icon": "💬",
       "color": "#5865F2",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://discord.com/settings/subscriptions",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Open Discord and click the gear icon (User Settings)",
+        "Go to Nitro or Subscriptions",
+        "Select Cancel Subscription",
+        "Confirm — Nitro perks removed at the end of the billing period"
+      ],
       "plans": [
-        { "id": "basic", "name": "Basic", "price": 2.99, "cycle": "monthly" },
-        { "id": "nitro", "name": "Nitro", "price": 9.99, "cycle": "monthly" }
+        {
+          "id": "basic",
+          "name": "Basic",
+          "price": 2.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "nitro",
+          "name": "Nitro",
+          "price": 9.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1441,8 +3680,21 @@
       "icon": "📺",
       "color": "#000000",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://support.apple.com/en-us/HT202039",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Open Settings on your iPhone > tap your Apple ID name",
+        "Tap Subscriptions",
+        "Select Apple TV+ and tap Cancel Subscription",
+        "Confirm — streaming access continues until period ends"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 9.99, "cycle": "monthly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 9.99,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1450,13 +3702,31 @@
       "name": "ESPN+",
       "domain": "espn.com",
       "logoUrl": "https://www.google.com/s2/favicons?domain=espn.com&sz=128",
-      "category": "Entertainment",
+      "category": "Sports",
       "icon": "⚽",
-      "color": "#FF0000",
+      "color": "#FF4747",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.espn.com/espnplus/manage",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to espnplus.com and sign in",
+        "Click your profile icon > ESPN+ Subscription",
+        "Select Cancel Subscription",
+        "Confirm — sports access continues until billing period ends"
+      ],
       "plans": [
-        { "id": "monthly", "name": "Monthly", "price": 10.99, "cycle": "monthly" },
-        { "id": "yearly", "name": "Annual", "price": 109.99, "cycle": "yearly" }
+        {
+          "id": "monthly",
+          "name": "Monthly",
+          "price": 10.99,
+          "cycle": "monthly"
+        },
+        {
+          "id": "yearly",
+          "name": "Annual",
+          "price": 109.99,
+          "cycle": "yearly"
+        }
       ]
     },
     {
@@ -1468,8 +3738,21 @@
       "icon": "❤️",
       "color": "#FF424D",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://www.patreon.com/settings/membership",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to patreon.com and sign in",
+        "Click your profile > Settings > Memberships",
+        "Select the creator membership and click Cancel",
+        "Confirm — you lose patron benefits at end of month"
+      ],
       "plans": [
-        { "id": "custom", "name": "Custom Amount", "price": 5.00, "cycle": "monthly" }
+        {
+          "id": "custom",
+          "name": "Custom Amount",
+          "price": 5.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1481,8 +3764,21 @@
       "icon": "☕",
       "color": "#FF5E5B",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://ko-fi.com/manage/memberships",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to ko-fi.com and sign in",
+        "Click your profile > Manage Memberships",
+        "Find the membership and select Cancel",
+        "Confirm cancellation"
+      ],
       "plans": [
-        { "id": "gold", "name": "Gold", "price": 6.00, "cycle": "monthly" }
+        {
+          "id": "gold",
+          "name": "Gold",
+          "price": 6.0,
+          "cycle": "monthly"
+        }
       ]
     },
     {
@@ -1494,26 +3790,225 @@
       "icon": "📝",
       "color": "#FF6719",
       "defaultCycle": "monthly",
+      "cancelUrl": "https://substack.com/settings",
+      "cancelDifficulty": "easy",
+      "cancelSteps": [
+        "Go to substack.com and sign in",
+        "Click your profile > Settings > Subscriptions",
+        "Find the newsletter subscription and select Cancel",
+        "Confirm — you lose subscriber benefits immediately or at period end"
+      ],
       "plans": [
-        { "id": "custom", "name": "Custom Amount", "price": 5.00, "cycle": "monthly" }
+        {
+          "id": "custom",
+          "name": "Custom Amount",
+          "price": 5.0,
+          "cycle": "monthly"
+        }
+      ]
+    },
+    {
+      "id": "apple-arcade",
+      "name": "Apple Arcade",
+      "domain": "apple.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=apple.com&sz=128",
+      "senderPatterns": ["apple.com", "email.apple.com"],
+      "subjectPatterns": ["receipt", "subscription", "apple arcade"],
+      "category": "Gaming",
+      "icon": "🎮",
+      "color": "#0066CC",
+      "defaultCycle": "monthly",
+      "manageUrl": "https://support.apple.com/en-us/HT202039",
+      "cancelUrl": "https://support.apple.com/en-us/HT202039",
+      "cancelDifficulty": "medium",
+      "cancelSteps": [
+        "Open Settings on your iPhone > tap your Apple ID name",
+        "Tap Subscriptions",
+        "Select Apple Arcade and tap Cancel Subscription",
+        "Confirm — game access continues until the billing period ends"
+      ],
+      "plans": [
+        { "id": "monthly", "name": "Monthly", "price": 6.99, "cycle": "monthly" },
+        { "id": "yearly", "name": "Yearly", "price": 49.99, "cycle": "yearly" }
+      ],
+      "alternatives": [
+        { "name": "Xbox Game Pass", "price": 9.99, "currency": "USD", "cycle": "monthly", "note": "Hundreds of games on mobile, console, and PC" },
+        { "name": "Netflix Games", "price": 0, "currency": "USD", "cycle": "monthly", "note": "Included with Netflix subscription — growing library" }
       ]
     }
   ],
   "categories": [
-    { "name": "Entertainment", "color": "#EC4899" },
-    { "name": "Music", "color": "#06B6D4" },
-    { "name": "Design", "color": "#F59E0B" },
-    { "name": "Development", "color": "#8B5CF6" },
-    { "name": "Productivity", "color": "#10B981" },
-    { "name": "Storage", "color": "#3B82F6" },
-    { "name": "Health", "color": "#22C55E" },
-    { "name": "Education", "color": "#A855F7" },
-    { "name": "Finance", "color": "#F97316" },
-    { "name": "Security", "color": "#6366F1" },
-    { "name": "News", "color": "#EF4444" },
-    { "name": "Marketing", "color": "#14B8A6" },
-    { "name": "Other", "color": "#6B7280" }
+    {
+      "name": "Entertainment",
+      "color": "#EC4899"
+    },
+    {
+      "name": "Music",
+      "color": "#06B6D4"
+    },
+    {
+      "name": "Design",
+      "color": "#F59E0B"
+    },
+    {
+      "name": "Development",
+      "color": "#8B5CF6"
+    },
+    {
+      "name": "Productivity",
+      "color": "#10B981"
+    },
+    {
+      "name": "Storage",
+      "color": "#3B82F6"
+    },
+    {
+      "name": "Health",
+      "color": "#22C55E"
+    },
+    {
+      "name": "Education",
+      "color": "#A855F7"
+    },
+    {
+      "name": "Finance",
+      "color": "#F97316"
+    },
+    {
+      "name": "Security",
+      "color": "#6366F1"
+    },
+    {
+      "name": "News",
+      "color": "#EF4444"
+    },
+    {
+      "name": "Marketing",
+      "color": "#14B8A6"
+    },
+    {
+      "name": "Sports",
+      "color": "#FF4747"
+    },
+    {
+      "name": "Gaming",
+      "color": "#0066CC"
+    },
+    {
+      "name": "Other",
+      "color": "#6B7280"
+    }
+  ],
+  "bundles": [
+    {
+      "id": "disney-bundle-basic",
+      "name": "Disney Bundle (Basic)",
+      "services": ["disney-plus", "hulu", "espn-plus"],
+      "bundlePrice": 14.99,
+      "individualTotal": 29.97,
+      "currency": "USD",
+      "cycle": "monthly",
+      "url": "https://www.disneyplus.com/bundle",
+      "description": "Disney+, Hulu, and ESPN+ together at a discount"
+    },
+    {
+      "id": "disney-bundle-premium",
+      "name": "Disney Bundle (Premium)",
+      "services": ["disney-plus", "hulu", "espn-plus"],
+      "bundlePrice": 24.99,
+      "individualTotal": 41.97,
+      "currency": "USD",
+      "cycle": "monthly",
+      "url": "https://www.disneyplus.com/bundle",
+      "description": "Disney+ Premium, Hulu (No Ads), and ESPN+ together"
+    },
+    {
+      "id": "apple-one-individual",
+      "name": "Apple One Individual",
+      "services": ["apple-music", "apple-tv-plus", "apple-arcade", "icloud"],
+      "bundlePrice": 19.95,
+      "individualTotal": 30.93,
+      "currency": "USD",
+      "cycle": "monthly",
+      "url": "https://www.apple.com/apple-one/",
+      "description": "Apple Music, TV+, Arcade, and 50GB iCloud+"
+    },
+    {
+      "id": "apple-one-family",
+      "name": "Apple One Family",
+      "services": ["apple-music", "apple-tv-plus", "apple-arcade", "icloud"],
+      "bundlePrice": 25.95,
+      "individualTotal": 41.92,
+      "currency": "USD",
+      "cycle": "monthly",
+      "url": "https://www.apple.com/apple-one/",
+      "description": "Apple Music Family, TV+, Arcade, and 200GB iCloud+"
+    },
+    {
+      "id": "apple-one-premier",
+      "name": "Apple One Premier",
+      "services": ["apple-music", "apple-tv-plus", "apple-arcade", "icloud"],
+      "bundlePrice": 37.95,
+      "individualTotal": 56.91,
+      "currency": "USD",
+      "cycle": "monthly",
+      "url": "https://www.apple.com/apple-one/",
+      "description": "Everything in Family plus Apple News+ and Fitness+"
+    },
+    {
+      "id": "youtube-premium-family",
+      "name": "YouTube Premium Family",
+      "services": ["youtube-premium"],
+      "bundlePrice": 22.99,
+      "individualTotal": 27.98,
+      "currency": "USD",
+      "cycle": "monthly",
+      "url": "https://www.youtube.com/premium/family",
+      "description": "YouTube Premium for up to 5 family members"
+    },
+    {
+      "id": "microsoft-365-personal",
+      "name": "Microsoft 365 Personal",
+      "services": ["microsoft-365"],
+      "bundlePrice": 9.99,
+      "individualTotal": 16.99,
+      "currency": "USD",
+      "cycle": "monthly",
+      "url": "https://www.microsoft.com/microsoft-365",
+      "description": "Office apps + 1TB OneDrive for 1 person"
+    },
+    {
+      "id": "microsoft-365-family",
+      "name": "Microsoft 365 Family",
+      "services": ["microsoft-365"],
+      "bundlePrice": 12.99,
+      "individualTotal": 29.94,
+      "currency": "USD",
+      "cycle": "monthly",
+      "url": "https://www.microsoft.com/microsoft-365",
+      "description": "Office apps + 1TB OneDrive per person, up to 6 people"
+    },
+    {
+      "id": "amazon-prime-bundle",
+      "name": "Amazon Prime",
+      "services": ["amazon-prime"],
+      "bundlePrice": 14.99,
+      "individualTotal": 24.97,
+      "currency": "USD",
+      "cycle": "monthly",
+      "url": "https://www.amazon.com/prime",
+      "description": "Prime Video, Music, free shipping, and more"
+    },
+    {
+      "id": "max-bundle",
+      "name": "Max + Discovery+",
+      "services": ["hbo-max"],
+      "bundlePrice": 15.99,
+      "individualTotal": 25.98,
+      "currency": "USD",
+      "cycle": "monthly",
+      "url": "https://www.max.com",
+      "description": "Max Ad-Free with Discovery+ content included"
+    }
   ]
 }
-
-

@@ -8,10 +8,14 @@ export function calculateMonthlyTotal(subscriptions: Subscription[]): number {
   return subscriptions
     .filter(s => s.status === 'active')
     .reduce((total, sub) => {
-      if (sub.cycle === 'monthly') {
-        return total + sub.amount;
+      switch (sub.cycle) {
+        case 'weekly': return total + sub.amount * 4.33;
+        case 'monthly': return total + sub.amount;
+        case 'quarterly': return total + sub.amount / 3;
+        case 'yearly': return total + sub.amount / 12;
+        case 'custom': return total + sub.amount * (30.44 / (sub.customDays || 30));
+        default: return total + sub.amount;
       }
-      return total + sub.amount / 12;
     }, 0);
 }
 
@@ -19,10 +23,14 @@ export function calculateYearlyTotal(subscriptions: Subscription[]): number {
   return subscriptions
     .filter(s => s.status === 'active')
     .reduce((total, sub) => {
-      if (sub.cycle === 'yearly') {
-        return total + sub.amount;
+      switch (sub.cycle) {
+        case 'weekly': return total + sub.amount * 52;
+        case 'monthly': return total + sub.amount * 12;
+        case 'quarterly': return total + sub.amount * 4;
+        case 'yearly': return total + sub.amount;
+        case 'custom': return total + sub.amount * (365.25 / (sub.customDays || 365));
+        default: return total + sub.amount * 12;
       }
-      return total + sub.amount * 12;
     }, 0);
 }
 
@@ -31,7 +39,15 @@ export function calculateCategoryTotals(subscriptions: Subscription[]): Category
   const totalMonthly = calculateMonthlyTotal(subscriptions);
 
   subscriptions.filter(s => s.status === 'active').forEach(sub => {
-    const monthlyAmount = sub.cycle === 'monthly' ? sub.amount : sub.amount / 12;
+    let monthlyAmount: number;
+    switch (sub.cycle) {
+      case 'weekly': monthlyAmount = sub.amount * 4.33; break;
+      case 'monthly': monthlyAmount = sub.amount; break;
+      case 'quarterly': monthlyAmount = sub.amount / 3; break;
+      case 'yearly': monthlyAmount = sub.amount / 12; break;
+      case 'custom': monthlyAmount = sub.amount * (30.44 / (sub.customDays || 30)); break;
+      default: monthlyAmount = sub.amount;
+    }
     totals[sub.category] = (totals[sub.category] || 0) + monthlyAmount;
   });
 

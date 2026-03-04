@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { usePlanStore } from '../../state';
 import { getBannerAdUnitId, areAdsAvailable } from '../../services/AdMobService';
+import { logger } from '../../services/LoggerService';
 
 // Dynamic import to avoid crash in Expo Go
 let GoogleBannerAd: any = null;
@@ -59,7 +60,7 @@ export function BannerAd({ size = 'standard' }: BannerAdProps) {
           requestNonPersonalizedAdsOnly: false,
         }}
         onAdFailedToLoad={(error: any) => {
-          console.log('Banner ad failed to load:', error);
+          logger.warn('BannerAd', 'Failed to load:', error);
           setAdError(true);
         }}
       />

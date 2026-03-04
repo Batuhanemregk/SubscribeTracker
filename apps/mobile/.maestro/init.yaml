@@ -1,0 +1,38 @@
+appId: host.exp.Exponent
+---
+# Common init: ensure Finify is loaded in Expo Go
+- openLink: "exp://127.0.0.1:8081"
+
+# Wait for either Finify home screen or onboarding
+- extendedWaitUntil:
+    visible: "Home|Good Morning|Good Afternoon|Good Evening|Get Started|Take Control"
+    timeout: 30000
+
+# Dismiss any onboarding/paywall
+- tapOn:
+    text: "Get Started"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Next"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Finish"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# Ensure we're on a known screen
+- extendedWaitUntil:
+    visible: "Home"
+    timeout: 15000

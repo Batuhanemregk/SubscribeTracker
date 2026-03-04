@@ -60,9 +60,18 @@ export const DEFAULT_PRO_PLAN: UserPlan = {
 // SUBSCRIPTION
 // =============================================================================
 
-export type BillingCycle = 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+export type BillingCycle = 'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom';
 export type SubscriptionStatus = 'active' | 'paused' | 'cancelled';
 export type SubscriptionSource = 'manual' | 'detected';
+
+export type LifecycleEventType = 'subscribed' | 'paused' | 'resumed' | 'price_changed' | 'renewed' | 'cancelled' | 'rating_changed';
+
+export interface LifecycleEvent {
+  id: string;
+  type: LifecycleEventType;
+  date: string;          // ISO date
+  details?: string;      // e.g. "Price changed from $9.99 to $12.99"
+}
 
 export interface SubscriptionDetection {
   confidence: number;               // 0-1
@@ -86,6 +95,14 @@ export interface Subscription {
   cancelUrl: string | null;         // Pro only
   manageUrl: string | null;         // Pro only
   notes: string;
+  customDays?: number;              // Only used when cycle === 'custom'
+  isTrial: boolean;                 // Whether this is a free trial
+  trialEndsAt: string | null;       // ISO date when trial converts to paid
+  paymentMethod?: string;           // e.g. "Visa *4242", "PayPal"
+  customReminderDays?: number[] | null; // Override global reminder days (e.g., [7, 3, 1, 0])
+  lifecycle?: LifecycleEvent[];
+  usageRating?: number;             // 1-5 scale (1=never use, 5=use daily)
+  lastUsedAt?: string | null;       // ISO date of last manual usage log
   createdAt: string;
   updatedAt: string;
 }

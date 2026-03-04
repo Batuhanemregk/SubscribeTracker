@@ -13,32 +13,36 @@ interface PrimaryButtonProps {
   disabled?: boolean;
   fullWidth?: boolean;
   style?: ViewStyle;
+  accessibilityLabel?: string;
+  testID?: string;
 }
 
-export function PrimaryButton({ 
-  title, 
-  onPress, 
-  loading = false, 
+export function PrimaryButton({
+  title,
+  onPress,
+  loading = false,
   disabled = false,
   fullWidth = true,
-  style 
+  style,
+  accessibilityLabel,
+  testID,
 }: PrimaryButtonProps) {
   const { colors } = useTheme();
 
   return (
     <TouchableOpacity
+      testID={testID}
       onPress={onPress}
       disabled={disabled || loading}
       activeOpacity={0.8}
-      style={[
-        styles.container,
-        fullWidth && styles.fullWidth,
-        disabled && styles.disabled,
-        style,
-      ]}
+      accessibilityLabel={accessibilityLabel ?? title}
+      accessibilityRole="button"
+      style={[styles.container, fullWidth && styles.fullWidth, disabled && styles.disabled, style]}
     >
       <LinearGradient
-        colors={disabled ? [colors.bgElevated, colors.bgCard] : [colors.primary, colors.primaryDark]}
+        colors={
+          disabled ? [colors.bgElevated, colors.bgCard] : [colors.primary, colors.primaryDark]
+        }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.gradient}

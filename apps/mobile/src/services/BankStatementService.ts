@@ -20,6 +20,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
+import { logger } from './LoggerService';
 
 // ─── Usage Limits ─────────────────────────────────────────
 const SCAN_USAGE_KEY = 'bank_scan_usage';
@@ -134,7 +135,7 @@ async function getScanUsage(): Promise<ScanUsage> {
   try {
     const raw = await AsyncStorage.getItem(SCAN_USAGE_KEY);
     if (raw) return JSON.parse(raw);
-  } catch {}
+  } catch { /* fallback to defaults */ }
   
   const today = new Date().toISOString().split('T')[0];
   const month = today.substring(0, 7);
@@ -265,7 +266,7 @@ export async function pickBankStatement(): Promise<{
       mimeType: asset.mimeType,
     };
   } catch (error: any) {
-    console.error('Document picker error:', error);
+    logger.error('BankStatement', 'Document picker error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -298,7 +299,7 @@ export async function pickFromGallery(): Promise<{
       mimeType: asset.mimeType || 'image/jpeg',
     };
   } catch (error: any) {
-    console.error('Gallery picker error:', error);
+    logger.error('BankStatement', 'Gallery picker error:', error);
     return { success: false, error: error.message };
   }
 }
@@ -315,14 +316,14 @@ export async function readFileAsBase64(uri: string): Promise<string | null> {
 
     // Check file exists first
     if (!file.exists) {
-      console.error('File does not exist at URI:', uri);
+      logger.error('BankStatement', 'File does not exist at URI:', uri);
       return null;
     }
 
     const content = await file.base64();
     return content;
   } catch (error) {
-    console.error('Failed to read file:', error, 'URI:', uri);
+    logger.error('BankStatement', 'Failed to read file:', error, 'URI:', uri);
     return null;
   }
 }
@@ -369,7 +370,7 @@ export async function extractSubscriptionsFromStatement(
     });
 
     if (error) {
-      console.error('Edge function error:', error);
+      logger.error('BankStatement', 'Edge function error:', error);
       // Extract user-friendly error message from the Edge Function response if available
       let errorMessage: string;
       if (data?.error && typeof data.error === 'string') {
@@ -423,7 +424,7 @@ export async function extractSubscriptionsFromStatement(
       monthsCovered: data.monthsCovered || 1,
     };
   } catch (error: any) {
-    console.error('Extraction error:', error);
+    logger.error('BankStatement', 'Extraction error:', error);
     return { success: false, subscriptions: [], error: error.message };
   }
 }

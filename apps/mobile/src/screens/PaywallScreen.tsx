@@ -19,7 +19,7 @@ import Animated, {
 import { Header, PrimaryButton, SecondaryButton } from '../components';
 import { useTheme, borderRadius, type ThemeColors } from '../theme';
 import { usePlanStore } from '../state';
-import { 
+import {
   showPaywallDismissAd,
   getOfferings,
   purchasePackage,
@@ -27,6 +27,7 @@ import {
   formatPackagePrice,
   getPackageType,
   isPurchasesConfigured,
+  PRODUCT_IDS,
 } from '../services';
 import { t } from '../i18n';
 
@@ -87,10 +88,10 @@ export function PaywallScreen({ navigation, route }: any) {
     { icon: 'infinite', iconColor: colors.cyan, title: t('paywall.features.unlimitedSubs'), standard: '10', pro: t('common.upgrade') },
     { icon: 'remove-circle', iconColor: colors.red, title: t('paywall.features.noAds'), standard: false, pro: true },
   ];
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly' | 'lifetime'>('yearly');
   const [isLoading, setIsLoading] = useState(false);
   const [packages, setPackages] = useState<any[]>([]);
-  const { upgradeToPro, startTrial } = usePlanStore();
+  const { upgradeToPro, upgradeToLifetime, startTrial } = usePlanStore();
 
   const handleDismiss = () => {
     showPaywallDismissAd();
@@ -112,6 +113,7 @@ export function PaywallScreen({ navigation, route }: any) {
   // Fallback prices (TRY) - used when RevenueCat not configured
   const [monthlyPrice, setMonthlyPrice] = useState('₺99');
   const [yearlyPrice, setYearlyPrice] = useState('₺799');
+  const [lifetimePrice, setLifetimePrice] = useState(t('paywall.lifetimePrice'));
   const yearlySavings = 33; // Pre-calculated for fallback
 
   // Load offerings from RevenueCat
@@ -130,6 +132,8 @@ export function PaywallScreen({ navigation, route }: any) {
             setMonthlyPrice(formatPackagePrice(pkg));
           } else if (type === 'yearly') {
             setYearlyPrice(formatPackagePrice(pkg));
+          } else if (type === 'lifetime') {
+            setLifetimePrice(formatPackagePrice(pkg));
           }
         });
       }
@@ -138,6 +142,9 @@ export function PaywallScreen({ navigation, route }: any) {
   }, []);
 
   const getSelectedPackage = (): any | undefined => {
+    if (billingCycle === 'lifetime') {
+      return packages.find(pkg => getPackageType(pkg) === 'lifetime');
+    }
     return packages.find(pkg => getPackageType(pkg) === billingCycle);
   };
 
@@ -156,7 +163,11 @@ export function PaywallScreen({ navigation, route }: any) {
         const result = await purchasePackage(pkg);
 
         if (result.success) {
-          upgradeToPro();
+          if (billingCycle === 'lifetime') {
+            upgradeToLifetime();
+          } else {
+            upgradeToPro();
+          }
           Alert.alert(
             t('paywall.welcomePro'),
             t('paywall.welcomeProMessage'),
@@ -189,7 +200,11 @@ export function PaywallScreen({ navigation, route }: any) {
       } else {
         // Mock purchase for development (RevenueCat not configured)
         await new Promise(resolve => setTimeout(resolve, 1500));
-        upgradeToPro();
+        if (billingCycle === 'lifetime') {
+          upgradeToLifetime();
+        } else {
+          upgradeToPro();
+        }
         Alert.alert(
           t('paywall.welcomePro') + ' (Dev)',
           'RevenueCat not configured. Simulated purchase.',
@@ -268,42 +283,65 @@ export function PaywallScreen({ navigation, route }: any) {
           </Text>
         </LinearGradient>
 
-        {/* Billing Cycle Toggle */}
-        <View style={styles.billingToggle}>
+        {/* Plan Cards */}
+        <View style={styles.planCards}>
+          {/* Lifetime Plan - Most Prominent */}
           <TouchableOpacity
-            style={[styles.billingOption, billingCycle === 'monthly' && styles.billingOptionActive]}
-            onPress={() => setBillingCycle('monthly')}
+            style={[styles.planCard, styles.lifetimeCard, billingCycle === 'lifetime' && styles.planCardActive]}
+            onPress={() => setBillingCycle('lifetime')}
+            activeOpacity={0.85}
           >
-            <Text style={[styles.billingOptionText, billingCycle === 'monthly' && styles.billingOptionTextActive]}>
-              {t('paywall.monthlyPlan')}
-            </Text>
+            <LinearGradient
+              colors={[`${colors.amber}30`, `${colors.pink}20`]}
+              style={styles.lifetimeGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            >
+              <View style={styles.planCardHeader}>
+                <Text style={styles.planCardTitle}>{t('paywall.lifetimePlan')}</Text>
+                <View style={styles.lifetimeBadge}>
+                  <Text style={styles.lifetimeBadgeText}>{t('paywall.lifetimeBadge')}</Text>
+                </View>
+              </View>
+              <Text style={styles.lifetimePriceAmount}>{lifetimePrice}</Text>
+              <Text style={styles.lifetimeOneTime}>{t('paywall.oneTime')}</Text>
+              <Text style={styles.lifetimeDescription}>{t('paywall.lifetimeDescription')}</Text>
+              {billingCycle === 'lifetime' && (
+                <View style={styles.selectedCheck}>
+                  <Ionicons name="checkmark-circle" size={20} color={colors.amber} />
+                </View>
+              )}
+            </LinearGradient>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.billingOption, billingCycle === 'yearly' && styles.billingOptionActive]}
-            onPress={() => setBillingCycle('yearly')}
-          >
-            <Text style={[styles.billingOptionText, billingCycle === 'yearly' && styles.billingOptionTextActive]}>
-              {t('paywall.yearlyPlan')}
-            </Text>
-            <View style={styles.saveBadge}>
-              <Text style={styles.saveBadgeText}>Save {yearlySavings}%</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
 
-        {/* Price Card */}
-        <View style={styles.priceCard}>
-          <Text style={styles.priceAmount}>
-            {billingCycle === 'yearly' ? yearlyPrice : monthlyPrice}
-          </Text>
-          <Text style={styles.pricePeriod}>
-            {billingCycle === 'yearly' ? t('paywall.perYear') : t('paywall.perMonth')}
-          </Text>
-          {billingCycle === 'yearly' && (
-            <Text style={styles.priceBreakdown}>
-              Great value - save {yearlySavings}%
-            </Text>
-          )}
+          {/* Monthly / Yearly toggle row */}
+          <View style={styles.billingToggle}>
+            <TouchableOpacity
+              style={[styles.billingOption, billingCycle === 'monthly' && styles.billingOptionActive]}
+              onPress={() => setBillingCycle('monthly')}
+            >
+              <Text style={[styles.billingOptionText, billingCycle === 'monthly' && styles.billingOptionTextActive]}>
+                {t('paywall.monthlyPlan')}
+              </Text>
+              <Text style={[styles.billingOptionPrice, billingCycle === 'monthly' && styles.billingOptionTextActive]}>
+                {monthlyPrice}{t('paywall.perMonth')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.billingOption, billingCycle === 'yearly' && styles.billingOptionActive]}
+              onPress={() => setBillingCycle('yearly')}
+            >
+              <Text style={[styles.billingOptionText, billingCycle === 'yearly' && styles.billingOptionTextActive]}>
+                {t('paywall.yearlyPlan')}
+              </Text>
+              <Text style={[styles.billingOptionPrice, billingCycle === 'yearly' && styles.billingOptionTextActive]}>
+                {yearlyPrice}{t('paywall.perYear')}
+              </Text>
+              <View style={styles.saveBadge}>
+                <Text style={styles.saveBadgeText}>Save {yearlySavings}%</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Feature Comparison */}
@@ -330,7 +368,11 @@ export function PaywallScreen({ navigation, route }: any) {
         {/* CTA Buttons */}
         <View style={styles.ctaContainer}>
           <PrimaryButton
-            title={`Subscribe Now - ${billingCycle === 'yearly' ? yearlyPrice : monthlyPrice}`}
+            title={
+              billingCycle === 'lifetime'
+                ? `${t('paywall.payOnce')} - ${lifetimePrice}`
+                : `Subscribe Now - ${billingCycle === 'yearly' ? yearlyPrice : monthlyPrice}`
+            }
             onPress={handlePurchase}
             loading={isLoading}
           />
@@ -425,13 +467,75 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     lineHeight: 24,
     paddingHorizontal: 20,
   },
+  planCards: {
+    marginHorizontal: 16,
+    marginBottom: 20,
+    gap: 12,
+  },
+  planCard: {
+    borderRadius: borderRadius.xl,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  planCardActive: {
+    borderColor: colors.amber,
+  },
+  lifetimeCard: {
+    borderWidth: 2,
+    borderColor: `${colors.amber}60`,
+  },
+  lifetimeGradient: {
+    padding: 16,
+  },
+  planCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  planCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+  },
+  lifetimeBadge: {
+    backgroundColor: colors.amber,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  lifetimeBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.bg,
+  },
+  lifetimePriceAmount: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 2,
+  },
+  lifetimeOneTime: {
+    fontSize: 13,
+    color: colors.amber,
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  lifetimeDescription: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  selectedCheck: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+  },
   billingToggle: {
     flexDirection: 'row',
     backgroundColor: colors.bgCard,
-    marginHorizontal: 16,
     borderRadius: borderRadius.xl,
     padding: 4,
-    marginBottom: 20,
   },
   billingOption: {
     flex: 1,
@@ -451,6 +555,11 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   billingOptionTextActive: {
     color: colors.text,
   },
+  billingOptionPrice: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
   saveBadge: {
     position: 'absolute',
     top: -8,
@@ -464,26 +573,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: colors.text,
-  },
-  priceCard: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  priceAmount: {
-    fontSize: 48,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  pricePeriod: {
-    fontSize: 16,
-    color: colors.textMuted,
-    marginTop: 4,
-  },
-  priceBreakdown: {
-    fontSize: 14,
-    color: colors.emerald,
-    marginTop: 8,
-    fontWeight: '600',
   },
   comparisonHeader: {
     paddingHorizontal: 16,

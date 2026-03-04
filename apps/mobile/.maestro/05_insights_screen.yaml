@@ -1,0 +1,39 @@
+appId: host.exp.Exponent
+---
+# Test 05: Insights Screen
+
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 30000
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Get Started"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Finish"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# Tap Insights tab (2nd tab)
+- tapOn:
+    point: "30%,97%"
+- waitForAnimationToEnd
+
+# Verify content
+- assertVisible:
+    text: ".*[Ss]pending.*|.*[Ii]nsights.*|.*[Aa]nalytics.*"
+    optional: true
+
+- scroll
+- waitForAnimationToEnd

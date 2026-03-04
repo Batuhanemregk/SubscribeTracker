@@ -2,16 +2,9 @@
  * HomeScreen - Main dashboard
  * Uses Zustand stores and new component library
  */
-import React, { useEffect, useCallback, useRef, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  RefreshControl,
-  TouchableOpacity,
-} from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import React, { useEffect, useCallback, useRef, useMemo, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import {
   Header,
   GradientStatCard,
@@ -19,15 +12,20 @@ import {
   PremiumSubscriptionCard,
   BannerAd,
   CompactSubscriptionCard,
-} from "../components";
-import { AddMethodSheet } from "../components/AddMethodSheet";
-import { ScanBanner } from "../components/ScanBanner";
-import { useTheme } from "../theme";
-import { useSubscriptionStore, useSettingsStore, usePlanStore, useCurrencyStore } from "../state";
-import { formatCurrency } from "../utils";
-import { SEED_SUBSCRIPTIONS } from "../data/seed";
-import type { Subscription } from "../types";
-import { t } from "../i18n";
+} from '../components';
+import { AddMethodSheet } from '../components/AddMethodSheet';
+import { ScanBanner } from '../components/ScanBanner';
+import { useTheme } from '../theme';
+import { useSubscriptionStore, useSettingsStore, usePlanStore, useCurrencyStore } from '../state';
+import {
+  formatCurrency,
+  findNextUpcomingPayment,
+  formatBillingDate,
+  advanceToNextBillingDate,
+} from '../utils';
+import { SEED_SUBSCRIPTIONS } from '../data/seed';
+import type { Subscription } from '../types';
+import { t } from '../i18n';
 
 interface HomeScreenProps {
   navigation: any;
@@ -46,6 +44,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
     subscriptions,
     setSubscriptions,
     deleteSubscription,
+    pauseSubscription,
     calculateMonthlyTotalConverted,
     calculateYearlyTotalConverted,
     getActiveSubscriptions,
@@ -94,11 +93,22 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   const monthlyTotal = calculateMonthlyTotalConverted(convert, currency);
   const yearlyTotal = calculateYearlyTotalConverted(convert, currency);
 
+  // Sort subscriptions by next billing date ASC (AC-DB-07)
+  const sortedSubs = useMemo(() => {
+    return [...activeSubs].sort((a, b) => {
+      const aDate = advanceToNextBillingDate(a.nextBillingDate, a.cycle, a.customDays).getTime();
+      const bDate = advanceToNextBillingDate(b.nextBillingDate, b.cycle, b.customDays).getTime();
+      return aDate - bDate;
+    });
+  }, [activeSubs]);
+
+  // Find next upcoming payment (AC-DB-03)
+  const nextUpcoming = useMemo(() => findNextUpcomingPayment(subscriptions), [subscriptions]);
+
   // Count upcoming (next 7 days)
   const upcomingCount = activeSubs.filter((sub) => {
     const daysUntil = Math.ceil(
-      (new Date(sub.nextBillingDate).getTime() - Date.now()) /
-        (1000 * 60 * 60 * 24),
+      (new Date(sub.nextBillingDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
     );
     return daysUntil <= 7 && daysUntil >= 0;
   }).length;
@@ -110,11 +120,11 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   }, []);
 
   const handlePressSubscription = (sub: Subscription) => {
-    navigation.navigate("SubscriptionDetails", { subscriptionId: sub.id });
+    navigation.navigate('SubscriptionDetails', { subscriptionId: sub.id });
   };
 
   const handleEditSubscription = (sub: Subscription) => {
-    navigation.navigate("AddSubscription", {
+    navigation.navigate('AddSubscription', {
       subscriptionId: sub.id,
       editMode: true,
     });
@@ -144,37 +154,52 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
     navigation.navigate('AddSubscription');
   };
 
-  const renderSubscriptionItem = ({
-    item,
-    index,
-  }: {
-    item: Subscription;
-    index: number;
-  }) => (
+  const renderSubscriptionItem = ({ item, index }: { item: Subscription; index: number }) => (
     <PremiumSubscriptionCard
       item={item}
       index={index}
       onPress={() => handlePressSubscription(item)}
       onEdit={() => handleEditSubscription(item)}
       onDelete={() => handleDeleteSubscription(item)}
+      onPause={() => pauseSubscription(item.id)}
       onSwipeOpen={() => closeOtherCards(item.id)}
-      swipeableRef={(ref: any) => { swipeableRefs.current[item.id] = ref; }}
+      swipeableRef={(ref: any) => {
+        swipeableRefs.current[item.id] = ref;
+      }}
     />
   );
 
   const greeting = useMemo(() => getGreeting(), []);
 
+  // Build upcoming text (AC-DB-03)
+  const upcomingText = useMemo(() => {
+    if (!nextUpcoming) return t('home.noUpcoming');
+    const { subscription: upSub, daysUntil } = nextUpcoming;
+    const amountStr = formatCurrency(upSub.amount, upSub.currency || currency);
+    if (daysUntil <= 0) return t('home.upcomingToday', { amount: amountStr, name: upSub.name });
+    return t('home.upcoming', { amount: amountStr, days: daysUntil, name: upSub.name });
+  }, [nextUpcoming, currency]);
+
   const renderHeader = () => (
     <>
+      {/* Hero Summary Card — TOTAL MONTHLY SPEND (AC-DB-02, AC-DB-03) */}
+      <View
+        testID="dashboard-summary-card"
+        style={[styles.heroCard, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
+      >
+        <Text style={[styles.heroLabel, { color: colors.textMuted }]}>
+          {t('home.totalMonthlySpend')}
+        </Text>
+        <Text testID="dashboard-total-monthly" style={[styles.heroAmount, { color: colors.text }]}>
+          {formatCurrency(monthlyTotal, currency)}
+        </Text>
+        <Text testID="dashboard-upcoming" style={[styles.heroUpcoming, { color: colors.primary }]}>
+          {upcomingText}
+        </Text>
+      </View>
+
       {/* Stats Row */}
       <View style={styles.statsRow}>
-        <GradientStatCard
-          icon="cash-outline"
-          iconColor={colors.emerald}
-          label={t('home.monthly')}
-          value={formatCurrency(monthlyTotal, currency)}
-          delay={0}
-        />
         <GradientStatCard
           icon="calendar-outline"
           iconColor={colors.primary}
@@ -182,9 +207,6 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
           value={formatCurrency(yearlyTotal, currency)}
           delay={0}
         />
-      </View>
-
-      <View style={styles.statsRow}>
         <GradientStatCard
           icon="apps-outline"
           iconColor={colors.pink}
@@ -192,21 +214,19 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
           value={activeSubs.length.toString()}
           delay={0}
         />
-        <GradientStatCard
-          icon="notifications-outline"
-          iconColor={colors.amber}
-          label={t('home.thisWeek')}
-          value={upcomingCount.toString()}
-          delay={0}
-        />
       </View>
 
       {/* Scan Banner */}
       <ScanBanner onScanPress={handleScanStatement} />
 
-      {/* Section Title */}
+      {/* Section Title with count (AC-DB-04) */}
       <View style={styles.sectionHeader}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('home.yourSubscriptions')}</Text>
+        <Text
+          testID="dashboard-subscription-count"
+          style={[styles.sectionTitle, { color: colors.text }]}
+        >
+          {t('home.subscriptionCount', { count: sortedSubs.length })}
+        </Text>
         <TouchableOpacity onPress={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}>
           <Text style={[styles.seeAll, { color: colors.primary }]}>
             {viewMode === 'list' ? t('home.seeAll') : t('home.listView')}
@@ -217,21 +237,20 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   );
 
   const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
+    <View testID="dashboard-empty" style={styles.emptyContainer}>
       {/* Hero Icon */}
-      <View style={[styles.emptyIconWrap, { backgroundColor: `${colors.primary}15` }]}> 
+      <View style={[styles.emptyIconWrap, { backgroundColor: `${colors.primary}15` }]}>
         <Ionicons name="document-text" size={48} color={colors.primary} />
       </View>
 
-      <Text style={[styles.emptyTitle, { color: colors.text }]}>
-        {t('home.findSubscriptions')}
-      </Text>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('home.noSubscriptions')}</Text>
       <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-        {t('home.findSubtitle')}
+        {t('home.noSubscriptionsMessage')}
       </Text>
 
       {/* Primary CTA — Scan */}
       <TouchableOpacity
+        testID="dashboard-scan-btn"
         style={[styles.emptyScanBtn, { backgroundColor: colors.primary }]}
         onPress={handleScanStatement}
         activeOpacity={0.85}
@@ -241,7 +260,11 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
       </TouchableOpacity>
 
       {/* Secondary link — Manual */}
-      <TouchableOpacity onPress={handleBrowseServices} style={styles.emptyManualBtn}>
+      <TouchableOpacity
+        testID="dashboard-manual-btn"
+        onPress={handleBrowseServices}
+        style={styles.emptyManualBtn}
+      >
         <Text style={[styles.emptyManualText, { color: colors.primary }]}>
           {t('home.enterManually')}
         </Text>
@@ -250,37 +273,32 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.bg }]}>
+    <View testID="dashboard-screen" style={[styles.container, { backgroundColor: colors.bg }]}>
       {/* Header */}
       <View style={styles.header}>
         <Header
           title={greeting}
           rightAction={
-            <TouchableOpacity 
+            <TouchableOpacity
+              testID="dashboard-settings-btn"
               style={[styles.notificationButton, { backgroundColor: colors.bgCard }]}
               onPress={() => navigation.navigate('Settings')}
             >
-              <Ionicons
-                name="settings-outline"
-                size={22}
-                color={colors.text}
-              />
+              <Ionicons name="settings-outline" size={22} color={colors.text} />
             </TouchableOpacity>
           }
         />
       </View>
 
-      {/* Subscription List */}
+      {/* Subscription List (sorted by next_billing_date ASC — AC-DB-07) */}
       {viewMode === 'grid' ? (
         <FlatList
+          testID="dashboard-list"
           key="grid"
-          data={activeSubs}
+          data={sortedSubs}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <CompactSubscriptionCard
-              item={item}
-              onPress={() => handlePressSubscription(item)}
-            />
+            <CompactSubscriptionCard item={item} onPress={() => handlePressSubscription(item)} />
           )}
           numColumns={2}
           ListHeaderComponent={renderHeader}
@@ -298,8 +316,9 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         />
       ) : (
         <FlatList
+          testID="dashboard-list"
           key="list"
-          data={activeSubs}
+          data={sortedSubs}
           keyExtractor={(item) => item.id}
           renderItem={renderSubscriptionItem}
           ListHeaderComponent={renderHeader}
@@ -320,8 +339,8 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
       {/* Banner Ad for Standard Users */}
       <BannerAd />
 
-      {/* FAB */}
-      <FAB icon="add" onPress={handleAddSubscription} />
+      {/* FAB (AC-DB-06) */}
+      <FAB testID="dashboard-fab" icon="add" onPress={handleAddSubscription} />
 
       {/* Add Method Sheet */}
       <AddMethodSheet
@@ -347,32 +366,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 140,
   },
+  heroCard: {
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 16,
+    borderWidth: 1,
+  },
+  heroLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    marginBottom: 8,
+  },
+  heroAmount: {
+    fontSize: 40,
+    fontWeight: '800',
+    letterSpacing: -1,
+    marginBottom: 8,
+  },
+  heroUpcoming: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   statsRow: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 12,
     marginBottom: 12,
   },
   sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginTop: 12,
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   seeAll: {
     fontSize: 14,
-    fontWeight: "500",
+    fontWeight: '500',
   },
   notificationButton: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   emptyContainer: {
     alignItems: 'center',

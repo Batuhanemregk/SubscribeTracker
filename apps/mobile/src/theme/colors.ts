@@ -3,6 +3,20 @@
  * Based on approved design system
  */
 
+// Accent color options for user personalization
+export const ACCENT_COLORS = {
+  purple: { primary: '#A855F6', name: 'Purple' },
+  blue: { primary: '#3B82F6', name: 'Blue' },
+  green: { primary: '#10B981', name: 'Green' },
+  orange: { primary: '#F97316', name: 'Orange' },
+  pink: { primary: '#EC4899', name: 'Pink' },
+  red: { primary: '#EF4444', name: 'Red' },
+  teal: { primary: '#14B8A6', name: 'Teal' },
+  yellow: { primary: '#EAB308', name: 'Yellow' },
+} as const;
+
+export type AccentColorKey = keyof typeof ACCENT_COLORS;
+
 // Primary brand color
 export const primary = '#8B5CF6';      // Violet
 export const primaryLight = '#A78BFA';

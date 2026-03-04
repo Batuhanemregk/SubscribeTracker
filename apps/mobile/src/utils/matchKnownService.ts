@@ -121,9 +121,9 @@ export function matchKnownService(name: string): MatchedService {
   }
   
   // 5. Partial word match — split both names and compare words
-  const inputWords = normalized.split(/[\s\-\_\.\*]+/).filter(Boolean);
+  const inputWords = normalized.split(/[\s\-_.*]+/).filter(Boolean);
   for (const [key, svc] of serviceIndex) {
-    const svcWords = key.split(/[\s\-\_\.]+/).filter(Boolean);
+    const svcWords = key.split(/[\s\-_.]+/).filter(Boolean);
     const commonWords = inputWords.filter(w => svcWords.some(sw => sw.includes(w) || w.includes(sw)));
     if (commonWords.length > 0 && commonWords[0].length >= 3) {
       return {

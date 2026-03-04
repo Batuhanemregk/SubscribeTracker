@@ -1,0 +1,46 @@
+appId: host.exp.Exponent
+---
+# Test 09: Bubble View
+
+- openLink: "exp://127.0.0.1:8081"
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 30000
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Get Started"
+    optional: true
+- tapOn:
+    text: "Skip"
+    optional: true
+- tapOn:
+    text: "Finish"
+    optional: true
+- tapOn:
+    text: "Close"
+    optional: true
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# Go to Home tab
+- tapOn:
+    point: "10%,97%"
+- waitForAnimationToEnd
+
+# Scroll to see Bubble View button
+- scroll
+
+# Tap Bubble View
+- tapOn:
+    text: "Bubble View"
+    optional: true
+- waitForAnimationToEnd
+
+# Go back to Home
+- tapOn:
+    point: "10%,97%"
+    optional: true
+- waitForAnimationToEnd

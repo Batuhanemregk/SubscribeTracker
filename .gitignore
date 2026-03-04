@@ -51,5 +51,9 @@ htmlcov/
 # Docker
 docker-compose.override.yml
 
-# Claude Code
-.claude/
+# Claude Code (ignore session data, keep skills/commands/agents)
+.claude/*
+!.claude/commands/
+!.claude/agents/
+!.claude/skills/
+!.claude/settings.json

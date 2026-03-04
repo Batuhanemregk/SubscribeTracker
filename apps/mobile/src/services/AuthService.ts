@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import { CONFIG } from '../config';
+import { logger } from './LoggerService';
 
 // Ensure web browser redirects work
 WebBrowser.maybeCompleteAuthSession();
@@ -86,7 +87,7 @@ export async function signInWithGoogle(): Promise<{
 
     return { success: false, error: 'Sign-in flow failed' };
   } catch (error) {
-    console.error('[Auth] Sign-in error:', error);
+    logger.error('Auth', 'Sign-in error:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
@@ -101,7 +102,7 @@ export async function signOut(): Promise<void> {
   try {
     await supabase.auth.signOut();
   } catch (error) {
-    console.error('[Auth] Sign-out error:', error);
+    logger.error('Auth', 'Sign-out error:', error);
   }
 }
 

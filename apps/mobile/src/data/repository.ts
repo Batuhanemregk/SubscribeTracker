@@ -5,6 +5,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Subscription } from '../types';
 import { SEED_SUBSCRIPTIONS } from './seed';
+import { logger } from '../services/LoggerService';
 
 const STORAGE_KEY = '@subscriptions';
 
@@ -25,7 +26,7 @@ export async function getSubscriptions(): Promise<Subscription[]> {
     const data = await AsyncStorage.getItem(STORAGE_KEY);
     return data ? JSON.parse(data) : [];
   } catch (e) {
-    console.error('Get subscriptions error:', e);
+    logger.error('Repository', 'Get subscriptions error:', e);
     return [];
   }
 }
