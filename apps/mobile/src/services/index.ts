@@ -147,3 +147,12 @@ export {
   onMonthlyReportViewed,
   onGoalReached,
 } from './RatingService';
+
+export {
+  aggregateWidgetSummaryData,
+  saveWidgetDataToSharedStorage,
+  syncWidgetData,
+  WIDGET_DATA_STORAGE_KEY,
+  type WidgetSummaryData,
+  type WidgetRenewalItem,
+} from './WidgetDataService';

@@ -1,0 +1,26 @@
+# Progress Log
+Run: 8d7df402-9f20-4cc3-a7bb-9739d09bacbf
+Task: Implement Home Screen Widgets (FB-004)
+Started: 2026-03-06 01:43 +03
+
+## Codebase Patterns
+- Service modules live under `apps/mobile/src/services` and are re-exported via `apps/mobile/src/services/index.ts`.
+- Jest tests are colocated in `__tests__` folders and use shared mocks from `apps/mobile/jest.setup.js` (including AsyncStorage mock).
+- Subscription monthly normalization logic follows the existing cycle conversion pattern (`weekly` 4.33x, `quarterly` /3, `yearly` /12, `custom` using 30.44/customDays).
+
+---
+
+## 2026-03-06 01:43 +03 - FB-004-1: Create Shared Widget Data Service
+- Implemented `WidgetDataService` with:
+  - `aggregateWidgetSummaryData` utility for total monthly cost, active count, and upcoming renewals.
+  - `saveWidgetDataToSharedStorage` to persist widget JSON in AsyncStorage and optionally mirror to iOS App Group / Android Shared Preferences bridges when available.
+  - `syncWidgetData` convenience function to aggregate + persist in one call.
+- Added barrel exports for widget service in `apps/mobile/src/services/index.ts`.
+- Added unit tests covering aggregation correctness and shared storage writes.
+- Files changed:
+  - `apps/mobile/src/services/WidgetDataService.ts`
+  - `apps/mobile/src/services/__tests__/WidgetDataService.test.ts`
+  - `apps/mobile/src/services/index.ts`
+  - `progress-8d7df402-9f20-4cc3-a7bb-9739d09bacbf.txt`
+- **Learnings:** Optional native bridge resolution via runtime `require(...)` keeps this Expo-managed codepath safe while still supporting native widget storage integrations when modules are linked.
+---
