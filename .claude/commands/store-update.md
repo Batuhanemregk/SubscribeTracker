@@ -38,7 +38,13 @@ cd apps/mobile
 eas update --branch production --platform all --message "[MESSAGE]" --non-interactive
 ```
 
-### Step 4. Report
+### Step 4. Verify via Store Consoles (Playwright)
+
+Optionally use Playwright to verify the update is live:
+1. Navigate to App Store Connect → TestFlight → check OTA update status
+2. Navigate to Play Console → check update channel status
+
+### Step 5. Report
 
 - Display update ID and status
 - Note: "OTA update published. Users will receive it on next app launch."
