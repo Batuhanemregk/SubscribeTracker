@@ -16,7 +16,7 @@ export default function PrivacyPolicyScreen() {
     <View style={styles.container}>
       <Header title={t('privacy.title')} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <Text style={styles.lastUpdated}>Last Updated: February 7, 2026</Text>
+        <Text style={styles.lastUpdated}>Last Updated: March 10, 2026</Text>
 
         <Text style={styles.heading}>1. Introduction</Text>
         <Text style={styles.paragraph}>
@@ -100,7 +100,7 @@ export default function PrivacyPolicyScreen() {
         <Text style={styles.heading}>11. Contact Us</Text>
         <Text style={styles.paragraph}>
           If you have questions about this Privacy Policy, please contact us at:
-          {'\n'}support@finify.app
+          {'\n'}myappcontact.sgx@gmail.com
         </Text>
 
         <View style={{ height: 40 }} />

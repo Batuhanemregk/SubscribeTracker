@@ -16,7 +16,7 @@ export default function TermsOfServiceScreen() {
     <View style={styles.container}>
       <Header title={t('terms.title')} />
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
-        <Text style={styles.lastUpdated}>Last Updated: February 7, 2026</Text>
+        <Text style={styles.lastUpdated}>Last Updated: March 10, 2026</Text>
 
         <Text style={styles.heading}>1. Acceptance of Terms</Text>
         <Text style={styles.paragraph}>
@@ -104,7 +104,7 @@ export default function TermsOfServiceScreen() {
         <Text style={styles.heading}>13. Contact</Text>
         <Text style={styles.paragraph}>
           For questions about these Terms, contact us at:
-          {'\n'}support@finify.app
+          {'\n'}myappcontact.sgx@gmail.com
         </Text>
 
         <View style={{ height: 40 }} />

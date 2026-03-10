@@ -35,7 +35,10 @@ logs/
 # Secrets (never commit)
 *.pem
 *.key
+*.p8
 secrets/
+google-play-service-account.json
+google-service-account.json
 
 # Mobile
 apps/mobile/.expo/

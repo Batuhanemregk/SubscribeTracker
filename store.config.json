@@ -1,0 +1,45 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "copyright": "2026 SubsSentry",
+    "categories": ["FINANCE", "UTILITIES"],
+    "advisory": {
+      "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+      "contests": "NONE",
+      "gamblingSimulated": "NONE",
+      "medicalOrTreatmentInformation": "NONE",
+      "profanityOrCrudeHumor": "NONE",
+      "sexualContentGraphicAndNudity": "NONE",
+      "sexualContentOrNudity": "NONE",
+      "horrorOrFearThemes": "NONE",
+      "matureOrSuggestiveThemes": "NONE",
+      "unrestrictedWebAccess": "NONE",
+      "violenceCartoonOrFantasy": "NONE",
+      "violenceRealistic": "NONE",
+      "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+      "gambling": "NONE",
+      "seventeenPlus": false
+    },
+    "info": {
+      "en-US": {
+        "title": "Finify: Subscription Tracker",
+        "subtitle": "Track, Save & Cancel Smarter",
+        "description": "Finify helps you take control of your subscriptions — without connecting your bank account.\n\nTrack every recurring payment in one place. Add subscriptions manually, scan bank statements with AI, or snap a screenshot to import automatically. Finify shows you exactly where your money goes each month.\n\nKEY FEATURES:\n\n- Smart Import: Scan bank statements or screenshots with AI to detect subscriptions instantly\n- Billing Calendar: See upcoming payments at a glance with a visual calendar\n- Budget Tracking: Set monthly spending goals and track progress in real time\n- Free Trial Alerts: Never get charged for a forgotten trial again — countdown reminders for 3 days, 1 day, and day-of\n- Health Score: Get a personalized subscription health grade (A-F) based on spending habits\n- Bundle Detection: Discover savings by bundling overlapping services\n- Cancellation Guides: Step-by-step instructions to cancel 100+ services\n- Rich Analytics: 6-month trends, category breakdowns, month-over-month comparisons\n- Multi-Currency: Track subscriptions in any currency with live exchange rates\n- Lifetime Purchase: One-time payment option — no subscription to track your subscriptions\n- Privacy First: Your financial data stays on your device. No bank account access required.\n\nPRO FEATURES:\n- AI Bank Statement Scanning\n- Cloud Sync across devices\n- CSV/PDF Data Export\n- Biometric Lock (Face ID / Touch ID)\n- Ad-free experience\n\nAvailable in English and Turkish. Works on iPhone & iPad.",
+        "keywords": "subscription,tracker,spending,budget,cancel,recurring,payments,bills,money,finance",
+        "releaseNotes": "Welcome to Finify! Track all your subscriptions in one place. Scan bank statements with AI, get free trial reminders, and discover savings with bundle detection.",
+        "marketingUrl": "https://batuhanemregk.github.io/SubscribeTracker/",
+        "supportUrl": "https://batuhanemregk.github.io/SubscribeTracker/",
+        "privacyPolicyUrl": "https://batuhanemregk.github.io/SubscribeTracker/privacy-policy.html"
+      }
+    },
+    "release": {
+      "automaticRelease": true
+    },
+    "review": {
+      "firstName": "Batuhan",
+      "lastName": "Emre",
+      "email": "myappcontact.sgx@gmail.com",
+      "phone": "FILL_PHONE_NUMBER"
+    }
+  }
+}
