@@ -26,13 +26,14 @@ interface ExistingSub {
  * Normalize a merchant name for comparison
  * "NETFLIX.COM" → "netflix"
  * "Spotify AB" → "spotify"
+ * "TURKCELL İLETİŞİM" → "turkcelliletiim" (preserves Turkish chars as best-effort)
  */
 function normalizeName(name: string): string {
   return name
     .toLowerCase()
     .replace(/\.(com|net|org|io|co|app|tv)$/i, '')
-    .replace(/[^a-z0-9]/g, '')
-    .trim();
+    .replace(/[^a-z0-9\u00e7\u011f\u0131\u00f6\u015f\u00fc]/g, '') // keep a-z, 0-9, ç ğ ı ö ş ü
+    ;
 }
 
 /**
@@ -66,16 +67,22 @@ function deduplicateRecurring(subs: ExtractedSubscription[]): ExtractedSubscript
     } else if (key !== altKey && groups.has(altKey)) {
       matchedKey = altKey;
     } else {
-      // Check for partial name matches (one contains the other)
+      // Check for partial name matches — require the shorter string to be at least
+      // 70% of the longer string's length to avoid merging distinct services
+      // (e.g. "apple" should NOT match "appletv" or "applemusic")
       for (const [groupKey] of groups) {
-        if (groupKey.length >= 4 && key.length >= 4) {
-          if (groupKey.includes(key) || key.includes(groupKey)) {
+        if (groupKey.length >= 6 && key.length >= 6) {
+          const shorter = Math.min(groupKey.length, key.length);
+          const longer = Math.max(groupKey.length, key.length);
+          if (shorter / longer >= 0.7 && (groupKey.includes(key) || key.includes(groupKey))) {
             matchedKey = groupKey;
             break;
           }
         }
-        if (groupKey.length >= 4 && altKey.length >= 4) {
-          if (groupKey.includes(altKey) || altKey.includes(groupKey)) {
+        if (groupKey.length >= 6 && altKey.length >= 6) {
+          const shorter = Math.min(groupKey.length, altKey.length);
+          const longer = Math.max(groupKey.length, altKey.length);
+          if (shorter / longer >= 0.7 && (groupKey.includes(altKey) || altKey.includes(groupKey))) {
             matchedKey = groupKey;
             break;
           }
@@ -99,8 +106,8 @@ function deduplicateRecurring(subs: ExtractedSubscription[]): ExtractedSubscript
       continue;
     }
 
-    // Sort by confidence descending, then by date descending
-    const sorted = group.sort((a, b) => {
+    // Sort by confidence descending, then by date descending (copy to avoid mutation)
+    const sorted = [...group].sort((a, b) => {
       // Primary: highest confidence
       if (b.confidence !== a.confidence) return b.confidence - a.confidence;
       // Secondary: latest date
@@ -119,8 +126,10 @@ function deduplicateRecurring(subs: ExtractedSubscription[]): ExtractedSubscript
       ? allDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0]
       : best.lastChargeDate;
 
-    // Boost confidence for recurring charges
-    const boostedConfidence = Math.min(1, best.confidence + (group.length * 0.05));
+    // Boost confidence for recurring charges (diminishing returns)
+    // 2 occurrences: +0.08, 3: +0.12, 4: +0.14, 5+: capped at +0.15
+    const boost = Math.min(0.15, 0.05 * Math.log2(group.length) + 0.03);
+    const boostedConfidence = Math.min(1, best.confidence + boost);
 
     deduplicated.push({
       ...best,
@@ -182,16 +191,22 @@ export function analyzeStatement(
       (existing) => {
         // Exact name match
         if (existing.name === normalizedMerchant || existing.name === normalizedClean) return true;
-        // Bidirectional includes (either contains the other)
-        if (existing.name.length >= 4 && normalizedMerchant.length >= 4) {
-          if (existing.name.includes(normalizedMerchant) || normalizedMerchant.includes(existing.name)) return true;
+        // Bidirectional includes — require 70% length ratio to avoid false matches
+        // (e.g. "apple" should NOT match "appletv")
+        if (existing.name.length >= 6 && normalizedMerchant.length >= 6) {
+          const shorter = Math.min(existing.name.length, normalizedMerchant.length);
+          const longer = Math.max(existing.name.length, normalizedMerchant.length);
+          if (shorter / longer >= 0.7 && (existing.name.includes(normalizedMerchant) || normalizedMerchant.includes(existing.name))) return true;
         }
-        if (existing.name.length >= 4 && normalizedClean.length >= 4) {
-          if (existing.name.includes(normalizedClean) || normalizedClean.includes(existing.name)) return true;
+        if (existing.name.length >= 6 && normalizedClean.length >= 6) {
+          const shorter = Math.min(existing.name.length, normalizedClean.length);
+          const longer = Math.max(existing.name.length, normalizedClean.length);
+          if (shorter / longer >= 0.7 && (existing.name.includes(normalizedClean) || normalizedClean.includes(existing.name))) return true;
         }
-        // Fuzzy: similar amount + partial name overlap (first 3 chars)
-        if (isSimilarAmount(existing.amount, sub.amount) && 
-            existing.name.substring(0, 3) === normalizedClean.substring(0, 3)) return true;
+        // Fuzzy: similar amount + partial name overlap (first 4 chars)
+        if (isSimilarAmount(existing.amount, sub.amount) &&
+            existing.name.length >= 4 && normalizedClean.length >= 4 &&
+            existing.name.substring(0, 4) === normalizedClean.substring(0, 4)) return true;
         return false;
       }
     );
@@ -226,11 +241,11 @@ export function analyzeStatement(
       };
     }
 
-    // Default: single occurrence, not identified as new
+    // Default: single occurrence, treat as potential new subscription
     return {
       ...sub,
-      status: 'recurring' as const,
-      statusLabel: '',
+      status: 'new' as const,
+      statusLabel: 'Possible subscription',
       occurrences: sub.occurrenceCount || 1,
       autoSelected: true,
     };

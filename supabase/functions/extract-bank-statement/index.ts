@@ -1,5 +1,5 @@
 // Supabase Edge Function: extract-bank-statement
-// Uses OpenAI Chat Completions API with gpt-4o-mini for both PDF and image analysis.
+// Uses OpenAI Chat Completions API with gpt-4.1-mini for both PDF and image analysis.
 // PDF: sent via 'file' content type with inline base64 data URL
 // Image: sent via 'image_url' content type with inline base64 data URL
 
@@ -108,24 +108,38 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Chat Completions call with gpt-4o-mini
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userContent },
-        ],
-        temperature: 0.1,
-        max_tokens: 8000,
-        response_format: { type: 'json_object' },
-      }),
-    });
+    // Chat Completions call with gpt-4.1-mini (50s timeout to stay within Edge Function limits)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 50_000);
+
+    let res: Response;
+    try {
+      res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4.1-mini',
+          messages: [
+            { role: 'system', content: SYSTEM_PROMPT },
+            { role: 'user', content: userContent },
+          ],
+          temperature: 0.1,
+          max_tokens: 16000,
+          response_format: { type: 'json_object' },
+        }),
+        signal: controller.signal,
+      });
+    } catch (fetchError: any) {
+      clearTimeout(timeoutId);
+      if (fetchError.name === 'AbortError') {
+        return jsonResponse(504, { error: 'Analysis timed out. Try a smaller or clearer document.' });
+      }
+      throw fetchError;
+    }
+    clearTimeout(timeoutId);
 
     if (!res.ok) {
       const errText = await res.text();
@@ -157,22 +171,47 @@ Deno.serve(async (req: Request) => {
     }
 
     const chatJson = await res.json();
+    const finishReason = chatJson.choices?.[0]?.finish_reason;
     const content = chatJson.choices?.[0]?.message?.content || '{"subscriptions":[]}';
     console.log('Model output (first 800):', content.substring(0, 800));
+    console.log('Finish reason:', finishReason);
+
+    // Check if response was truncated
+    if (finishReason === 'length') {
+      console.warn('Response was truncated (max_tokens reached)');
+      return jsonResponse(200, {
+        subscriptions: [],
+        tokensUsed: chatJson.usage?.total_tokens || 0,
+        monthsCovered: 0,
+        model: chatJson.model || 'gpt-4.1-mini',
+        error: 'The document has too many transactions for a single scan. Try uploading a shorter statement (1-2 months).',
+      });
+    }
 
     let subscriptions: any[] = [];
     let monthsCovered = 1;
+    let gptError: string | undefined;
     try {
       const parsed = JSON.parse(content);
       subscriptions = parsed.subscriptions || (Array.isArray(parsed) ? parsed : []);
       monthsCovered = parsed.monthsCovered || 1;
+      // Forward GPT error message (e.g., "not a bank statement", "document is unreadable")
+      if (parsed.error && typeof parsed.error === 'string') {
+        gptError = parsed.error;
+      }
     } catch {
       console.error('JSON parse failed:', content);
-      subscriptions = [];
+      return jsonResponse(200, {
+        subscriptions: [],
+        tokensUsed: chatJson.usage?.total_tokens || 0,
+        monthsCovered: 0,
+        model: chatJson.model || 'gpt-4.1-mini',
+        error: 'Failed to parse the analysis results. Please try again with a clearer document.',
+      });
     }
 
     const tokensUsed = chatJson.usage?.total_tokens || 0;
-    const modelUsed = chatJson.model || 'gpt-4o-mini';
+    const modelUsed = chatJson.model || 'gpt-4.1-mini';
 
     console.log(`Done: ${subscriptions.length} subscriptions | months: ${monthsCovered} | model: ${modelUsed} | tokens: ${tokensUsed}`);
 
@@ -181,6 +220,7 @@ Deno.serve(async (req: Request) => {
       tokensUsed,
       monthsCovered,
       model: modelUsed,
+      ...(gptError && { error: gptError }),
     });
 
   } catch (error: any) {

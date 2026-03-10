@@ -4,7 +4,7 @@
 // This function proxies OpenAI API calls to keep API keys secure.
 // It receives minimized email snippets and returns detected subscriptions.
 
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
 
@@ -50,7 +50,7 @@ Return a JSON array of detected subscriptions:
 
 If no subscriptions found, return empty array: []`;
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });

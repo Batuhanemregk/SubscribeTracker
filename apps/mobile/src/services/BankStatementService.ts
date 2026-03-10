@@ -24,12 +24,12 @@ import { logger } from './LoggerService';
 
 // ─── Usage Limits ─────────────────────────────────────────
 const SCAN_USAGE_KEY = 'bank_scan_usage';
-const MAX_SCANS_PER_DAY = 100;
+const MAX_SCANS_PER_DAY = 5;
 const MAX_SCANS_PER_MONTH = 30;
 const COOLDOWN_MS = 30_000; // 30 seconds between scans
 
 // ─── File Limits ──────────────────────────────────────────
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 7;
 const MIN_FILE_SIZE_KB = 5;
 
 // ─── Types ────────────────────────────────────────────────
@@ -98,6 +98,12 @@ export function validateFile(base64Content: string, mimeType: string): Validatio
   // Check maximum size (> 10MB)
   if (fileSizeMB > MAX_FILE_SIZE_MB) {
     return { valid: false, error: `File too large. Maximum ${MAX_FILE_SIZE_MB}MB.`, errorKey: 'bankScan.errors.tooLarge' };
+  }
+
+  // Warn about large files that may cause slow uploads on mobile networks
+  // (5MB+ PDF = ~6.7MB base64 = slow on 3G/4G)
+  if (fileSizeMB > 5) {
+    logger.warn('BankStatement', `Large file: ${fileSizeMB.toFixed(1)}MB — may be slow on mobile networks`);
   }
 
   // Check MIME type
@@ -358,10 +364,7 @@ export async function extractSubscriptionsFromStatement(
       return { success: false, subscriptions: [], error: validation.error };
     }
 
-    // Step 4: Record the scan
-    await recordScan();
-
-    // Step 5: Call Supabase Edge Function
+    // Step 4: Call Supabase Edge Function (record scan AFTER success to avoid wasting credits)
     const { data, error } = await supabase.functions.invoke('extract-bank-statement', {
       body: {
         fileBase64: base64Content,
@@ -388,20 +391,27 @@ export async function extractSubscriptionsFromStatement(
     }
 
     if (!data?.subscriptions || !Array.isArray(data.subscriptions)) {
-      return { 
-        success: false, 
-        subscriptions: [], 
-        error: 'Invalid response from extraction service' 
+      // Check if GPT returned an error reason (e.g. "not a bank statement")
+      if (data?.error && typeof data.error === 'string') {
+        return { success: false, subscriptions: [], error: data.error };
+      }
+      return {
+        success: false,
+        subscriptions: [],
+        error: 'Invalid response from extraction service'
       };
     }
 
+    // Step 5: Record the scan only after successful extraction
+    await recordScan();
+
     // Step 6: Validate and clean results
     const subscriptions: ExtractedSubscription[] = data.subscriptions
-      .filter((s: any) => 
-        s.name && 
-        typeof s.amount === 'number' && 
-        s.amount > 0 &&
-        s.confidence >= 0.6  // Only return ≥ 0.60 confidence
+      .filter((s: any) =>
+        s.name &&
+        typeof s.amount === 'number' &&
+        s.amount >= 0 &&  // Allow $0 free trials / verification charges
+        s.confidence >= 0.65  // Only return ≥ 0.65 confidence
       )
       .map((s: any) => ({
         name: String(s.name),

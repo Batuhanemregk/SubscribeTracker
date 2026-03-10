@@ -46,6 +46,7 @@ import {
   getRemainingScans,
 } from '../services/BankStatementService';
 import { analyzeStatement, type AnalyzedSubscription } from '../utils/statementAnalyzer';
+import { markScanCompleted } from '../components/ScanBanner';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const DOC_WIDTH = SCREEN_WIDTH * 0.52;
@@ -336,6 +337,7 @@ export function BankStatementScanScreen({ navigation }: any) {
   }
 
   const handlePickDocument = async () => {
+    if (isProcessing) return;
     const result = await pickBankStatement();
     
     if (!result.success) {
@@ -383,6 +385,7 @@ export function BankStatementScanScreen({ navigation }: any) {
   };
 
   const handlePickFromGallery = async () => {
+    if (isProcessing) return;
     const result = await pickFromGallery();
     
     if (!result.success) {
@@ -458,6 +461,9 @@ export function BankStatementScanScreen({ navigation }: any) {
       });
       addSubscription(newSub);
     });
+
+    // Hide the scan promotion banner after successful scan
+    markScanCompleted();
 
     Alert.alert(
       t('common.success'),
@@ -567,7 +573,7 @@ export function BankStatementScanScreen({ navigation }: any) {
 
       <FlatList
         data={analyzedSubs}
-        keyExtractor={(_, index) => index.toString()}
+        keyExtractor={(item, index) => `${item.name}-${item.amount}-${index}`}
         renderItem={({ item, index }) => (
           <Animated.View entering={FadeInDown.delay(150 + index * 80).springify()}>
             <TouchableOpacity
@@ -645,11 +651,26 @@ export function BankStatementScanScreen({ navigation }: any) {
 // ─── Helpers ─────────────────────────────────────────────
 function calculateNextBillingDate(lastDate: string, cycle: string): string {
   const date = new Date(lastDate);
+  const originalDay = date.getDate();
   switch (cycle) {
-    case 'weekly': date.setDate(date.getDate() + 7); break;
-    case 'monthly': date.setMonth(date.getMonth() + 1); break;
-    case 'quarterly': date.setMonth(date.getMonth() + 3); break;
-    case 'yearly': date.setFullYear(date.getFullYear() + 1); break;
+    case 'weekly':
+      date.setDate(date.getDate() + 7);
+      break;
+    case 'monthly': {
+      date.setMonth(date.getMonth() + 1);
+      // Fix month-end overflow (Jan 31 + 1 month should be Feb 28, not Mar 3)
+      if (date.getDate() < originalDay) date.setDate(0); // set to last day of prev month
+      break;
+    }
+    case 'quarterly': {
+      date.setMonth(date.getMonth() + 3);
+      if (date.getDate() < originalDay) date.setDate(0);
+      break;
+    }
+    case 'yearly':
+      date.setFullYear(date.getFullYear() + 1);
+      if (date.getDate() < originalDay) date.setDate(0);
+      break;
   }
   return date.toISOString();
 }

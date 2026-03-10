@@ -83,7 +83,7 @@ export function PaywallScreen({ navigation, route }: any) {
     { icon: 'document-text', iconColor: colors.amber, title: t('paywall.features.bankScan'), standard: false, pro: true },
     { icon: 'cloud', iconColor: colors.primary, title: t('paywall.features.cloudSync'), standard: false, pro: true },
     { icon: 'download', iconColor: colors.emerald, title: t('paywall.features.dataExport'), standard: false, pro: 'CSV/PDF' },
-    { icon: 'color-palette', iconColor: colors.pink, title: t('paywall.features.biometricLock'), standard: false, pro: true },
+    { icon: 'color-palette', iconColor: colors.pink, title: t('paywall.features.customCategories'), standard: false, pro: true },
     { icon: 'lock-closed', iconColor: colors.primary, title: t('paywall.features.biometricLock'), standard: false, pro: true },
     { icon: 'infinite', iconColor: colors.cyan, title: t('paywall.features.unlimitedSubs'), standard: '10', pro: t('common.upgrade') },
     { icon: 'remove-circle', iconColor: colors.red, title: t('paywall.features.noAds'), standard: false, pro: true },
