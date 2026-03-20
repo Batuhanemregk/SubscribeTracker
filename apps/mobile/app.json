@@ -27,7 +27,10 @@
       },
       "package": "com.subssentry.app",
       "versionCode": 2,
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "com.google.android.gms.permission.AD_ID"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -50,7 +53,13 @@
       "expo-web-browser",
       "expo-localization",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "bf26d233-7a01-46d1-84d6-2abff076536c"
+      }
+    },
+    "owner": "segsi"
   },
   "react-native-google-mobile-ads": {
     "android_app_id": "ca-app-pub-7540196282258726~7515719785",
