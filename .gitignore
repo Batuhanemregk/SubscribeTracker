@@ -53,3 +53,9 @@ docker-compose.override.yml
 
 # Claude Code
 .claude/
+
+# Supabase temp
+supabase/.temp/
+
+# Agent config
+.agent/
