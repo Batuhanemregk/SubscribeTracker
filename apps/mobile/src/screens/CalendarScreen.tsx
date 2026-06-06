@@ -226,7 +226,7 @@ export function CalendarScreen() {
         <Calendar subscriptions={subs} onDayPress={handleDayPress} />
 
         {/* Selected day's payments (if tapped) */}
-        {selectedDaySubs && selectedDaySubs.length > 0 && (
+        {selectedDay !== null && selectedDaySubs && selectedDaySubs.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>
               {t('calendar.paymentsOnDay', { day: selectedDay })}
