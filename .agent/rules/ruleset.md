@@ -32,9 +32,11 @@ layer-boundaries: domain, application, infrastructure, presentation
 
 dependency-direction: domain-none; application-domain; infrastructure-application; presentation-application
 
-provider-agnostic: all email access must go through email-provider interface; gmail is an adapter
+provider-agnostic: all data-source access (gmail, bank-statement) must go through a provider interface; each source is an adapter
 
 extraction-pipeline
+
+extraction-location: extraction runs in supabase edge functions (extract-subscriptions, extract-bank-statement)
 
 extractor-chain: rule-extractor then heuristic-extractor then llm-extractor then merge-dedupe
 
@@ -54,7 +56,7 @@ catch-up-job: weekly scan last 7 days to recover from outages or quota issues
 
 rules-engine
 
-rules-as-yaml: rules live in rules/merchant/version.yaml
+rules-versioned: extraction rules are versioned and config-driven within the relevant edge function; activate or rollback via config
 
 fixtures-required: every rule must have sanitized fixtures and expected outputs
 
@@ -76,9 +78,9 @@ security-store-ready
 
 oauth-pkce: enforce pkce on mobile oauth flow
 
-secure-token-storage: mobile uses keychain-keystore; backend uses encryption-at-rest for refresh tokens
+secure-token-storage: mobile uses keychain-keystore; supabase stores tokens encrypted at rest; service-role key only in edge functions
 
-secrets-management: no secrets in repo; use env and secret manager in prod
+secrets-management: no secrets in repo; only EXPO_PUBLIC_* vars allowed in client code; service-role and secret keys live only in edge functions
 
 rate-limits: enforce scanning and llm call limits per user
 
@@ -94,13 +96,13 @@ transparency: show last-sync-time and scan-window
 
 engineering-quality
 
-monorepo-structure: apps/mobile and services/api and services/worker
+repo-structure: apps/mobile (expo app) and supabase (schema + edge functions)
 
-api-versioning: api routes under /api/v1
+backend-supabase: supabase is the backend (postgres, auth, edge functions); no self-hosted api or worker
 
-typed-contracts: openapi is source of truth; generate client types
+typed-contracts: supabase schema is source of truth; generate client types via `supabase gen types typescript`; enable rls on every table
 
-ci-gates: lint, format, unit-tests, rule-fixture-tests
+ci-gates: typecheck (tsc --noEmit), lint, format, unit-tests
 
 migrations-required: database schema changes require migrations
 

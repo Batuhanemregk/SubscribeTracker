@@ -39,7 +39,7 @@ export async function getBiometricType(): Promise<string> {
  * @returns true if authentication succeeded
  */
 export async function authenticateWithBiometrics(
-  reason: string = 'Unlock SubscribeTracker'
+  reason: string = 'Unlock Finify'
 ): Promise<boolean> {
   try {
     const available = await isBiometricAvailable();

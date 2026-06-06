@@ -149,7 +149,7 @@ export function SettingsScreen({ navigation }: any) {
   const handleOpenTerms = () => {
     Alert.alert(
       'Terms of Service',
-      'By using SubscribeTracker you agree to:\n\n• Use the app for personal purposes\n• Not reverse engineer the app\n• Accept that Pro features require payment\n• Understand we are not liable for missed payments\n\nFor full terms, visit our website.',
+      'By using Finify you agree to:\n\n• Use the app for personal purposes\n• Not reverse engineer the app\n• Accept that Pro features require payment\n• Understand we are not liable for missed payments\n\nFor full terms, visit our website.',
       [{ text: 'OK' }]
     );
   };

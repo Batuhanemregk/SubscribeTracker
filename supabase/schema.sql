@@ -1,4 +1,4 @@
--- SubscribeTracker Database Schema for Supabase
+-- Finify Database Schema for Supabase
 -- Run this in Supabase SQL Editor
 
 -- Enable UUID extension
