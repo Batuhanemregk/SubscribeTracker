@@ -7,6 +7,17 @@
 
 ## 🔴 HIGH PRIORITY
 
+### Startup Black-Screen Fix (App.tsx readiness gate)
+
+- **Date:** 2026-06-06
+- **Area:** Mobile / App startup / App.tsx
+- **Current State:** [FIX APPLIED LOCALLY — needs device/TestFlight verification + commit] Root cause found: `AppContent.prepare()` only called `setIsReady(true)` after a sequential chain of `await`s (notification permission, scheduleAllReminders, initAdManager, initPurchases, checkProStatus) with **no `.catch` on `prepare()` and no per-call guards**. If any pre-ready await hung or threw, `isReady` stayed `false` forever → permanent dark loading screen (≈ black). The notification-permission path only runs on a real device (`Device.isDevice` guard skips it in the simulator), which is why TestFlight black-screened but the simulator did not. Reproduced on iPhone 16 Pro sim by injecting a hang before `setIsReady` (dark screen + spinner forever); fix verified by relaunch (Home renders even though RevenueCat init fails in background).
+- **Fix:** Reordered `prepare()` so `setIsReady(true)` runs immediately after the local critical path (initData/migration/locale, wrapped in try/catch). All network/native inits (notifications, ads, RevenueCat, pro-sync, rates, catalog) moved **after** first paint, each in its own try/catch. Added a `cancelled` cleanup flag.
+- **Why It Matters:** A hung/failed startup task could brick the app on launch for real users with no recovery.
+- **Next Action:** Commit the App.tsx change; cut a TestFlight build and confirm the black screen is gone on a physical device. Consider adding a root ErrorBoundary so render-time crashes degrade gracefully instead of showing a blank screen.
+
+---
+
 ### Bank Statement Scanning (Pro)
 
 - **Date:** 2026-02-08
