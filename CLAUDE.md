@@ -31,7 +31,7 @@ Finify is a privacy-first subscription-tracking mobile app (iOS + Android) built
 - Regenerate Supabase types: `npx supabase gen types typescript --project-id wsymhdlrrftewkwyzzlf > src/lib/database.types.ts`
 - Deploy an Edge Function: `npx supabase functions deploy <name>`
 - Dev build (RevenueCat needs native code): `eas build --platform ios --profile development`
-- Release to TestFlight: `eas build --platform ios --profile production` then `eas submit --platform ios --latest`
+- Release to TestFlight (one shot): `eas login` then `eas build --platform ios --profile production --auto-submit` (certs + ASC API key are stored on EAS). Export compliance is declared via `ITSAppUsesNonExemptEncryption: false` in `app.json` so builds don't stall in "Missing Compliance". The EAS project has no GitHub repo connected, so trigger builds from the CLI (not the expo MCP `build_run`).
 
 ## Conventions
 - TypeScript strict; functional components + hooks only (no classes); 2-space indent.

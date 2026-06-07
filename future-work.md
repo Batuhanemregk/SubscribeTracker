@@ -11,10 +11,20 @@
 
 - **Date:** 2026-06-06
 - **Area:** Mobile / App startup / App.tsx
-- **Current State:** [FIX APPLIED LOCALLY — needs device/TestFlight verification + commit] Root cause found: `AppContent.prepare()` only called `setIsReady(true)` after a sequential chain of `await`s (notification permission, scheduleAllReminders, initAdManager, initPurchases, checkProStatus) with **no `.catch` on `prepare()` and no per-call guards**. If any pre-ready await hung or threw, `isReady` stayed `false` forever → permanent dark loading screen (≈ black). The notification-permission path only runs on a real device (`Device.isDevice` guard skips it in the simulator), which is why TestFlight black-screened but the simulator did not. Reproduced on iPhone 16 Pro sim by injecting a hang before `setIsReady` (dark screen + spinner forever); fix verified by relaunch (Home renders even though RevenueCat init fails in background).
+- **Current State:** [FIX SHIPPED TO TESTFLIGHT — pending physical-device confirmation] Committed as `5140ab5` on branch `fix/startup-black-screen`; EAS production build **1.0.4 (18)** built and uploaded to App Store Connect on 2026-06-07 (submission required 3 tries — Apple agreement acceptance has propagation lag). Root cause found: `AppContent.prepare()` only called `setIsReady(true)` after a sequential chain of `await`s (notification permission, scheduleAllReminders, initAdManager, initPurchases, checkProStatus) with **no `.catch` on `prepare()` and no per-call guards**. If any pre-ready await hung or threw, `isReady` stayed `false` forever → permanent dark loading screen (≈ black). The notification-permission path only runs on a real device (`Device.isDevice` guard skips it in the simulator), which is why TestFlight black-screened but the simulator did not. Reproduced on iPhone 16 Pro sim by injecting a hang before `setIsReady` (dark screen + spinner forever); fix verified by relaunch (Home renders even though RevenueCat init fails in background).
 - **Fix:** Reordered `prepare()` so `setIsReady(true)` runs immediately after the local critical path (initData/migration/locale, wrapped in try/catch). All network/native inits (notifications, ads, RevenueCat, pro-sync, rates, catalog) moved **after** first paint, each in its own try/catch. Added a `cancelled` cleanup flag.
 - **Why It Matters:** A hung/failed startup task could brick the app on launch for real users with no recovery.
-- **Next Action:** Commit the App.tsx change; cut a TestFlight build and confirm the black screen is gone on a physical device. Consider adding a root ErrorBoundary so render-time crashes degrade gracefully instead of showing a blank screen.
+- **Next Action:** Confirm on a physical device via TestFlight build **1.0.4 (18)** that the black screen is gone (build was processing/awaiting export-compliance answer at hand-off). Still open: (1) add a root **ErrorBoundary** so render-time crashes degrade gracefully instead of a blank screen; (2) open a PR to merge `fix/startup-black-screen` → `main`.
+
+---
+
+### iOS Export Compliance + TestFlight Deploy Flow
+
+- **Date:** 2026-06-07
+- **Area:** Mobile / Release / iOS
+- **Status:** [DONE]
+- **Summary:** Added `ITSAppUsesNonExemptEncryption: false` to `app.json` `ios.infoPlist` (`65c50cd`) so production builds no longer get stuck in App Store Connect "Missing Compliance" (Finify uses only standard HTTPS — exempt). Deploy flow that worked this session: `eas login` (CLI starts logged out; the expo MCP is authenticated for reads but the EAS project has **no GitHub repo connected**, so `build_run` / GitHub-triggered builds fail with "No repository found") → `eas build --platform ios --profile production --auto-submit`. Distribution cert, provisioning profile, and App Store Connect API key are all already stored on EAS servers. NOTE: right after accepting a pending Apple agreement, submissions can fail 2–3 times for a few minutes until Apple propagates the acceptance — retry.
+- **Next Action:** None (working). For the next build, export compliance is auto-declared.
 
 ---
 
