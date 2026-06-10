@@ -262,14 +262,17 @@ export function SettingsScreen({ navigation }: any) {
         {/* Cloud Sync Section */}
         <Text style={styles.sectionTitle}>{t('settings.cloudSync')}</Text>
         <View style={styles.card}>
-          {/* Google Account Sign-In/Sign-Out */}
-          <SettingsRow
-            icon={isSignedIn() ? 'person-circle' : 'logo-google'}
-            iconColor={isSignedIn() ? colors.emerald : colors.primary}
-            title={isSignedIn() ? (account?.displayName || account?.email || t('settings.signedIn')) : t('settings.signInGoogle')}
-            subtitle={isSignedIn() ? account?.email : t('settings.signInSubtitle')}
-            rightElement={
-              isSignedIn() ? (
+          {/* Account — sign-in is offered ONLY to Pro users (cloud sync is a Pro
+              feature). A signed-in account is always shown so it can be managed
+              and signed out (e.g. after a downgrade). Free users see only the
+              "Sync to Cloud → PRO" row below. */}
+          {isSignedIn() ? (
+            <SettingsRow
+              icon="person-circle"
+              iconColor={colors.emerald}
+              title={account?.displayName || account?.email || t('settings.signedIn')}
+              subtitle={account?.email}
+              rightElement={
                 <TouchableOpacity
                   onPress={async () => {
                     await authSignOut();
@@ -280,37 +283,51 @@ export function SettingsScreen({ navigation }: any) {
                 >
                   <Text style={{ color: colors.red, fontSize: 13, fontWeight: '500' }}>{t('common.signOut')}</Text>
                 </TouchableOpacity>
-              ) : isSigningIn ? (
-                <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('common.signingIn')}</Text>
-              ) : undefined
-            }
-            onPress={isSignedIn() ? undefined : () => performSignIn('google')}
-          />
-          {/* Apple Sign-In (iOS only, required by App Store when offering Google) */}
-          {!isSignedIn() && isAppleSignInAvailable() && (
-            <SettingsRow
-              icon="logo-apple"
-              iconColor={colors.text}
-              title={t('settings.signInApple')}
-              subtitle={t('settings.signInSubtitle')}
-              rightElement={
-                isSigningIn ? (
-                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('common.signingIn')}</Text>
-                ) : undefined
               }
-              onPress={() => performSignIn('apple')}
             />
-          )}
+          ) : isPro() ? (
+            <>
+              <SettingsRow
+                icon="logo-google"
+                iconColor={colors.primary}
+                title={t('settings.signInGoogle')}
+                subtitle={t('settings.signInSubtitle')}
+                rightElement={
+                  isSigningIn ? (
+                    <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('common.signingIn')}</Text>
+                  ) : undefined
+                }
+                onPress={() => performSignIn('google')}
+              />
+              {isAppleSignInAvailable() && (
+                <SettingsRow
+                  icon="logo-apple"
+                  iconColor={colors.text}
+                  title={t('settings.signInApple')}
+                  subtitle={t('settings.signInSubtitle')}
+                  rightElement={
+                    isSigningIn ? (
+                      <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('common.signingIn')}</Text>
+                    ) : undefined
+                  }
+                  onPress={() => performSignIn('apple')}
+                />
+              )}
+            </>
+          ) : null}
+
           <SettingsRow
             icon="cloud-upload"
             iconColor={colors.primary}
             title={t('settings.syncToCloud')}
             subtitle={
-              isPro() 
-                ? (subscriptionStore.lastSyncedAt 
-                    ? t('settings.lastSynced', { date: new Date(subscriptionStore.lastSyncedAt).toLocaleString() })
-                    : t('settings.tapToSync'))
-                : t('settings.upgradeForSync')
+              !isPro()
+                ? t('settings.upgradeForSync')
+                : isSignedIn()
+                  ? (subscriptionStore.lastSyncedAt
+                      ? t('settings.lastSynced', { date: new Date(subscriptionStore.lastSyncedAt).toLocaleString() })
+                      : t('settings.tapToSync'))
+                  : t('settings.signInToSync')
             }
             rightElement={
               !isPro() ? (
@@ -322,15 +339,19 @@ export function SettingsScreen({ navigation }: any) {
               ) : undefined
             }
             onPress={async () => {
-              if (isPro()) {
-                const success = await subscriptionStore.performFullSync();
-                if (success) {
-                  Alert.alert(t('settings.synced'), t('settings.syncedMessage'));
-                } else {
-                  Alert.alert(t('settings.syncFailed'), subscriptionStore.syncError || 'Unknown error');
-                }
-              } else {
+              if (!isPro()) {
                 navigation.navigate('Paywall');
+                return;
+              }
+              if (!isSignedIn()) {
+                Alert.alert(t('settings.cloudSync'), t('settings.signInToSync'));
+                return;
+              }
+              const success = await subscriptionStore.performFullSync();
+              if (success) {
+                Alert.alert(t('settings.synced'), t('settings.syncedMessage'));
+              } else {
+                Alert.alert(t('settings.syncFailed'), subscriptionStore.syncError || 'Unknown error');
               }
             }}
           />

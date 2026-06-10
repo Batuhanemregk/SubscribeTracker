@@ -250,6 +250,7 @@
     "lastSynced": "Last synced: {{date}}",
     "tapToSync": "Tap to sync your subscriptions",
     "upgradeForSync": "Upgrade to Pro for cloud sync",
+    "signInToSync": "Sign in to enable cloud sync",
     "synced": "Synced!",
     "syncedMessage": "Your subscriptions are now synced to the cloud.",
     "syncFailed": "Sync Failed",

@@ -250,6 +250,7 @@
     "lastSynced": "Son senkronizasyon: {{date}}",
     "tapToSync": "Aboneliklerinizi senkronize etmek için dokunun",
     "upgradeForSync": "Bulut senkronizasyon için Pro'ya yükseltin",
+    "signInToSync": "Bulut senkronu için giriş yapın",
     "synced": "Senkronize Edildi!",
     "syncedMessage": "Abonelikleriniz buluta senkronize edildi.",
     "syncFailed": "Senkronizasyon Başarısız",
