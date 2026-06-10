@@ -1,0 +1,12 @@
+{
+  "description": "A single retail purchase the model flagged as not a subscription. Must be gated out (regression for 'reads too much').",
+  "now": "2026-06-08",
+  "input": {
+    "documentType": "card_statement",
+    "monthsCovered": 1,
+    "charges": [
+      { "name": "Trendyol", "merchantName": "TRENDYOL SIPARIS", "amount": 459.9, "currency": "TRY", "chargeDate": "2026-05-03", "cycleHint": "unknown", "isLikelySubscription": false, "confidence": 0.4 }
+    ]
+  },
+  "expected": { "count": 0 }
+}

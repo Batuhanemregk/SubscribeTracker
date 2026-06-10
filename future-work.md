@@ -38,12 +38,60 @@
 
 ---
 
+### Bank Statement Scanning — Full Rewrite (Accuracy + Robustness)
+
+- **Date:** 2026-06-08
+- **Area:** Mobile / Pro Feature / Edge Function
+- **Current State:** [DONE — needs device verification + edge deploy] Full rewrite to fix "reads too much / wrong / errors out". Edge function migrated from Chat Completions (gpt-4o-mini) to the **Responses API** with **strict Structured Outputs** and model **`gpt-5-mini`** (env `OPENAI_VISION_MODEL`, swappable to gpt-5.4-mini / gpt-4o). All validation, confidence gating (AND of `isLikelySubscription && confidence>=0.6`), dedup/grouping (one entry per service+currency), cadence inference and retry (429/5xx + thrown network errors) now run **server-side** in `supabase/functions/extract-bank-statement/lib.ts`. Prompt rebalanced to "accuracy over recall" (reversed the old "be inclusive"). Always returns a `{ ok, ... }` envelope (HTTP 200); `errorCode` mapped to localized client messages. Client `statementAnalyzer` simplified to existing-sub matching only (tightened to avoid Netflix/Notion collisions; one-time charges no longer auto-selected). Screen gained an error step that retains the picked file + Retry, an empty state, and a "verify cycle" badge. Tests: 20 Deno tests (`__tests__/lib.test.ts` + 7 fixtures) and 8 analyzer jest tests. Reviewed by a 22-agent adversarial workflow; 4 findings fixed.
+- **Why It Matters:** This is the headline Pro feature and was unreliable; accuracy + clear errors are required to ship.
+- **Next Action:** `supabase secrets set OPENAI_API_KEY=... OPENAI_VISION_MODEL=gpt-5-mini` then `npx supabase functions deploy extract-bank-statement`. Verify PDF `input_file` parsing on the chosen model on a real device (iOS + Android); if a PDF misbehaves, add an image-render fallback.
+
+---
+
+### Auth — Apple Sign-In + Real Account Deletion + Disconnect
+
+- **Date:** 2026-06-08
+- **Area:** Mobile / OAuth / Edge Function / App Store compliance
+- **Current State:** [DONE — needs native build + dashboard verification] Added **Apple Sign-In** (`expo-apple-authentication` + SHA-256 nonce + `supabase.auth.signInWithIdToken({ provider:'apple' })`); app.json gained the plugin + `ios.usesAppleSignIn`. **Google** hardened: `sessionFromRedirectUrl` now handles both implicit (hash tokens) and PKCE (`?code=` → `exchangeCodeForSession`). New **`delete-account` Edge Function** (service-role: deletes `public.users` row → cascades subscriptions, then `auth.admin.deleteUser`) wired into Settings → real delete (server + local wipe). **Disconnect** implemented (signOut + RevenueCat logout + clearAccount, keeps local data). Dev-only `getMissingConfig()` warning added.
+- **Why It Matters:** Apple Sign-In is an App Store requirement when offering Google login; real delete-account satisfies the privacy ruleset + store policy.
+- **Review fixes (19-agent adversarial pass):** enabled **PKCE** (`flowType:'pkce'` in supabase.ts — was implicitly using the implicit flow, violating the oauth-pkce rule; the `?code=` exchange branch is now live); made `delete-account` deletion **ordered + fatal** (subscriptions → users → auth user, return 500 on any error, never orphan PII — there is NO FK cascade from auth.users to public.users); `deleteAccount()` now recovers the server error message from `error.context.json()` on non-2xx.
+- **Next Action:** Enable Apple as a provider in the Supabase dashboard (Service ID + key); build a dev/EAS build and verify Apple + Google sign-in, account delete (confirm the Supabase row is gone), and disconnect on iOS + Android. `npx supabase functions deploy delete-account`. Optional hardening: add an FK `public.users.id REFERENCES auth.users(id) ON DELETE CASCADE` migration as a cascade safety net.
+
+---
+
+### Premium / IAP — Production Hardening
+
+- **Date:** 2026-06-08
+- **Area:** Mobile / Monetization
+- **Current State:** [DONE] PaywallScreen mock-purchase and the local "Start Trial" button are now gated behind `__DEV__` (no Pro without a real purchase in production). Added `addProStatusListener` (RevenueCat `addCustomerInfoUpdateListener`) wired in App.tsx so Pro status refreshes without an app restart (purchase/expiry/cross-device); cleaned up on unmount.
+- **Why It Matters:** Prevents a free-Pro bypass in production and keeps entitlement state fresh.
+- **Review fix:** startup pro-sync no longer downgrades a paying user on a transient/offline error — `getProStatus()` is now tri-state (`true|false|null`) and the app only downgrades on a CONFIRMED `false`, never on `null` (unknown). Replaced the old boolean `checkProStatus()`.
+- **Next Action:** Set `EXPO_PUBLIC_REVENUECAT_IOS_KEY` / `ANDROID_KEY` as EAS build secrets; verify `finify_premium_monthly/yearly` + the `premium` entitlement resolve at runtime via the RevenueCat MCP.
+
+---
+
+### Tech Debt from the 2026-06-08 ship-prep pass
+
+- **Date:** 2026-06-08
+- **Area:** Mobile / Backend
+- **Current State:** Known shortcuts taken during the bank-scan/auth/premium pass:
+  1. **Server-side scan rate limiting deferred** — limits are still client-side (AsyncStorage), which is bypassable. A `scan_usage` table + RLS + per-`auth.uid()` check in the edge function was planned but deferred.
+  2. **Native Google Sign-In not migrated** — kept the working `expo-auth-session`/WebBrowser flow (hardened) instead of `@react-native-google-signin` to avoid breaking a working login blind; native migration would give a nicer account-picker UX.
+  3. **Startup pro-sync can wrongly downgrade an offline paying user** — `checkProStatus()` returns false on network error at launch → `downgradeToStandard()`. Pre-existing; consider only downgrading on a *confirmed* not-pro response.
+  4. **Hardcoded "Subscribe Now - {price}" string** in PaywallScreen (i18n violation, pre-existing).
+  5. **Real free trial** should be a RevenueCat intro offer on the products, not the removed local trial.
+- **Why It Matters:** Bypassable limits + offline downgrade affect cost/abuse and paying users.
+- **Next Action:** Prioritize (1) and (3) before scaling.
+
+---
+
 ### Native Google Sign-In (Premium UX)
 
 - **Date:** 2026-02-07
 - **Area:** Mobile / OAuth
 - **Status:** [DONE]
 - **Summary:** Google Sign-In working on Android Studio dev build. Tested and confirmed by user.
+- **Correction (2026-06-08):** The implementation is the browser-based `expo-auth-session` / `signInWithOAuth` flow, NOT the native `@react-native-google-signin` module (despite the title). It was hardened on 2026-06-08 (handles both implicit + PKCE redirects). Migrating to the native module remains an optional UX improvement — see the tech-debt entry above.
 
 ---
 

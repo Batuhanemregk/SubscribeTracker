@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components';
 import { borderRadius, useTheme, type ThemeColors } from '../theme';
 import { useSettingsStore, usePlanStore, useSubscriptionStore, useAccountStore } from '../state';
-import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signOut as authSignOut, identifyUser, logoutUser } from '../services';
+import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signInWithApple, isAppleSignInAvailable, deleteAccount, signOut as authSignOut, identifyUser, logoutUser, type AuthResult } from '../services';
 import { t } from '../i18n';
 
 
@@ -84,6 +84,34 @@ export function SettingsScreen({ navigation }: any) {
     );
   };
 
+  // Shared sign-in for Google + Apple: links RevenueCat and stores the account.
+  const performSignIn = async (provider: 'google' | 'apple') => {
+    setIsSigningIn(true);
+    try {
+      const result: AuthResult =
+        provider === 'apple' ? await signInWithApple() : await signInWithGoogle();
+      if (result.success && result.user) {
+        await identifyUser(result.user.id);
+        useAccountStore.getState().setAccount({
+          id: result.user.id,
+          email: result.user.email,
+          displayName: result.user.displayName,
+          avatarUrl: result.user.avatarUrl,
+          connectedAt: new Date().toISOString(),
+        });
+        Alert.alert(
+          t('settings.signedIn'),
+          t('settings.welcome', { name: result.user.displayName || result.user.email })
+        );
+      } else if (result.error && result.error !== 'User cancelled') {
+        Alert.alert(t('settings.signInFailed'), result.error);
+      }
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  // Disconnect: revoke access + stop sync, but KEEP local data.
   const handleDisconnectAccount = () => {
     Alert.alert(
       t('settings.disconnectAlertTitle'),
@@ -93,14 +121,18 @@ export function SettingsScreen({ navigation }: any) {
         {
           text: t('settings.disconnectAlertButton'),
           style: 'destructive',
-          onPress: () => {
-            // TODO: Implement disconnect
+          onPress: async () => {
+            await authSignOut();
+            await logoutUser();
+            useAccountStore.getState().clearAccount();
+            Alert.alert(t('settings.disconnected'), t('settings.disconnectedMessage'));
           },
         },
       ]
     );
   };
 
+  // Delete account: server-side deletion (if signed in) + wipe all local data.
   const handleDeleteAccount = () => {
     Alert.alert(
       t('settings.deleteAlertTitle'),
@@ -111,13 +143,17 @@ export function SettingsScreen({ navigation }: any) {
           text: t('settings.deleteAlertButton'),
           style: 'destructive',
           onPress: async () => {
-            // Clear all stores
+            // 1. Delete server-side account + derived data (no-op if not signed in).
+            const result = await deleteAccount();
+            if (!result.success) {
+              Alert.alert(t('settings.signInFailed'), result.error || t('settings.deleteFailed'));
+              return;
+            }
+            // 2. Wipe local data + auth state.
             subscriptionStore.setSubscriptions([]);
             resetToDefaults();
-            // Clear auth account if signed in
-            if (account) {
-              useAccountStore.getState().clearAccount();
-            }
+            await logoutUser();
+            useAccountStore.getState().clearAccount();
             Alert.alert(t('settings.accountDeleted'), t('settings.accountDeletedMessage'));
           },
         },
@@ -248,29 +284,23 @@ export function SettingsScreen({ navigation }: any) {
                 <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('common.signingIn')}</Text>
               ) : undefined
             }
-            onPress={isSignedIn() ? undefined : async () => {
-              setIsSigningIn(true);
-              try {
-                const result = await signInWithGoogle();
-                if (result.success && result.user) {
-                  // Link RevenueCat purchases to authenticated user
-                  await identifyUser(result.user.id);
-                  useAccountStore.getState().setAccount({
-                    id: result.user.id,
-                    email: result.user.email,
-                    displayName: result.user.displayName,
-                    avatarUrl: result.user.avatarUrl,
-                    connectedAt: new Date().toISOString(),
-                  });
-                  Alert.alert(t('settings.signedIn'), t('settings.welcome', { name: result.user.displayName || result.user.email }));
-                } else if (result.error && result.error !== 'User cancelled') {
-                  Alert.alert('Sign-In Failed', result.error);
-                }
-              } finally {
-                setIsSigningIn(false);
-              }
-            }}
+            onPress={isSignedIn() ? undefined : () => performSignIn('google')}
           />
+          {/* Apple Sign-In (iOS only, required by App Store when offering Google) */}
+          {!isSignedIn() && isAppleSignInAvailable() && (
+            <SettingsRow
+              icon="logo-apple"
+              iconColor={colors.text}
+              title={t('settings.signInApple')}
+              subtitle={t('settings.signInSubtitle')}
+              rightElement={
+                isSigningIn ? (
+                  <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('common.signingIn')}</Text>
+                ) : undefined
+              }
+              onPress={() => performSignIn('apple')}
+            />
+          )}
           <SettingsRow
             icon="cloud-upload"
             iconColor={colors.primary}

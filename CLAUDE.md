@@ -21,7 +21,8 @@ Finify is a privacy-first subscription-tracking mobile app (iOS + Android) built
   - `src/lib/supabase.ts` — Supabase client; `src/lib/database.types.ts` — generated DB types
   - `src/theme/` — dark-first design system (colors, spacing, typography, shadows)
   - `src/config/index.ts` — Google OAuth, AdMob IDs, app identity
-- `supabase/` — `schema.sql` + `functions/` (Edge Functions: extract-subscriptions, extract-bank-statement, exchange-rates)
+- `supabase/` — `schema.sql` + `functions/` (Edge Functions: extract-subscriptions, extract-bank-statement, exchange-rates, delete-account)
+  - `extract-bank-statement` uses the OpenAI **Responses API** with strict Structured Outputs; model is env-driven (`OPENAI_VISION_MODEL`, default `gpt-5-mini`). All confidence-gating / dedup / grouping / retry live server-side in its `lib.ts` (Deno-tested); it returns a `{ ok, ... }` envelope. Auth uses Google (browser OAuth) + Apple (`expo-apple-authentication` + `signInWithIdToken`); `delete-account` does real server-side account deletion with the service-role key.
 
 ## Commands (run from apps/mobile)
 - Install: `npm install`

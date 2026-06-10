@@ -1,0 +1,17 @@
+{
+  "description": "Same merchant charged ~90 days apart with no cycle hint. Server must infer quarterly from the date gaps.",
+  "now": "2026-06-08",
+  "input": {
+    "documentType": "card_statement",
+    "monthsCovered": 7,
+    "charges": [
+      { "name": "Surfshark VPN", "merchantName": "SURFSHARK", "amount": 89.0, "currency": "TRY", "chargeDate": "2025-11-05", "cycleHint": "unknown", "isLikelySubscription": true, "confidence": 0.86 },
+      { "name": "Surfshark VPN", "merchantName": "SURFSHARK", "amount": 89.0, "currency": "TRY", "chargeDate": "2026-02-05", "cycleHint": "unknown", "isLikelySubscription": true, "confidence": 0.86 },
+      { "name": "Surfshark VPN", "merchantName": "SURFSHARK", "amount": 89.0, "currency": "TRY", "chargeDate": "2026-05-05", "cycleHint": "unknown", "isLikelySubscription": true, "confidence": 0.86 }
+    ]
+  },
+  "expected": {
+    "count": 1,
+    "byName": { "Surfshark VPN": { "occurrenceCount": 3, "cycle": "quarterly", "cycleInferred": true } }
+  }
+}

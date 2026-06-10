@@ -83,3 +83,31 @@ export const getGoogleClientId = () => {
     default: CONFIG.google.iosClientId,
   });
 };
+
+/**
+ * Returns the list of required public env vars that are missing. Used to fail
+ * loudly in development so misconfiguration is caught before a build ships.
+ */
+export const getMissingConfig = (): string[] => {
+  const missing: string[] = [];
+  if (!process.env.EXPO_PUBLIC_SUPABASE_URL) missing.push('EXPO_PUBLIC_SUPABASE_URL');
+  if (!process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY) missing.push('EXPO_PUBLIC_SUPABASE_ANON_KEY');
+  if (!CONFIG.google.webClientId && !CONFIG.google.iosClientId && !CONFIG.google.androidClientId) {
+    missing.push('EXPO_PUBLIC_GOOGLE_*_CLIENT_ID');
+  }
+  if (!process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY && !process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY) {
+    missing.push('EXPO_PUBLIC_REVENUECAT_IOS_KEY / EXPO_PUBLIC_REVENUECAT_ANDROID_KEY');
+  }
+  return missing;
+};
+
+// Dev-only: warn loudly about missing configuration at import time.
+if (__DEV__) {
+  const missing = getMissingConfig();
+  if (missing.length > 0) {
+    console.warn(
+      '[config] Missing environment configuration — some features will be disabled:\n  - ' +
+        missing.join('\n  - ')
+    );
+  }
+}

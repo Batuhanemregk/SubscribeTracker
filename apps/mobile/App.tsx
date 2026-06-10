@@ -27,7 +27,8 @@ import {
   initAdManager,
   authenticateWithBiometrics,
   initPurchases,
-  checkProStatus,
+  getProStatus,
+  addProStatusListener,
   checkCatalogUpdate,
 } from './src/services';
 import {
@@ -174,6 +175,7 @@ function AppContent() {
 
   useEffect(() => {
     let cancelled = false;
+    let removeProListener: (() => void) | undefined;
 
     const prepare = async () => {
       // --- Critical path: local + fast. Must run before first paint. ---
@@ -241,14 +243,26 @@ function AppContent() {
       // RevenueCat init + pro status sync
       try {
         await initPurchases();
-        const isRevenueCatPro = await checkProStatus();
+        const rcPro = await getProStatus(); // true | false | null (unknown)
         const localPro = usePlanStore.getState().isPro();
-        if (isRevenueCatPro && !localPro) {
+        // Only act on a CONFIRMED status — never downgrade a paying user on a
+        // transient/offline error (rcPro === null means "could not determine").
+        if (rcPro === true && !localPro) {
           usePlanStore.getState().upgradeToPro();
           console.log('[App] Pro status synced: upgraded from RevenueCat');
-        } else if (!isRevenueCatPro && localPro) {
+        } else if (rcPro === false && localPro) {
           usePlanStore.getState().downgradeToStandard();
           console.log('[App] Pro status synced: downgraded (subscription expired)');
+        }
+
+        // Keep Pro status fresh when entitlements change without an app restart
+        // (purchase completes, subscription expires, restore on another device).
+        if (!cancelled) {
+          removeProListener = addProStatusListener((isPro) => {
+            const local = usePlanStore.getState().isPro();
+            if (isPro && !local) usePlanStore.getState().upgradeToPro();
+            else if (!isPro && local) usePlanStore.getState().downgradeToStandard();
+          });
         }
       } catch (e) {
         console.warn('[App] Purchases/pro sync failed:', e);
@@ -262,6 +276,7 @@ function AppContent() {
     prepare();
     return () => {
       cancelled = true;
+      removeProListener?.();
     };
   }, []);
 

@@ -243,6 +243,8 @@
     "resetPlan": "Standart'a Sıfırla (Debug)",
     "cloudSync": "Bulut Senkronizasyon",
     "signInGoogle": "Google ile Giriş Yap",
+    "signInApple": "Apple ile Giriş Yap",
+    "signInFailed": "Giriş Başarısız",
     "signInSubtitle": "Bulut yedekleme ve çoklu cihaz senkronizasyonu",
     "syncToCloud": "Buluta Senkronize Et",
     "lastSynced": "Son senkronizasyon: {{date}}",
@@ -334,6 +336,9 @@
     "deleteAlertButton": "Her Şeyi Sil",
     "accountDeleted": "Hesap Silindi",
     "accountDeletedMessage": "Tüm verileriniz bu cihazdan kaldırıldı.",
+    "deleteFailed": "Hesabınız silinemedi. Lütfen tekrar deneyin.",
+    "disconnected": "Bağlantı Kesildi",
+    "disconnectedMessage": "Hesabınızın bağlantısı kesildi. Yerel abonelikleriniz bu cihazda kalmaya devam ediyor.",
     "resetPlanTitle": "Standart'a Sıfırla",
     "resetPlanMessage": "Bu işlem planınızı Standart'a düşürecektir (Debug).",
     "resetPlanButton": "Sıfırla",
@@ -437,6 +442,15 @@
     "tip3": "Daha uzun dökümanlar tekrarlayan kalıpları daha güvenilir tespit eder",
     "tip4": "Ekstreniz güvenli şekilde işlenir ve asla saklanmaz",
     "remainingScans": "Bugün {{count}} tarama hakkınız kaldı",
+    "verifyCycle": "Faturalama dönemini doğrulayın",
+    "retry": "Tekrar dene",
+    "noSubscriptionsTitle": "Abonelik bulunamadı",
+    "noSubscriptionsBody": "Bu dökümanda yinelenen abonelik bulamadık. 1–3 aylık bir ekstre deneyin.",
+    "status": {
+      "alreadyTracked": "Zaten takip ediliyor",
+      "seenTimes": "{{count}} kez görüldü",
+      "new": "Yeni abonelik"
+    },
     "errors": {
       "tooSmall": "Dosya boş veya çok küçük görünüyor.",
       "tooLarge": "Dosya çok büyük. Maksimum 10MB.",
@@ -445,7 +459,12 @@
       "invalidImage": "Bu geçerli bir görsel gibi görünmüyor.",
       "cooldown": "Lütfen tekrar taramadan önce bekleyin.",
       "dailyLimit": "Günlük tarama limitine ulaşıldı. Yarın tekrar deneyin.",
-      "monthlyLimit": "Aylık tarama limitine ulaşıldı."
+      "monthlyLimit": "Aylık tarama limitine ulaşıldı.",
+      "notAStatement": "Bu bir banka veya kart ekstresi gibi görünmüyor. Farklı bir dosya deneyin.",
+      "unreadable": "Bu dökümanı net okuyamadık. Daha net bir fotoğraf veya PDF deneyin.",
+      "rateLimited": "Tarama limitinize ulaştınız. Lütfen daha sonra tekrar deneyin.",
+      "serviceBusy": "Analiz servisi şu an meşgul. Lütfen birazdan tekrar deneyin.",
+      "serviceError": "Döküman analiz edilemedi. Lütfen tekrar deneyin."
     }
   },
   "notifications": {

@@ -243,6 +243,8 @@
     "resetPlan": "Reset to Standard (Debug)",
     "cloudSync": "Cloud Sync",
     "signInGoogle": "Sign in with Google",
+    "signInApple": "Sign in with Apple",
+    "signInFailed": "Sign-In Failed",
     "signInSubtitle": "Enable cloud backup & multi-device sync",
     "syncToCloud": "Sync to Cloud",
     "lastSynced": "Last synced: {{date}}",
@@ -334,6 +336,9 @@
     "deleteAlertButton": "Delete Everything",
     "accountDeleted": "Account Deleted",
     "accountDeletedMessage": "All your data has been removed from this device.",
+    "deleteFailed": "Could not delete your account. Please try again.",
+    "disconnected": "Disconnected",
+    "disconnectedMessage": "Your account has been disconnected. Your local subscriptions remain on this device.",
     "resetPlanTitle": "Reset to Standard",
     "resetPlanMessage": "This will downgrade your plan to Standard (Debug only).",
     "resetPlanButton": "Reset",
@@ -437,6 +442,15 @@
     "tip3": "Longer statements detect recurring patterns more reliably",
     "tip4": "Your statement is processed securely and never stored",
     "remainingScans": "{{count}} scans remaining today",
+    "verifyCycle": "Verify billing cycle",
+    "retry": "Retry",
+    "noSubscriptionsTitle": "No subscriptions found",
+    "noSubscriptionsBody": "We didn't find any recurring subscriptions in this document. Try a statement covering 1–3 months.",
+    "status": {
+      "alreadyTracked": "Already tracked",
+      "seenTimes": "Seen {{count}} times",
+      "new": "New subscription"
+    },
     "errors": {
       "tooSmall": "File appears empty or too small.",
       "tooLarge": "File too large. Maximum 10MB.",
@@ -445,7 +459,12 @@
       "invalidImage": "This doesn't appear to be a valid image.",
       "cooldown": "Please wait before scanning again.",
       "dailyLimit": "Daily scan limit reached. Try again tomorrow.",
-      "monthlyLimit": "Monthly scan limit reached."
+      "monthlyLimit": "Monthly scan limit reached.",
+      "notAStatement": "This doesn't look like a bank or card statement. Try a different file.",
+      "unreadable": "We couldn't read this document clearly. Try a sharper photo or a PDF.",
+      "rateLimited": "You've reached your scan limit. Please try again later.",
+      "serviceBusy": "The analysis service is busy right now. Please try again in a moment.",
+      "serviceError": "Couldn't analyze the document. Please try again."
     }
   },
   "notifications": {

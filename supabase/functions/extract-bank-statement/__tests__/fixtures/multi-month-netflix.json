@@ -1,0 +1,21 @@
+{
+  "description": "Netflix charged 3 months + a similarly-priced Notion charge. Netflix must group to one entry (occ=3, monthly inferred) and must NOT merge with Notion despite the close amount.",
+  "now": "2026-06-08",
+  "input": {
+    "documentType": "card_statement",
+    "monthsCovered": 3,
+    "charges": [
+      { "name": "Netflix", "merchantName": "NETFLIX.COM 4250", "amount": 149.99, "currency": "TRY", "chargeDate": "2026-03-15", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.95 },
+      { "name": "Netflix", "merchantName": "NETFLIX.COM 4250", "amount": 149.99, "currency": "TRY", "chargeDate": "2026-04-15", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.93 },
+      { "name": "Netflix", "merchantName": "NETFLIX.COM 4250", "amount": 149.99, "currency": "TRY", "chargeDate": "2026-05-15", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.94 },
+      { "name": "Notion", "merchantName": "NOTION LABS INC", "amount": 150.00, "currency": "TRY", "chargeDate": "2026-05-02", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.88 }
+    ]
+  },
+  "expected": {
+    "count": 2,
+    "byName": {
+      "Netflix": { "occurrenceCount": 3, "cycle": "monthly", "cycleInferred": true, "amount": 149.99 },
+      "Notion": { "occurrenceCount": 1 }
+    }
+  }
+}

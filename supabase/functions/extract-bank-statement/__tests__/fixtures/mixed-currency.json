@@ -1,0 +1,17 @@
+{
+  "description": "Three services in three currencies. Currencies must be preserved exactly and never cross-merged.",
+  "now": "2026-06-08",
+  "input": {
+    "documentType": "bank_statement",
+    "monthsCovered": 1,
+    "charges": [
+      { "name": "Spotify", "merchantName": "SPOTIFY AB", "amount": 5.99, "currency": "EUR", "chargeDate": "2026-05-10", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.92 },
+      { "name": "iCloud", "merchantName": "APPLE.COM/BILL", "amount": 2.99, "currency": "USD", "chargeDate": "2026-05-12", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.9 },
+      { "name": "Turkcell", "merchantName": "TURKCELL FATURA", "amount": 320.0, "currency": "TRY", "chargeDate": "2026-05-20", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.8 }
+    ]
+  },
+  "expected": {
+    "count": 3,
+    "currenciesByName": { "Spotify": "EUR", "iCloud": "USD", "Turkcell": "TRY" }
+  }
+}

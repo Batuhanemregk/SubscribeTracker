@@ -51,7 +51,13 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const DOC_WIDTH = SCREEN_WIDTH * 0.52;
 const DOC_HEIGHT = DOC_WIDTH * 1.35;
 
-type ScanStep = 'upload' | 'scanning' | 'review';
+type ScanStep = 'upload' | 'scanning' | 'review' | 'error';
+
+interface PickedAsset {
+  uri: string;
+  mimeType: string;
+  name: string;
+}
 
 // ─── 3D Floating Document Component ──────────────────────
 function FloatingDocument({ colors, step }: { colors: ThemeColors; step: ScanStep }) {
@@ -311,6 +317,9 @@ export function BankStatementScanScreen({ navigation }: any) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [remaining, setRemaining] = useState({ today: 5, month: 30 });
   const [tipsExpanded, setTipsExpanded] = useState(false);
+  // Retained so the user can retry after a failure without re-picking the file.
+  const [lastAsset, setLastAsset] = useState<PickedAsset | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   // Load remaining scans
   useEffect(() => {
@@ -335,96 +344,75 @@ export function BankStatementScanScreen({ navigation }: any) {
     );
   }
 
+  // Shared extraction path used by both pickers and the Retry button.
+  const runExtraction = useCallback(
+    async (asset: PickedAsset) => {
+      setLastAsset(asset);
+      setFileName(asset.name);
+      setErrorMessage('');
+      setStep('scanning');
+      setIsProcessing(true);
+
+      try {
+        const extraction = await extractSubscriptionsFromStatement(asset.uri, asset.mimeType);
+
+        if (!extraction.success) {
+          // Prefer the localized key so limit/validation errors are translated too.
+          setErrorMessage(
+            extraction.errorKey
+              ? t(extraction.errorKey)
+              : extraction.error || t('bankScan.errors.serviceError')
+          );
+          setStep('error');
+          return;
+        }
+
+        const existingSubs = subscriptions.map((s) => ({ name: s.name, amount: s.amount }));
+        const analyzed = analyzeStatement(extraction.subscriptions, existingSubs);
+
+        setAnalyzedSubs(analyzed);
+        setSelectedIds(
+          new Set(analyzed.map((s, i) => (s.autoSelected ? i : -1)).filter((i) => i >= 0))
+        );
+        setStep('review');
+      } catch {
+        setErrorMessage(t('bankScan.errors.serviceError'));
+        setStep('error');
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [subscriptions]
+  );
+
   const handlePickDocument = async () => {
     const result = await pickBankStatement();
-    
     if (!result.success) {
-      if (result.error !== 'User cancelled') {
-        Alert.alert(t('common.error'), result.error || 'Failed to pick document');
+      if (result.error && result.error !== 'User cancelled') {
+        Alert.alert(t('common.error'), result.error);
       }
       return;
     }
-
-    setFileName(result.name || 'Document');
-    setStep('scanning');
-    setIsProcessing(true);
-
-    try {
-      const extraction = await extractSubscriptionsFromStatement(
-        result.uri!,
-        result.mimeType || 'application/pdf'
-      );
-
-      if (!extraction.success) {
-        Alert.alert(t('bankScan.extractionFailed'), extraction.error || 'Could not extract subscriptions');
-        setStep('upload');
-        return;
-      }
-
-      // Post-process with statement analyzer
-      const existingSubs = subscriptions.map((s) => ({ name: s.name, amount: s.amount }));
-      const analyzed = analyzeStatement(extraction.subscriptions, existingSubs);
-      
-      setAnalyzedSubs(analyzed);
-      // Auto-select based on analyzer recommendation
-      const autoSelected = new Set(
-        analyzed
-          .map((s, i) => (s.autoSelected ? i : -1))
-          .filter((i) => i >= 0)
-      );
-      setSelectedIds(autoSelected);
-      setStep('review');
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message);
-      setStep('upload');
-    } finally {
-      setIsProcessing(false);
-    }
+    runExtraction({
+      uri: result.uri!,
+      mimeType: result.mimeType || 'application/pdf',
+      name: result.name || 'Document',
+    });
   };
 
   const handlePickFromGallery = async () => {
     const result = await pickFromGallery();
-    
     if (!result.success) {
-      if (result.error !== 'User cancelled') {
-        Alert.alert(t('common.error'), result.error || 'Failed to pick image');
+      if (result.error && result.error !== 'User cancelled') {
+        Alert.alert(t('common.error'), result.error);
       }
       return;
     }
-
-    setFileName(result.name || 'Image');
-    setStep('scanning');
-    setIsProcessing(true);
-
-    try {
-      const extraction = await extractSubscriptionsFromStatement(
-        result.uri!,
-        result.mimeType || 'image/jpeg'
-      );
-
-      if (!extraction.success) {
-        Alert.alert(t('bankScan.extractionFailed'), extraction.error || 'Could not extract subscriptions');
-        setStep('upload');
-        return;
-      }
-
-      const existingSubs = subscriptions.map((s) => ({ name: s.name, amount: s.amount }));
-      const analyzed = analyzeStatement(extraction.subscriptions, existingSubs);
-      
-      setAnalyzedSubs(analyzed);
-      const autoSelected = new Set(
-        analyzed
-          .map((s, i) => (s.autoSelected ? i : -1))
-          .filter((i) => i >= 0)
-      );
-      setSelectedIds(autoSelected);
-      setStep('review');
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message);
-      setStep('upload');
-    } finally {
-      setIsProcessing(false);
-    }
+    runExtraction({
+      uri: result.uri!,
+      mimeType: result.mimeType || 'image/jpeg',
+      name: result.name || 'Image',
+    });
   };
 
   const toggleSelection = (index: number) => {
@@ -555,8 +543,52 @@ export function BankStatementScanScreen({ navigation }: any) {
     </View>
   );
 
+  const resetToUpload = () => {
+    setStep('upload');
+    setAnalyzedSubs([]);
+    setErrorMessage('');
+  };
+
+  // ─── Error Step ────────────────────────────────────────
+  const renderErrorStep = () => (
+    <View style={styles.stepContainer}>
+      <Ionicons name="alert-circle-outline" size={64} color={colors.amber} />
+      <Text style={[styles.mainTitle, { marginTop: 16 }]}>{t('bankScan.extractionFailed')}</Text>
+      <Text style={styles.mainSubtitle}>{errorMessage}</Text>
+      <View style={styles.uploadAction}>
+        {lastAsset && (
+          <PrimaryButton title={t('bankScan.retry')} onPress={() => runExtraction(lastAsset)} />
+        )}
+        <TouchableOpacity
+          style={[styles.galleryButton, { borderColor: colors.border }]}
+          onPress={resetToUpload}
+        >
+          <Ionicons name="document-outline" size={20} color={colors.primary} />
+          <Text style={[styles.galleryButtonText, { color: colors.primary }]}>
+            {t('bankScan.chooseFile')}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   // ─── Review Step ───────────────────────────────────────
-  const renderReviewStep = () => (
+  const renderReviewStep = () => {
+    if (analyzedSubs.length === 0) {
+      return (
+        <View style={styles.stepContainer}>
+          <Ionicons name="search-outline" size={64} color={colors.textSecondary} />
+          <Text style={[styles.mainTitle, { marginTop: 16 }]}>
+            {t('bankScan.noSubscriptionsTitle')}
+          </Text>
+          <Text style={styles.mainSubtitle}>{t('bankScan.noSubscriptionsBody')}</Text>
+          <View style={styles.uploadAction}>
+            <PrimaryButton title={t('bankScan.scanAnother')} onPress={resetToUpload} />
+          </View>
+        </View>
+      );
+    }
+    return (
     <View style={styles.reviewContainer}>
       <Animated.View entering={FadeInDown.delay(100)}>
         <Text style={styles.reviewTitle}>
@@ -591,9 +623,17 @@ export function BankStatementScanScreen({ navigation }: any) {
                 {item.merchantName && (
                   <Text style={styles.subMerchant}>{item.merchantName}</Text>
                 )}
-                {/* Status badge */}
+                {/* Status + verify-cycle badges */}
                 <View style={styles.subBadgeRow}>
-                  <StatusBadge status={item.status} label={item.statusLabel} colors={colors} />
+                  <StatusBadge status={item.status} label={getStatusLabel(item)} colors={colors} />
+                  {item.verifyCycle && (
+                    <View style={[statusBadgeStyles.container, { backgroundColor: `${colors.amber}20` }]}>
+                      <Ionicons name="help-circle-outline" size={11} color={colors.amber} />
+                      <Text style={[statusBadgeStyles.label, { color: colors.amber }]}>
+                        {t('bankScan.verifyCycle')}
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
               <View style={styles.subAmountCol}>
@@ -615,7 +655,7 @@ export function BankStatementScanScreen({ navigation }: any) {
       <Animated.View entering={FadeInUp.delay(400)} style={styles.reviewActions}>
         <TouchableOpacity
           style={[styles.secondaryButton, { borderColor: colors.border }]}
-          onPress={() => { setStep('upload'); setAnalyzedSubs([]); }}
+          onPress={resetToUpload}
         >
           <Text style={[styles.secondaryButtonText, { color: colors.text }]}>
             {t('bankScan.scanAnother')}
@@ -630,7 +670,8 @@ export function BankStatementScanScreen({ navigation }: any) {
         </View>
       </Animated.View>
     </View>
-  );
+    );
+  };
 
   return (
     <Screen>
@@ -638,11 +679,24 @@ export function BankStatementScanScreen({ navigation }: any) {
       {step === 'upload' && renderUploadStep()}
       {step === 'scanning' && renderScanningStep()}
       {step === 'review' && renderReviewStep()}
+      {step === 'error' && renderErrorStep()}
     </Screen>
   );
 }
 
 // ─── Helpers ─────────────────────────────────────────────
+function getStatusLabel(item: AnalyzedSubscription): string {
+  switch (item.status) {
+    case 'tracked':
+      return t('bankScan.status.alreadyTracked');
+    case 'recurring':
+      return t('bankScan.status.seenTimes', { count: item.occurrences });
+    case 'new':
+    default:
+      return t('bankScan.status.new');
+  }
+}
+
 function calculateNextBillingDate(lastDate: string, cycle: string): string {
   const date = new Date(lastDate);
   switch (cycle) {

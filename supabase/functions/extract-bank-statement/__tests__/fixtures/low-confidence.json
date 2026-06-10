@@ -1,0 +1,12 @@
+{
+  "description": "A flagged-subscription charge but below MIN_CONFIDENCE (0.6). Must be dropped by the confidence gate.",
+  "now": "2026-06-08",
+  "input": {
+    "documentType": "bank_statement",
+    "monthsCovered": 1,
+    "charges": [
+      { "name": "Unknown App", "merchantName": "APP STORE PURCHASE", "amount": 19.99, "currency": "TRY", "chargeDate": "2026-05-08", "cycleHint": "unknown", "isLikelySubscription": true, "confidence": 0.55 }
+    ]
+  },
+  "expected": { "count": 0 }
+}
