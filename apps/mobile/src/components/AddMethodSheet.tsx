@@ -109,7 +109,7 @@ export function AddMethodSheet({ visible, onClose, onScan, onBrowse, onCustom }:
                     <Text style={[styles.optionTitle, { color: colors.text }]}>{option.title}</Text>
                     {option.isPro && (
                       <View style={[styles.proBadge, { backgroundColor: `${colors.primary}20` }]}>
-                        <Text style={[styles.proBadgeText, { color: colors.primary }]}>PRO</Text>
+                        <Text style={[styles.proBadgeText, { color: colors.primary }]}>PREMIUM</Text>
                       </View>
                     )}
                   </View>

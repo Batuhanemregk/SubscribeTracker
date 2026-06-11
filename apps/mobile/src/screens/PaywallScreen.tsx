@@ -264,7 +264,7 @@ export function PaywallScreen({ navigation, route }: any) {
         >
           <View style={styles.proBadge}>
             <Ionicons name="star" size={16} color={colors.amber} />
-            <Text style={styles.proBadgeText}>PRO</Text>
+            <Text style={styles.proBadgeText}>PREMIUM</Text>
           </View>
           <Text style={styles.heroTitle}>{t('settings.upgradeToPro')}</Text>
           <Text style={styles.heroSubtitle}>

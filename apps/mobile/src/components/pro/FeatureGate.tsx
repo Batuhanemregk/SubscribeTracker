@@ -75,7 +75,7 @@ export function FeatureGate({ feature, children, fallback }: FeatureGateProps) {
       >
         <View style={styles.lockBadge}>
           <Ionicons name="lock-closed" size={14} color={colors.amber} />
-          <Text style={styles.lockText}>PRO</Text>
+          <Text style={styles.lockText}>PREMIUM</Text>
         </View>
 
         <View style={styles.iconContainer}>

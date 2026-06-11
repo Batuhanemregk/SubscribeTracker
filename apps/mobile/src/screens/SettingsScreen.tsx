@@ -332,7 +332,7 @@ export function SettingsScreen({ navigation }: any) {
             rightElement={
               !isPro() ? (
                 <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
+                  <Text style={styles.proBadgeText}>PREMIUM</Text>
                 </View>
               ) : subscriptionStore.isSyncing ? (
                 <Text style={{ color: colors.textSecondary }}>{t('common.syncing')}</Text>
@@ -368,7 +368,7 @@ export function SettingsScreen({ navigation }: any) {
             rightElement={
               !isPro() ? (
                 <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
+                  <Text style={styles.proBadgeText}>PREMIUM</Text>
                 </View>
               ) : undefined
             }
@@ -393,7 +393,7 @@ export function SettingsScreen({ navigation }: any) {
             rightElement={
               !isPro() ? (
                 <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
+                  <Text style={styles.proBadgeText}>PREMIUM</Text>
                 </View>
               ) : undefined
             }
@@ -417,7 +417,7 @@ export function SettingsScreen({ navigation }: any) {
             rightElement={
               !isPro() ? (
                 <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
+                  <Text style={styles.proBadgeText}>PREMIUM</Text>
                 </View>
               ) : undefined
             }
@@ -669,7 +669,7 @@ export function SettingsScreen({ navigation }: any) {
                   </Text>
                   {(theme === 'light' || theme === 'system') && !canUseLight && (
                     <View style={styles.proBadge}>
-                      <Text style={styles.proBadgeText}>PRO</Text>
+                      <Text style={styles.proBadgeText}>PREMIUM</Text>
                     </View>
                   )}
                 </View>
