@@ -198,7 +198,10 @@ export function inferCycle(sortedDates: string[], cycleHint: CycleHint): { cycle
     }
     if (gaps.length > 0) {
       const cycle = gapToCycle(median(gaps));
-      if (cycle) return { cycle, cycleInferred: true };
+      // A single short gap (e.g. two one-off charges 5 days apart) must NOT be
+      // read as "weekly". Require >= 3 charges (>= 2 gaps) to infer weekly.
+      const weeklyUnderEvidenced = cycle === 'weekly' && sortedDates.length < 3;
+      if (cycle && !weeklyUnderEvidenced) return { cycle, cycleInferred: true };
     }
   }
   if (cycleHint !== 'unknown') return { cycle: cycleHint, cycleInferred: false };

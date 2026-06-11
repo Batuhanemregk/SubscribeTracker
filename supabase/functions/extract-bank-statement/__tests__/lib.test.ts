@@ -140,6 +140,18 @@ Deno.test("inferCycle falls back to hint then monthly", () => {
   assertEquals(monthly, { cycle: "monthly", cycleInferred: true });
 });
 
+Deno.test("inferCycle does NOT infer weekly from a single short gap (2 charges 5 days apart)", () => {
+  // Two one-off charges 5 days apart must not look "weekly".
+  assertEquals(inferCycle(["2026-06-02", "2026-06-07"], "unknown"), { cycle: "monthly", cycleInferred: false });
+  // ...but the model's hint is still honored when present.
+  assertEquals(inferCycle(["2026-06-02", "2026-06-07"], "monthly"), { cycle: "monthly", cycleInferred: false });
+  // Genuine weekly: 3+ charges ~7 days apart.
+  assertEquals(
+    inferCycle(["2026-06-01", "2026-06-08", "2026-06-15"], "unknown"),
+    { cycle: "weekly", cycleInferred: true },
+  );
+});
+
 Deno.test("withRetry retries on 429 then succeeds, without real sleeping", async () => {
   let calls = 0;
   const sleeps: number[] = [];

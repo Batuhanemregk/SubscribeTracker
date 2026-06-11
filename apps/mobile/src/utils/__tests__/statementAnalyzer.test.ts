@@ -62,13 +62,17 @@ describe('analyzeStatement', () => {
     expect(a.status).toBe('tracked');
   });
 
-  it('does NOT loosely match very short existing names (e.g. 3 chars)', () => {
-    const existing: ExistingSub[] = [{ name: 'HBO', amount: 99.0 }];
+  it('recognizes the same known service across name forms (Claude.ai ↔ stored "Claude Pro")', () => {
+    // The app stores "Claude.ai" under the canonical name "Claude Pro". A later
+    // scan of "Claude.ai" — even at a different amount — must be seen as already
+    // tracked (this is the cross-scan duplicate bug fix).
+    const existing: ExistingSub[] = [{ name: 'Claude Pro', amount: 96.01 }];
     const [a] = analyzeStatement(
-      [makeSub({ name: 'HBO Max', merchantName: 'HBOMAX', amount: 250.0, occurrenceCount: 1 })],
+      [makeSub({ name: 'Claude.ai', merchantName: 'CLAUDE.AI SU', amount: 120.0, occurrenceCount: 2 })],
       existing
     );
-    expect(a.status).not.toBe('tracked');
+    expect(a.status).toBe('tracked');
+    expect(a.autoSelected).toBe(false);
   });
 
   it('surfaces verifyCycle when the cycle could not be confirmed', () => {

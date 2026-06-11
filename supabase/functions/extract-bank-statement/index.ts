@@ -24,6 +24,13 @@ const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
 // gpt-5.4-mini (more accurate) or gpt-4o-2024-08-06 are drop-in alternatives.
 const MODEL = Deno.env.get("OPENAI_VISION_MODEL") || "gpt-5-mini";
 
+// gpt-5/o are reasoning models: default "medium" effort makes large statements
+// take 90-150s and hit the Edge Function gateway timeout (504). "low" keeps
+// extraction accuracy while cutting latency well under the limit. Env-tunable;
+// drop to "minimal" if very large statements still time out.
+const REASONING_EFFORT = Deno.env.get("OPENAI_REASONING_EFFORT") || "low";
+const IS_REASONING_MODEL = /^(gpt-5|o\d)/.test(MODEL);
+
 // Client caps files at 10MB; guard the base64 length defensively (~13MB of bytes).
 const MAX_BASE64_LEN = 18_000_000;
 
@@ -181,6 +188,7 @@ Deno.serve(async (req: Request) => {
             instructions: SYSTEM_PROMPT,
             input: [{ role: "user", content: [{ type: "input_text", text: USER_PROMPT }, fileContent] }],
             max_output_tokens: 16000,
+            ...(IS_REASONING_MODEL ? { reasoning: { effort: REASONING_EFFORT } } : {}),
             text: {
               format: {
                 type: "json_schema",

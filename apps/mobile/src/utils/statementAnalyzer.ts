@@ -7,6 +7,7 @@
  * pre-selected for adding. It is pure (no i18n / state) so it stays unit-testable.
  */
 import type { ExtractedSubscription } from '../services/BankStatementService';
+import { matchKnownService } from './matchKnownService';
 
 export type SubscriptionStatus = 'recurring' | 'new' | 'tracked';
 
@@ -48,28 +49,49 @@ function amountsClose(a: number, b: number, tolerance: number): boolean {
   return Math.abs(a - b) / avg <= tolerance;
 }
 
+interface NormalizedExisting {
+  name: string;
+  canonical: string;
+  amount: number;
+}
+
+/**
+ * Canonical service identity via the known-services catalog. This is what fixes
+ * the cross-scan duplicate bug: the app stores a matched name (e.g. "Claude.ai"
+ * is saved as "Claude Pro"), so on a later scan the raw extracted "Claude.ai"
+ * must resolve to the SAME canonical key as the stored "Claude Pro". Returns ''
+ * for unknown/fallback names (matchKnownService uses the 💳 placeholder icon)
+ * so we never merge two unrelated unknown services.
+ */
+function canonicalServiceKey(name: string): string {
+  if (!name) return '';
+  const matched = matchKnownService(name);
+  if (!matched || matched.icon === '💳') return '';
+  return normalizeName(matched.name);
+}
+
 /**
  * Decide whether an extracted subscription matches one the user already tracks.
- * Deliberately strict to avoid false "already tracked" collisions (e.g. Netflix
- * vs Notion): exact normalized name, OR containment where the shorter name is
- * >= 5 chars, OR a 6-char prefix match combined with a near-identical amount.
+ * Order: (1) same known service by canonical identity (Claude.ai ↔ Claude Pro),
+ * then deliberately strict text rules to avoid false collisions (e.g. Netflix vs
+ * Notion): exact normalized name, containment where the shorter name is >= 5
+ * chars, or a 6-char prefix match combined with a near-identical amount.
  */
-function matchesExisting(
-  sub: ExtractedSubscription,
-  existingNormalizedName: string,
-  existingAmount: number
-): boolean {
+function matchesExisting(sub: ExtractedSubscription, ex: NormalizedExisting): boolean {
   const subName = normalizeName(sub.name);
   const subMerchant = normalizeName(sub.merchantName || sub.name);
 
-  if (existingNormalizedName === subName || existingNormalizedName === subMerchant) return true;
-  if (oneContainsOther(existingNormalizedName, subName, 5)) return true;
-  if (oneContainsOther(existingNormalizedName, subMerchant, 5)) return true;
+  const subCanonical = canonicalServiceKey(sub.name) || canonicalServiceKey(sub.merchantName || '');
+  if (ex.canonical && subCanonical && ex.canonical === subCanonical) return true;
+
+  if (ex.name === subName || ex.name === subMerchant) return true;
+  if (oneContainsOther(ex.name, subName, 5)) return true;
+  if (oneContainsOther(ex.name, subMerchant, 5)) return true;
   if (
     subName.length >= 6 &&
-    existingNormalizedName.length >= 6 &&
-    subName.slice(0, 6) === existingNormalizedName.slice(0, 6) &&
-    amountsClose(existingAmount, sub.amount, 0.02)
+    ex.name.length >= 6 &&
+    subName.slice(0, 6) === ex.name.slice(0, 6) &&
+    amountsClose(ex.amount, sub.amount, 0.02)
   ) {
     return true;
   }
@@ -86,15 +108,16 @@ export function analyzeStatement(
   extracted: ExtractedSubscription[],
   existingSubscriptions: ExistingSub[]
 ): AnalyzedSubscription[] {
-  const normalizedExisting = existingSubscriptions.map((s) => ({
+  const normalizedExisting: NormalizedExisting[] = existingSubscriptions.map((s) => ({
     name: normalizeName(s.name),
+    canonical: canonicalServiceKey(s.name),
     amount: s.amount,
   }));
 
   return extracted.map((sub) => {
     const occurrences = sub.occurrenceCount && sub.occurrenceCount > 0 ? sub.occurrenceCount : 1;
     const verifyCycle = sub.cycleInferred === false;
-    const isTracked = normalizedExisting.some((ex) => matchesExisting(sub, ex.name, ex.amount));
+    const isTracked = normalizedExisting.some((ex) => matchesExisting(sub, ex));
 
     if (isTracked) {
       // Already tracked → never auto-select (avoid duplicate adds).
