@@ -1,0 +1,19 @@
+{
+  "description": "Invalid rows (zero amount, impossible date, future date, empty name) must all be dropped without crashing; only the one valid subscription survives.",
+  "now": "2026-06-08",
+  "input": {
+    "documentType": "bank_statement",
+    "monthsCovered": 1,
+    "charges": [
+      { "name": "Zero Amount", "merchantName": "ZERO", "amount": 0, "currency": "TRY", "chargeDate": "2026-05-01", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.9 },
+      { "name": "Impossible Date", "merchantName": "BADDATE", "amount": 10, "currency": "TRY", "chargeDate": "2026-13-40", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.9 },
+      { "name": "Future Date", "merchantName": "FUTURE", "amount": 10, "currency": "TRY", "chargeDate": "2030-01-01", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.9 },
+      { "name": "", "merchantName": "", "amount": 10, "currency": "TRY", "chargeDate": "2026-05-01", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.9 },
+      { "name": "YouTube Premium", "merchantName": "GOOGLE*YOUTUBEPREMIUM", "amount": 57.99, "currency": "TRY", "chargeDate": "2026-05-09", "cycleHint": "monthly", "isLikelySubscription": true, "confidence": 0.91 }
+    ]
+  },
+  "expected": {
+    "count": 1,
+    "byName": { "YouTube Premium": { "occurrenceCount": 1 } }
+  }
+}

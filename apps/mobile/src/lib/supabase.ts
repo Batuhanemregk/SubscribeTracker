@@ -28,6 +28,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: false, // Important for React Native
+    flowType: 'pkce', // Enforce PKCE on mobile OAuth (ruleset: oauth-pkce)
   },
 });
 

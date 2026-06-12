@@ -27,7 +27,8 @@ import {
   initAdManager,
   authenticateWithBiometrics,
   initPurchases,
-  checkProStatus,
+  getProStatus,
+  addProStatusListener,
   checkCatalogUpdate,
 } from './src/services';
 import {
@@ -173,69 +174,110 @@ function AppContent() {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    let removeProListener: (() => void) | undefined;
+
     const prepare = async () => {
-      await initData();
-
-      // Migrate non-UUID subscription IDs to proper UUIDs (one-time migration)
-      const subStore = useSubscriptionStore.getState();
-      const migrationResult = migrateSubscriptionIds({
-        subscriptions: subStore.subscriptions,
-        paymentHistory: subStore.paymentHistory,
-      });
-      if (migrationResult.migrated) {
-        useSubscriptionStore.setState({
-          subscriptions: migrationResult.subscriptions,
-          paymentHistory: migrationResult.paymentHistory,
-        });
-      }
-
-      // Initialize locale from saved language preference
-      const savedLanguage = useSettingsStore.getState().app.language;
-      initLocaleFromSettings(savedLanguage || 'system');
-      
-      const hasPermission = await requestNotificationPermission();
-      if (hasPermission && notificationsEnabled) {
-        await scheduleAllReminders(subscriptions, undefined, useSettingsStore.getState().app.currency);
-      }
-      
-      loadInterstitialAd();
-      await initAdManager();
-
-      await initPurchases();
-
-      // Sync pro status with RevenueCat entitlements
+      // --- Critical path: local + fast. Must run before first paint. ---
       try {
-        const isRevenueCatPro = await checkProStatus();
-        const localPro = usePlanStore.getState().isPro();
-        if (isRevenueCatPro && !localPro) {
-          usePlanStore.getState().upgradeToPro();
-          console.log('[App] Pro status synced: upgraded from RevenueCat');
-        } else if (!isRevenueCatPro && localPro) {
-          usePlanStore.getState().downgradeToStandard();
-          console.log('[App] Pro status synced: downgraded (subscription expired)');
+        await initData();
+
+        // Migrate non-UUID subscription IDs to proper UUIDs (one-time migration)
+        const subStore = useSubscriptionStore.getState();
+        const migrationResult = migrateSubscriptionIds({
+          subscriptions: subStore.subscriptions,
+          paymentHistory: subStore.paymentHistory,
+        });
+        if (migrationResult.migrated) {
+          useSubscriptionStore.setState({
+            subscriptions: migrationResult.subscriptions,
+            paymentHistory: migrationResult.paymentHistory,
+          });
         }
+
+        // Initialize locale from saved language preference
+        const savedLanguage = useSettingsStore.getState().app.language;
+        initLocaleFromSettings(savedLanguage || 'system');
       } catch (e) {
-        console.warn('[App] Pro status sync failed:', e);
+        console.warn('[App] Critical init failed:', e);
       }
 
-      // Fetch exchange rates in background
-      useCurrencyStore.getState().fetchRates();
+      // Reveal the UI now. First paint is NEVER gated on the network/native
+      // SDK init below: a single hung or rejected promise (e.g. the
+      // notification-permission call, which only runs on a real device) must
+      // not be able to leave the app stuck on a black loading screen forever.
+      if (!cancelled) setIsReady(true);
 
-      // Check for service catalog updates in background
-      checkCatalogUpdate().catch(() => {});
-      
-      setTimeout(async () => {
-        setIsReady(true);
+      // Biometric lock decision (lock screen shows immediately while Face ID
+      // prompts, since isLocked defaults to true).
+      try {
         const biometricEnabled = useSettingsStore.getState().app.biometricLockEnabled;
         if (biometricEnabled) {
           const success = await authenticateWithBiometrics();
-          setIsLocked(!success);
-        } else {
+          if (!cancelled) setIsLocked(!success);
+        } else if (!cancelled) {
           setIsLocked(false);
         }
-      }, 100);
+      } catch (e) {
+        console.warn('[App] Biometric unlock failed:', e);
+        if (!cancelled) setIsLocked(false);
+      }
+
+      // --- Background init: each guarded so one failure never blocks others. ---
+      try {
+        const hasPermission = await requestNotificationPermission();
+        if (hasPermission && notificationsEnabled) {
+          await scheduleAllReminders(subscriptions, undefined, useSettingsStore.getState().app.currency);
+        }
+      } catch (e) {
+        console.warn('[App] Notification init failed:', e);
+      }
+
+      try {
+        loadInterstitialAd();
+        await initAdManager();
+      } catch (e) {
+        console.warn('[App] Ad init failed:', e);
+      }
+
+      // RevenueCat init + pro status sync
+      try {
+        await initPurchases();
+        const rcPro = await getProStatus(); // true | false | null (unknown)
+        const localPro = usePlanStore.getState().isPro();
+        // Only act on a CONFIRMED status — never downgrade a paying user on a
+        // transient/offline error (rcPro === null means "could not determine").
+        if (rcPro === true && !localPro) {
+          usePlanStore.getState().upgradeToPro();
+          console.log('[App] Pro status synced: upgraded from RevenueCat');
+        } else if (rcPro === false && localPro) {
+          usePlanStore.getState().downgradeToStandard();
+          console.log('[App] Pro status synced: downgraded (subscription expired)');
+        }
+
+        // Keep Pro status fresh when entitlements change without an app restart
+        // (purchase completes, subscription expires, restore on another device).
+        if (!cancelled) {
+          removeProListener = addProStatusListener((isPro) => {
+            const local = usePlanStore.getState().isPro();
+            if (isPro && !local) usePlanStore.getState().upgradeToPro();
+            else if (!isPro && local) usePlanStore.getState().downgradeToStandard();
+          });
+        }
+      } catch (e) {
+        console.warn('[App] Purchases/pro sync failed:', e);
+      }
+
+      // Fetch exchange rates + service catalog updates in background
+      useCurrencyStore.getState().fetchRates();
+      checkCatalogUpdate().catch(() => {});
     };
+
     prepare();
+    return () => {
+      cancelled = true;
+      removeProListener?.();
+    };
   }, []);
 
   useEffect(() => {

@@ -186,8 +186,9 @@ export function PaywallScreen({ navigation, route }: any) {
         } else {
           Alert.alert(t('paywall.purchaseError'), result.error);
         }
-      } else {
-        // Mock purchase for development (RevenueCat not configured)
+      } else if (__DEV__) {
+        // Mock purchase for development ONLY (RevenueCat not configured).
+        // Never grant Pro without a real purchase in a production build.
         await new Promise(resolve => setTimeout(resolve, 1500));
         upgradeToPro();
         Alert.alert(
@@ -195,6 +196,9 @@ export function PaywallScreen({ navigation, route }: any) {
           'RevenueCat not configured. Simulated purchase.',
           [{ text: t('common.continue') || 'Continue', onPress: handleSuccess }]
         );
+      } else {
+        // Production with no package available → real misconfiguration.
+        Alert.alert(t('paywall.purchaseError'), t('paywall.productNotAvailable'));
       }
     } catch (error: any) {
       Alert.alert(t('paywall.purchaseError'), t('paywall.purchaseErrorGeneric'));
@@ -260,7 +264,7 @@ export function PaywallScreen({ navigation, route }: any) {
         >
           <View style={styles.proBadge}>
             <Ionicons name="star" size={16} color={colors.amber} />
-            <Text style={styles.proBadgeText}>PRO</Text>
+            <Text style={styles.proBadgeText}>PREMIUM</Text>
           </View>
           <Text style={styles.heroTitle}>{t('settings.upgradeToPro')}</Text>
           <Text style={styles.heroSubtitle}>
@@ -335,9 +339,13 @@ export function PaywallScreen({ navigation, route }: any) {
             loading={isLoading}
           />
           
-          <TouchableOpacity style={styles.trialButton} onPress={handleStartTrial}>
-            <Text style={styles.trialButtonText}>{t('paywall.startTrial')}</Text>
-          </TouchableOpacity>
+          {/* Local trial is a dev-only shortcut (no payment). A real free trial
+              must come from a RevenueCat intro offer on the products. */}
+          {__DEV__ && (
+            <TouchableOpacity style={styles.trialButton} onPress={handleStartTrial}>
+              <Text style={styles.trialButtonText}>{t('paywall.startTrial')} (Dev)</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity style={styles.restoreButton} onPress={handleRestorePurchases}>
             <Text style={styles.restoreButtonText}>{t('paywall.restore')}</Text>

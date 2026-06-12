@@ -1,190 +1,270 @@
 // Supabase Edge Function: extract-bank-statement
-// Uses OpenAI Chat Completions API with gpt-4o-mini for both PDF and image analysis.
-// PDF: sent via 'file' content type with inline base64 data URL
-// Image: sent via 'image_url' content type with inline base64 data URL
+// Deploy: npx supabase functions deploy extract-bank-statement
+// Secrets: supabase secrets set OPENAI_API_KEY=... [OPENAI_VISION_MODEL=gpt-5-mini]
+//
+// Reads a bank/card statement (PDF or image), extracts recurring subscription
+// charges with the OpenAI Responses API using strict Structured Outputs, then
+// validates / confidence-gates / groups them SERVER-SIDE. Always responds with a
+// { ok: boolean, ... } envelope (HTTP 200) so the client can branch cleanly.
+//
+// Privacy: the base64 document is forwarded to OpenAI and discarded. Nothing raw
+// is persisted; only derived subscription fields + confidence leave this function.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import {
+  extractOutputText,
+  extractRefusal,
+  processCharges,
+  withRetry,
+  type GroupedSubscription,
+} from "./lib.ts";
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+const OPENAI_API_KEY = Deno.env.get("OPENAI_API_KEY");
+// Swap the model with one env var. gpt-5-mini: cheap + accurate + strict outputs.
+// gpt-5.4-mini (more accurate) or gpt-4o-2024-08-06 are drop-in alternatives.
+const MODEL = Deno.env.get("OPENAI_VISION_MODEL") || "gpt-5-mini";
+
+// gpt-5/o are reasoning models: default "medium" effort makes large statements
+// take 90-150s and hit the Edge Function gateway timeout (504). "low" keeps
+// extraction accuracy while cutting latency well under the limit. Env-tunable;
+// drop to "minimal" if very large statements still time out.
+const REASONING_EFFORT = Deno.env.get("OPENAI_REASONING_EFFORT") || "low";
+const IS_REASONING_MODEL = /^(gpt-5|o\d)/.test(MODEL);
+
+// Client caps files at 10MB; guard the base64 length defensively (~13MB of bytes).
+const MAX_BASE64_LEN = 18_000_000;
 
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-function jsonResponse(status: number, body: unknown) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders },
+type ErrorCode =
+  | "BAD_REQUEST"
+  | "CONFIG"
+  | "NOT_A_STATEMENT"
+  | "UNREADABLE"
+  | "PARSE"
+  | "RATE_LIMITED"
+  | "UPSTREAM_BUSY"
+  | "UPSTREAM_ERROR";
+
+function ok(body: {
+  subscriptions: GroupedSubscription[];
+  monthsCovered: number;
+  documentType: string;
+  tokensUsed: number;
+  model: string;
+}) {
+  return new Response(JSON.stringify({ ok: true, ...body }), {
+    status: 200,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
   });
 }
 
-const SYSTEM_PROMPT = `You are a subscription and recurring payment detection specialist. The user will provide a bank or credit card statement (PDF or image). Your job is to carefully read the ENTIRE document — every page, every single transaction line — and identify ALL recurring subscription or membership payments.
-
-CRITICAL RULES:
-1. Read EVERY transaction on EVERY page. Do NOT skip any rows or pages.
-2. Be INCLUSIVE, not exclusive. When in doubt, INCLUDE the transaction. It is better to return a false positive than to miss a real subscription.
-3. Return EVERY occurrence of each subscription separately. If a service charged 3 times across different months, return 3 separate entries with their respective dates. Do NOT merge or deduplicate.
-4. Use your own knowledge and judgment to determine what is a subscription. Any payment to a service that typically charges on a recurring basis should be included — streaming, cloud storage, music, gaming, productivity tools, fitness apps, VPNs, telecom bills, insurance, memberships, etc.
-5. Raw merchant names in bank statements can be cryptic (e.g. "GOOGLE*YOUTUBE", "APPLE.COM/BILL", "SPOTIFY AB"). Use your knowledge to identify the actual service behind the merchant name.
-
-For each subscription found, extract:
-- name: Clean, human-readable service name (e.g. "Netflix" not "NETFLIX.COM")
-- amount: The numeric charge amount (just the number, no currency symbol)
-- currency: Detected from the statement (TRY, USD, EUR, GBP, etc.)
-- cycle: Best guess of billing frequency (monthly, yearly, weekly, quarterly)
-- confidence: 0.0 to 1.0 (0.9+ for clear subscriptions, 0.7-0.9 for probable, 0.5-0.7 for possible)
-- merchantName: The EXACT raw merchant name as it appears in the statement
-- lastChargeDate: The date of THIS specific charge (YYYY-MM-DD format)
-
-Return ONLY a JSON object with no markdown, no explanation, no code fences.
-If the document is unreadable or not a bank statement, return: { "subscriptions": [], "error": "reason" }`;
-
-const USER_PROMPT = `Analyze this bank/credit card statement. Read through EVERY page, EVERY transaction line carefully. Find ALL payments that look like subscriptions, memberships, or recurring service charges.
-
-IMPORTANT: Return EVERY occurrence separately — do NOT merge duplicates. If the same service charged multiple times, list each charge with its own date.
-
-Return this exact JSON format:
-{
-  "subscriptions": [
-    {
-      "name": "Service Name",
-      "amount": 0.00,
-      "currency": "TRY",
-      "cycle": "monthly",
-      "confidence": 0.90,
-      "merchantName": "RAW MERCHANT NAME FROM STATEMENT",
-      "lastChargeDate": "2026-01-15"
-    }
-  ],
-  "monthsCovered": 3
+// Business failures are returned as HTTP 200 with { ok: false } so supabase-js
+// always populates `data` and the client can map errorCode → a localized message.
+function fail(errorCode: ErrorCode, error: string) {
+  return new Response(JSON.stringify({ ok: false, errorCode, error }), {
+    status: 200,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
 }
 
-If no subscriptions are found, return: { "subscriptions": [], "monthsCovered": 0 }`;
+const SYSTEM_PROMPT =
+  `You are a precise financial-statement analyst. The user gives you a bank or credit-card statement (PDF or image). Read every page and every transaction line, then extract ONLY genuine recurring subscription / membership charges.
+
+PRINCIPLES
+- Accuracy over recall. Only report a charge when there is real evidence it is a subscription. Do NOT pad the list or guess to be "helpful". A clean, correct list is the goal.
+- Return EVERY occurrence of each charge as its OWN row in "charges" (one row per transaction line). Do NOT merge, group, or deduplicate — the server does that from the dates.
+- Merchant strings are often cryptic and bilingual (Turkish + English). Map them to the real service using your knowledge. Examples: "GOOGLE*YOUTUBEPREMIUM" → YouTube Premium, "APPLE.COM/BILL" → Apple, "SPOTIFY AB" → Spotify, "NETFLIX.COM" → Netflix, "TRENDYOL", "BLUTV", "EXXEN", "GAIN", "TABII", "AMAZON PRIME". Put the clean service name in "name" and the raw line text in "merchantName" (strip card-mask digits and city tokens from "name", keep them only in "merchantName").
+
+WHAT COUNTS
+- Streaming, music, cloud storage, productivity/SaaS, gaming, fitness/health apps, VPNs, news, telecom/utility bills, insurance, and explicit memberships.
+
+WHAT TO EXCLUDE (set isLikelySubscription:false, or omit)
+- One-off retail purchases, money transfers (HAVALE / EFT / FAST / wire), ATM withdrawals, refunds and any negative/incoming amounts, salary or other credits, and fees.
+
+CONFIDENCE RUBRIC (the "confidence" field, 0..1)
+- 0.90-1.00: merchant clearly maps to a known recurring service AND amount + date are present.
+- 0.70-0.89: probable subscription.
+- 0.50-0.69: possible — needs user review.
+- Below 0.50: set isLikelySubscription:false.
+
+CYCLE
+- Set "cycleHint" only when the statement states it or the merchant's standard cadence is unambiguous; otherwise use "unknown" (the server infers cadence from the dates). Never guess a cadence just to fill the field.
+
+If the file is not a bank/card statement (e.g. a random photo or unrelated document), set documentType:"other" and return an empty "charges" array.`;
+
+const USER_PROMPT =
+  `Analyze this statement. List every subscription-like charge as its own row in "charges" with its own chargeDate. Do not merge duplicates — the server groups them. Be accurate, not inclusive.`;
+
+// Strict Structured Outputs schema. Every property must be required and
+// additionalProperties:false at every level (strict mode requirement).
+const EXTRACTION_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["documentType", "monthsCovered", "charges"],
+  properties: {
+    documentType: { type: "string", enum: ["bank_statement", "card_statement", "other"] },
+    monthsCovered: { type: "integer" },
+    charges: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: [
+          "name",
+          "merchantName",
+          "amount",
+          "currency",
+          "chargeDate",
+          "cycleHint",
+          "isLikelySubscription",
+          "confidence",
+        ],
+        properties: {
+          name: { type: "string", description: "Clean human-readable service name, e.g. Netflix" },
+          merchantName: { type: "string", description: "Raw merchant text from the statement line" },
+          amount: { type: "number", description: "Positive charge amount, number only" },
+          currency: { type: "string", description: "ISO 4217 code, e.g. TRY, USD, EUR" },
+          chargeDate: { type: "string", description: "Date of THIS charge, YYYY-MM-DD" },
+          cycleHint: { type: "string", enum: ["weekly", "monthly", "quarterly", "yearly", "unknown"] },
+          isLikelySubscription: { type: "boolean" },
+          confidence: { type: "number", description: "0..1 per the rubric" },
+        },
+      },
+    },
+  },
+};
+
+function estimateMonths(subs: GroupedSubscription[]): number {
+  const dates = subs.flatMap((s) => s.chargedDates).map((d) => Date.parse(d + "T00:00:00Z")).filter((t) => !Number.isNaN(t));
+  if (dates.length < 2) return dates.length === 1 ? 1 : 0;
+  const span = Math.max(...dates) - Math.min(...dates);
+  return Math.max(1, Math.round(span / (30 * 86_400_000)) + 1);
+}
 
 Deno.serve(async (req: Request) => {
-  if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    if (!OPENAI_API_KEY) {
-      return jsonResponse(500, { error: 'OpenAI API key not configured' });
+    if (!OPENAI_API_KEY) return fail("CONFIG", "Analysis service is not configured.");
+
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") return fail("BAD_REQUEST", "Invalid request body.");
+
+    const { fileBase64, mimeType } = body as { fileBase64?: unknown; mimeType?: unknown };
+    if (typeof fileBase64 !== "string" || fileBase64.length === 0) {
+      return fail("BAD_REQUEST", "No file content provided.");
+    }
+    if (fileBase64.length > MAX_BASE64_LEN) {
+      return fail("BAD_REQUEST", "File is too large to analyze.");
     }
 
-    const { fileBase64, mimeType } = await req.json();
+    const isImage = typeof mimeType === "string" && mimeType.startsWith("image/");
+    const isPdf = mimeType === "application/pdf";
+    if (!isPdf && !isImage) return fail("BAD_REQUEST", `Unsupported file type: ${String(mimeType)}`);
 
-    if (!fileBase64) {
-      return jsonResponse(400, { error: 'No file content provided' });
+    console.log(`Processing | type: ${isPdf ? "PDF" : "Image"} | size: ${Math.round(fileBase64.length / 1024)}KB | model: ${MODEL}`);
+
+    const fileContent = isPdf
+      ? { type: "input_file", filename: "statement.pdf", file_data: `data:application/pdf;base64,${fileBase64}` }
+      : { type: "input_image", image_url: `data:${mimeType};base64,${fileBase64}`, detail: "high" };
+
+    let res: Response;
+    try {
+      res = await withRetry(() =>
+        fetch("https://api.openai.com/v1/responses", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${OPENAI_API_KEY}`,
+          },
+          body: JSON.stringify({
+            model: MODEL,
+            instructions: SYSTEM_PROMPT,
+            input: [{ role: "user", content: [{ type: "input_text", text: USER_PROMPT }, fileContent] }],
+            max_output_tokens: 16000,
+            ...(IS_REASONING_MODEL ? { reasoning: { effort: REASONING_EFFORT } } : {}),
+            text: {
+              format: {
+                type: "json_schema",
+                name: "subscription_extraction",
+                strict: true,
+                schema: EXTRACTION_SCHEMA,
+              },
+            },
+          }),
+        })
+      );
+    } catch (netErr: any) {
+      // All retries threw (network failure: DNS, reset, TLS, timeout).
+      console.error("OpenAI request failed after retries:", netErr?.message);
+      return fail("UPSTREAM_BUSY", "The analysis service is unreachable right now. Please try again in a moment.");
     }
-
-    const isImage = mimeType?.startsWith('image/');
-    const isPdf = mimeType === 'application/pdf';
-
-    if (!isPdf && !isImage) {
-      return jsonResponse(400, { error: `Unsupported file type: ${mimeType}` });
-    }
-
-    console.log(`Processing | type: ${isPdf ? 'PDF' : 'Image'} | size: ${Math.round(fileBase64.length / 1024)}KB`);
-
-    // Build content array based on file type
-    const userContent: any[] = [{ type: 'text', text: USER_PROMPT }];
-
-    if (isPdf) {
-      userContent.push({
-        type: 'file',
-        file: {
-          filename: 'bank_statement.pdf',
-          file_data: `data:application/pdf;base64,${fileBase64}`,
-        },
-      });
-    } else {
-      userContent.push({
-        type: 'image_url',
-        image_url: {
-          url: `data:${mimeType};base64,${fileBase64}`,
-          detail: 'high',
-        },
-      });
-    }
-
-    // Chat Completions call with gpt-4o-mini
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: userContent },
-        ],
-        temperature: 0.1,
-        max_tokens: 8000,
-        response_format: { type: 'json_object' },
-      }),
-    });
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error('OpenAI error:', res.status, errText);
-
-      // Return user-friendly error messages based on status code
-      let userMessage: string;
-      switch (res.status) {
-        case 429:
-          userMessage = 'The analysis service is temporarily busy. Please try again in a moment.';
-          break;
-        case 401:
-        case 403:
-          userMessage = 'Service authentication error. Please contact support.';
-          break;
-        case 413:
-          userMessage = 'The file is too large for analysis. Please use a smaller file.';
-          break;
-        case 500:
-        case 502:
-        case 503:
-          userMessage = 'The analysis service is temporarily unavailable. Please try again later.';
-          break;
-        default:
-          userMessage = 'Failed to analyze the document. Please try again.';
+      console.error("OpenAI error:", res.status, errText.slice(0, 500));
+      if (res.status === 429 || res.status === 503) {
+        return fail("UPSTREAM_BUSY", "The analysis service is busy right now. Please try again in a moment.");
       }
-
-      return jsonResponse(502, { error: userMessage });
+      if (res.status === 401 || res.status === 403) {
+        return fail("UPSTREAM_ERROR", "Service authentication error. Please contact support.");
+      }
+      if (res.status === 413) return fail("BAD_REQUEST", "The file is too large for analysis.");
+      return fail("UPSTREAM_ERROR", "Failed to analyze the document. Please try again.");
     }
 
-    const chatJson = await res.json();
-    const content = chatJson.choices?.[0]?.message?.content || '{"subscriptions":[]}';
-    console.log('Model output (first 800):', content.substring(0, 800));
+    const json = await res.json();
 
-    let subscriptions: any[] = [];
-    let monthsCovered = 1;
+    if (json?.status === "incomplete") {
+      console.error("Incomplete response:", JSON.stringify(json?.incomplete_details ?? {}));
+      return fail("UNREADABLE", "The document was too long or unclear to analyze fully. Try a clearer or shorter file.");
+    }
+
+    const refusal = extractRefusal(json);
+    if (refusal) {
+      console.error("Model refusal:", refusal.slice(0, 300));
+      return fail("UNREADABLE", "Could not analyze this document. Please try a different file.");
+    }
+
+    const text = extractOutputText(json);
+    if (!text) return fail("UNREADABLE", "Could not read the document. Please try a clearer file.");
+
+    let parsed: any;
     try {
-      const parsed = JSON.parse(content);
-      subscriptions = parsed.subscriptions || (Array.isArray(parsed) ? parsed : []);
-      monthsCovered = parsed.monthsCovered || 1;
+      parsed = JSON.parse(text);
     } catch {
-      console.error('JSON parse failed:', content);
-      subscriptions = [];
+      console.error("JSON parse failed (first 500):", text.slice(0, 500));
+      return fail("PARSE", "The analysis service returned an unexpected result. Please try again.");
     }
 
-    const tokensUsed = chatJson.usage?.total_tokens || 0;
-    const modelUsed = chatJson.model || 'gpt-4o-mini';
+    if (parsed?.documentType === "other") {
+      return fail("NOT_A_STATEMENT", "This does not look like a bank or card statement.");
+    }
 
-    console.log(`Done: ${subscriptions.length} subscriptions | months: ${monthsCovered} | model: ${modelUsed} | tokens: ${tokensUsed}`);
+    const subscriptions = processCharges(parsed?.charges);
+    const monthsCovered = Number.isFinite(parsed?.monthsCovered)
+      ? Math.max(0, Math.trunc(parsed.monthsCovered))
+      : estimateMonths(subscriptions);
+    const tokensUsed = json?.usage?.total_tokens ?? 0;
+    const rawCount = Array.isArray(parsed?.charges) ? parsed.charges.length : 0;
 
-    return jsonResponse(200, {
+    console.log(`Done: ${rawCount} raw → ${subscriptions.length} grouped | months: ${monthsCovered} | model: ${json?.model || MODEL} | tokens: ${tokensUsed}`);
+
+    return ok({
       subscriptions,
-      tokensUsed,
       monthsCovered,
-      model: modelUsed,
+      documentType: parsed?.documentType ?? "bank_statement",
+      tokensUsed,
+      model: json?.model || MODEL,
     });
-
   } catch (error: any) {
-    console.error('Edge function error:', error.message, error.stack);
-    return jsonResponse(500, { error: 'An unexpected error occurred while analyzing your document. Please try again.' });
+    console.error("Edge function error:", error?.message, error?.stack);
+    return fail("UPSTREAM_ERROR", "An unexpected error occurred while analyzing your document. Please try again.");
   }
 });

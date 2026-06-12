@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components';
 import { borderRadius, useTheme, type ThemeColors } from '../theme';
 import { useSettingsStore, usePlanStore, useSubscriptionStore, useAccountStore } from '../state';
-import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signOut as authSignOut, identifyUser, logoutUser } from '../services';
+import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signInWithApple, isAppleSignInAvailable, deleteAccount, signOut as authSignOut, identifyUser, logoutUser, type AuthResult } from '../services';
 import { t } from '../i18n';
 
 
@@ -84,6 +84,34 @@ export function SettingsScreen({ navigation }: any) {
     );
   };
 
+  // Shared sign-in for Google + Apple: links RevenueCat and stores the account.
+  const performSignIn = async (provider: 'google' | 'apple') => {
+    setIsSigningIn(true);
+    try {
+      const result: AuthResult =
+        provider === 'apple' ? await signInWithApple() : await signInWithGoogle();
+      if (result.success && result.user) {
+        await identifyUser(result.user.id);
+        useAccountStore.getState().setAccount({
+          id: result.user.id,
+          email: result.user.email,
+          displayName: result.user.displayName,
+          avatarUrl: result.user.avatarUrl,
+          connectedAt: new Date().toISOString(),
+        });
+        Alert.alert(
+          t('settings.signedIn'),
+          t('settings.welcome', { name: result.user.displayName || result.user.email })
+        );
+      } else if (result.error && result.error !== 'User cancelled') {
+        Alert.alert(t('settings.signInFailed'), result.error);
+      }
+    } finally {
+      setIsSigningIn(false);
+    }
+  };
+
+  // Disconnect: revoke access + stop sync, but KEEP local data.
   const handleDisconnectAccount = () => {
     Alert.alert(
       t('settings.disconnectAlertTitle'),
@@ -93,14 +121,18 @@ export function SettingsScreen({ navigation }: any) {
         {
           text: t('settings.disconnectAlertButton'),
           style: 'destructive',
-          onPress: () => {
-            // TODO: Implement disconnect
+          onPress: async () => {
+            await authSignOut();
+            await logoutUser();
+            useAccountStore.getState().clearAccount();
+            Alert.alert(t('settings.disconnected'), t('settings.disconnectedMessage'));
           },
         },
       ]
     );
   };
 
+  // Delete account: server-side deletion (if signed in) + wipe all local data.
   const handleDeleteAccount = () => {
     Alert.alert(
       t('settings.deleteAlertTitle'),
@@ -111,13 +143,17 @@ export function SettingsScreen({ navigation }: any) {
           text: t('settings.deleteAlertButton'),
           style: 'destructive',
           onPress: async () => {
-            // Clear all stores
+            // 1. Delete server-side account + derived data (no-op if not signed in).
+            const result = await deleteAccount();
+            if (!result.success) {
+              Alert.alert(t('settings.signInFailed'), result.error || t('settings.deleteFailed'));
+              return;
+            }
+            // 2. Wipe local data + auth state.
             subscriptionStore.setSubscriptions([]);
             resetToDefaults();
-            // Clear auth account if signed in
-            if (account) {
-              useAccountStore.getState().clearAccount();
-            }
+            await logoutUser();
+            useAccountStore.getState().clearAccount();
             Alert.alert(t('settings.accountDeleted'), t('settings.accountDeletedMessage'));
           },
         },
@@ -226,14 +262,17 @@ export function SettingsScreen({ navigation }: any) {
         {/* Cloud Sync Section */}
         <Text style={styles.sectionTitle}>{t('settings.cloudSync')}</Text>
         <View style={styles.card}>
-          {/* Google Account Sign-In/Sign-Out */}
-          <SettingsRow
-            icon={isSignedIn() ? 'person-circle' : 'logo-google'}
-            iconColor={isSignedIn() ? colors.emerald : colors.primary}
-            title={isSignedIn() ? (account?.displayName || account?.email || t('settings.signedIn')) : t('settings.signInGoogle')}
-            subtitle={isSignedIn() ? account?.email : t('settings.signInSubtitle')}
-            rightElement={
-              isSignedIn() ? (
+          {/* Account — sign-in is offered ONLY to Pro users (cloud sync is a Pro
+              feature). A signed-in account is always shown so it can be managed
+              and signed out (e.g. after a downgrade). Free users see only the
+              "Sync to Cloud → PRO" row below. */}
+          {isSignedIn() ? (
+            <SettingsRow
+              icon="person-circle"
+              iconColor={colors.emerald}
+              title={account?.displayName || account?.email || t('settings.signedIn')}
+              subtitle={account?.email}
+              rightElement={
                 <TouchableOpacity
                   onPress={async () => {
                     await authSignOut();
@@ -244,63 +283,75 @@ export function SettingsScreen({ navigation }: any) {
                 >
                   <Text style={{ color: colors.red, fontSize: 13, fontWeight: '500' }}>{t('common.signOut')}</Text>
                 </TouchableOpacity>
-              ) : isSigningIn ? (
-                <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('common.signingIn')}</Text>
-              ) : undefined
-            }
-            onPress={isSignedIn() ? undefined : async () => {
-              setIsSigningIn(true);
-              try {
-                const result = await signInWithGoogle();
-                if (result.success && result.user) {
-                  // Link RevenueCat purchases to authenticated user
-                  await identifyUser(result.user.id);
-                  useAccountStore.getState().setAccount({
-                    id: result.user.id,
-                    email: result.user.email,
-                    displayName: result.user.displayName,
-                    avatarUrl: result.user.avatarUrl,
-                    connectedAt: new Date().toISOString(),
-                  });
-                  Alert.alert(t('settings.signedIn'), t('settings.welcome', { name: result.user.displayName || result.user.email }));
-                } else if (result.error && result.error !== 'User cancelled') {
-                  Alert.alert('Sign-In Failed', result.error);
-                }
-              } finally {
-                setIsSigningIn(false);
               }
-            }}
-          />
+            />
+          ) : isPro() ? (
+            <>
+              <SettingsRow
+                icon="logo-google"
+                iconColor={colors.primary}
+                title={t('settings.signInGoogle')}
+                subtitle={t('settings.signInSubtitle')}
+                rightElement={
+                  isSigningIn ? (
+                    <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('common.signingIn')}</Text>
+                  ) : undefined
+                }
+                onPress={() => performSignIn('google')}
+              />
+              {isAppleSignInAvailable() && (
+                <SettingsRow
+                  icon="logo-apple"
+                  iconColor={colors.text}
+                  title={t('settings.signInApple')}
+                  subtitle={t('settings.signInSubtitle')}
+                  rightElement={
+                    isSigningIn ? (
+                      <Text style={{ color: colors.textSecondary, fontSize: 13 }}>{t('common.signingIn')}</Text>
+                    ) : undefined
+                  }
+                  onPress={() => performSignIn('apple')}
+                />
+              )}
+            </>
+          ) : null}
+
           <SettingsRow
             icon="cloud-upload"
             iconColor={colors.primary}
             title={t('settings.syncToCloud')}
             subtitle={
-              isPro() 
-                ? (subscriptionStore.lastSyncedAt 
-                    ? t('settings.lastSynced', { date: new Date(subscriptionStore.lastSyncedAt).toLocaleString() })
-                    : t('settings.tapToSync'))
-                : t('settings.upgradeForSync')
+              !isPro()
+                ? t('settings.upgradeForSync')
+                : isSignedIn()
+                  ? (subscriptionStore.lastSyncedAt
+                      ? t('settings.lastSynced', { date: new Date(subscriptionStore.lastSyncedAt).toLocaleString() })
+                      : t('settings.tapToSync'))
+                  : t('settings.signInToSync')
             }
             rightElement={
               !isPro() ? (
                 <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
+                  <Text style={styles.proBadgeText}>PREMIUM</Text>
                 </View>
               ) : subscriptionStore.isSyncing ? (
                 <Text style={{ color: colors.textSecondary }}>{t('common.syncing')}</Text>
               ) : undefined
             }
             onPress={async () => {
-              if (isPro()) {
-                const success = await subscriptionStore.performFullSync();
-                if (success) {
-                  Alert.alert(t('settings.synced'), t('settings.syncedMessage'));
-                } else {
-                  Alert.alert(t('settings.syncFailed'), subscriptionStore.syncError || 'Unknown error');
-                }
-              } else {
+              if (!isPro()) {
                 navigation.navigate('Paywall');
+                return;
+              }
+              if (!isSignedIn()) {
+                Alert.alert(t('settings.cloudSync'), t('settings.signInToSync'));
+                return;
+              }
+              const success = await subscriptionStore.performFullSync();
+              if (success) {
+                Alert.alert(t('settings.synced'), t('settings.syncedMessage'));
+              } else {
+                Alert.alert(t('settings.syncFailed'), subscriptionStore.syncError || 'Unknown error');
               }
             }}
           />
@@ -317,7 +368,7 @@ export function SettingsScreen({ navigation }: any) {
             rightElement={
               !isPro() ? (
                 <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
+                  <Text style={styles.proBadgeText}>PREMIUM</Text>
                 </View>
               ) : undefined
             }
@@ -342,7 +393,7 @@ export function SettingsScreen({ navigation }: any) {
             rightElement={
               !isPro() ? (
                 <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
+                  <Text style={styles.proBadgeText}>PREMIUM</Text>
                 </View>
               ) : undefined
             }
@@ -366,7 +417,7 @@ export function SettingsScreen({ navigation }: any) {
             rightElement={
               !isPro() ? (
                 <View style={styles.proBadge}>
-                  <Text style={styles.proBadgeText}>PRO</Text>
+                  <Text style={styles.proBadgeText}>PREMIUM</Text>
                 </View>
               ) : undefined
             }
@@ -618,7 +669,7 @@ export function SettingsScreen({ navigation }: any) {
                   </Text>
                   {(theme === 'light' || theme === 'system') && !canUseLight && (
                     <View style={styles.proBadge}>
-                      <Text style={styles.proBadgeText}>PRO</Text>
+                      <Text style={styles.proBadgeText}>PREMIUM</Text>
                     </View>
                   )}
                 </View>

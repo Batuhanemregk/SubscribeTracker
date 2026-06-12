@@ -25,8 +25,14 @@ try {
 const REVENUECAT_API_KEY_IOS = process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY || '';
 const REVENUECAT_API_KEY_ANDROID = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY || '';
 
-// Entitlement ID - matches what you set in RevenueCat dashboard
-const PREMIUM_ENTITLEMENT_ID = 'premium';
+// Entitlement identifier — MUST equal the entitlement's *Identifier* (lookup_key)
+// in the RevenueCat dashboard, which is what the SDK keys `entitlements.active`
+// by (NOT the display name). The Finify project's entitlement identifier is
+// "SubscribeTracker Pro" (display name "Finify Premium"). The MCP update API can
+// only change the display name, not the identifier, so the code matches the
+// identifier here. To clean this up, rename the entitlement Identifier to
+// "premium" in the dashboard, then set this back to 'premium'.
+const PREMIUM_ENTITLEMENT_ID = 'SubscribeTracker Pro';
 
 // Product identifiers - must match App Store Connect
 export const PRODUCT_IDS = {
@@ -94,16 +100,22 @@ export async function getCustomerInfo(): Promise<any | null> {
 }
 
 /**
- * Check if user has Pro entitlement
+ * Get Pro entitlement status as a TRI-STATE:
+ *   true  = confirmed Pro
+ *   false = confirmed NOT Pro
+ *   null  = could not determine (offline, timeout, backend error, RC unavailable)
+ *
+ * Callers MUST NOT downgrade a user on `null` — that conflates "unknown" with
+ * "not entitled" and would strip a paying user of Pro on a transient failure.
  */
-export async function checkProStatus(): Promise<boolean> {
-  if (!purchasesAvailable || !Purchases) return false;
+export async function getProStatus(): Promise<boolean | null> {
+  if (!purchasesAvailable || !Purchases) return null;
   try {
     const customerInfo = await Purchases.getCustomerInfo();
     return customerInfo.entitlements.active[PREMIUM_ENTITLEMENT_ID] !== undefined;
   } catch (error) {
     console.error('Failed to check Pro status:', error);
-    return false;
+    return null;
   }
 }
 
@@ -269,6 +281,32 @@ export async function logoutUser(): Promise<void> {
     console.log('User logged out from RevenueCat');
   } catch (error) {
     console.error('Failed to logout user:', error);
+  }
+}
+
+/**
+ * Listen for RevenueCat customer-info changes (purchase completes, subscription
+ * expires, restore on another device) and report the resulting Pro status.
+ * Returns a function to remove the listener. No-ops if RevenueCat is unavailable.
+ */
+export function addProStatusListener(onChange: (isPro: boolean) => void): () => void {
+  if (!purchasesAvailable || !Purchases) return () => {};
+  try {
+    const handler = (customerInfo: any) => {
+      const isPro = customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID] !== undefined;
+      onChange(isPro);
+    };
+    Purchases.addCustomerInfoUpdateListener(handler);
+    return () => {
+      try {
+        Purchases.removeCustomerInfoUpdateListener(handler);
+      } catch {
+        /* ignore */
+      }
+    };
+  } catch (error) {
+    console.error('Failed to add customer info listener:', error);
+    return () => {};
   }
 }
 

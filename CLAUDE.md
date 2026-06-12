@@ -21,7 +21,8 @@ Finify is a privacy-first subscription-tracking mobile app (iOS + Android) built
   - `src/lib/supabase.ts` — Supabase client; `src/lib/database.types.ts` — generated DB types
   - `src/theme/` — dark-first design system (colors, spacing, typography, shadows)
   - `src/config/index.ts` — Google OAuth, AdMob IDs, app identity
-- `supabase/` — `schema.sql` + `functions/` (Edge Functions: extract-subscriptions, extract-bank-statement, exchange-rates)
+- `supabase/` — `schema.sql` + `functions/` (Edge Functions: extract-subscriptions, extract-bank-statement, exchange-rates, delete-account)
+  - `extract-bank-statement` uses the OpenAI **Responses API** with strict Structured Outputs; model is env-driven (`OPENAI_VISION_MODEL`, default `gpt-5-mini`). All confidence-gating / dedup / grouping / retry live server-side in its `lib.ts` (Deno-tested); it returns a `{ ok, ... }` envelope. Auth uses Google (browser OAuth) + Apple (`expo-apple-authentication` + `signInWithIdToken`); `delete-account` does real server-side account deletion with the service-role key.
 
 ## Commands (run from apps/mobile)
 - Install: `npm install`
@@ -31,7 +32,7 @@ Finify is a privacy-first subscription-tracking mobile app (iOS + Android) built
 - Regenerate Supabase types: `npx supabase gen types typescript --project-id wsymhdlrrftewkwyzzlf > src/lib/database.types.ts`
 - Deploy an Edge Function: `npx supabase functions deploy <name>`
 - Dev build (RevenueCat needs native code): `eas build --platform ios --profile development`
-- Release to TestFlight: `eas build --platform ios --profile production` then `eas submit --platform ios --latest`
+- Release to TestFlight (one shot): `eas login` then `eas build --platform ios --profile production --auto-submit` (certs + ASC API key are stored on EAS). Export compliance is declared via `ITSAppUsesNonExemptEncryption: false` in `app.json` so builds don't stall in "Missing Compliance". The EAS project has no GitHub repo connected, so trigger builds from the CLI (not the expo MCP `build_run`).
 
 ## Conventions
 - TypeScript strict; functional components + hooks only (no classes); 2-space indent.

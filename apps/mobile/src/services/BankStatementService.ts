@@ -1,25 +1,29 @@
 /**
  * Bank Statement Scanning Service
- * 
- * Extracts subscription information from bank statements using GPT-4o-mini.
+ *
+ * Extracts subscription information from bank/card statements via the
+ * `extract-bank-statement` Edge Function (OpenAI Responses API, gpt-5-mini).
  * Pro-only feature.
- * 
+ *
  * Flow:
- * 1. User uploads PDF/image of bank statement
- * 2. Validate file (type, size, magic bytes)
- * 3. Check usage limits (5/day, 30/month)
- * 4. Read file as base64
- * 5. Send to Supabase Edge Function → GPT-4o-mini (file for PDF, vision for images)
- * 6. Post-process: dedup recurring, detect new, guard existing
- * 7. Return extracted subscriptions for user review
- * 
- * Privacy: Raw bank statement content is NOT stored. Only extracted subscription
- * records are kept. Base64 is sent directly to Edge Function and discarded.
+ * 1. User uploads PDF/image of a statement
+ * 2. Check usage limits (rate limiting)
+ * 3. Read file as base64 + validate (type, size, magic bytes)
+ * 4. Send to the Edge Function, which validates / confidence-gates / groups
+ *    subscriptions SERVER-SIDE and returns a { ok, ... } envelope
+ * 5. Map any error code to a localized message; return grouped subscriptions
+ *
+ * The server already deduplicates and confidence-gates, so this service does NOT
+ * filter by confidence anymore — it only does a thin sanity sanitization.
+ *
+ * Privacy: raw statement content is NOT stored. Base64 is sent to the Edge
+ * Function and discarded; only derived subscription fields are kept.
  */
 import * as DocumentPicker from 'expo-document-picker';
 import { File } from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
+import { t } from '../i18n';
 
 // ─── Usage Limits ─────────────────────────────────────────
 const SCAN_USAGE_KEY = 'bank_scan_usage';
@@ -32,25 +36,32 @@ const MAX_FILE_SIZE_MB = 10;
 const MIN_FILE_SIZE_KB = 5;
 
 // ─── Types ────────────────────────────────────────────────
+export type BillingCycle = 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+
+/**
+ * One subscription as grouped/deduped by the Edge Function. Fields below mirror
+ * the server `GroupedSubscription` contract.
+ */
 export interface ExtractedSubscription {
   name: string;
   amount: number;
   currency: string;
-  cycle: 'weekly' | 'monthly' | 'quarterly' | 'yearly';
+  cycle: BillingCycle;
   confidence: number; // 0-1
   merchantName?: string;
   lastChargeDate?: string;
-  // Enhanced fields
   occurrenceCount?: number;
   chargedDates?: string[];
-  isRecurring?: boolean;
-  potentialNew?: boolean;
+  /** false when the server could not confirm the cycle → UI asks user to verify. */
+  cycleInferred?: boolean;
 }
 
 export interface ExtractionResult {
   success: boolean;
   subscriptions: ExtractedSubscription[];
   error?: string;
+  /** i18n key for the error, so the UI can localize it. */
+  errorKey?: string;
   tokensUsed?: number;
   monthsCovered?: number;
 }
@@ -329,91 +340,108 @@ export async function readFileAsBase64(uri: string): Promise<string | null> {
 
 // ─── Extraction ───────────────────────────────────────────
 
+/** Map the Edge Function's errorCode to a localized i18n key. */
+const ERROR_CODE_KEYS: Record<string, string> = {
+  NOT_A_STATEMENT: 'bankScan.errors.notAStatement',
+  UNREADABLE: 'bankScan.errors.unreadable',
+  PARSE: 'bankScan.errors.serviceError',
+  RATE_LIMITED: 'bankScan.errors.rateLimited',
+  UPSTREAM_BUSY: 'bankScan.errors.serviceBusy',
+  UPSTREAM_ERROR: 'bankScan.errors.serviceError',
+  CONFIG: 'bankScan.errors.serviceError',
+  BAD_REQUEST: 'bankScan.errors.serviceError',
+};
+
+function serviceError(): ExtractionResult {
+  return {
+    success: false,
+    subscriptions: [],
+    error: t('bankScan.errors.serviceError'),
+    errorKey: 'bankScan.errors.serviceError',
+  };
+}
+
 /**
- * Extract subscriptions from bank statement using GPT-4o-mini
- * 
- * Now includes: file validation, usage limits, and enhanced extraction.
+ * Extract subscriptions from a bank/card statement.
+ *
+ * The Edge Function does all confidence gating, dedup and grouping, then returns
+ * a { ok, ... } envelope. This client only validates the file, maps errors to
+ * localized messages, and lightly sanitizes the grouped results.
  */
 export async function extractSubscriptionsFromStatement(
   fileUri: string,
   mimeType: string
 ): Promise<ExtractionResult> {
   try {
-    // Step 1: Check usage limits
+    // Step 1: Client-side rate limit
     const limits = await checkScanLimits();
     if (!limits.allowed) {
-      return { success: false, subscriptions: [], error: limits.error };
+      return { success: false, subscriptions: [], error: limits.error, errorKey: limits.errorKey };
     }
 
     // Step 2: Read file as base64
     const base64Content = await readFileAsBase64(fileUri);
-    if (!base64Content) {
-      return { success: false, subscriptions: [], error: 'Failed to read file' };
-    }
+    if (!base64Content) return serviceError();
 
-    // Step 3: Validate file
+    // Step 3: Validate file (type, size, magic bytes)
     const validation = validateFile(base64Content, mimeType);
     if (!validation.valid) {
-      return { success: false, subscriptions: [], error: validation.error };
+      return { success: false, subscriptions: [], error: validation.error, errorKey: validation.errorKey };
     }
 
-    // Step 4: Record the scan
-    await recordScan();
-
-    // Step 5: Call Supabase Edge Function
+    // Step 4: Call the Edge Function. We record the scan AFTER we know the
+    // outcome so transient failures don't burn the user's quota.
     const { data, error } = await supabase.functions.invoke('extract-bank-statement', {
-      body: {
-        fileBase64: base64Content,
-        mimeType,
-      },
+      body: { fileBase64: base64Content, mimeType },
     });
 
+    // Transport / platform failure (network, function crash, timeout)
     if (error) {
-      console.error('Edge function error:', error);
-      // Extract user-friendly error message from the Edge Function response if available
-      let errorMessage: string;
-      if (data?.error && typeof data.error === 'string') {
-        errorMessage = data.error;
-      } else if (error.message?.includes('non-2xx')) {
-        errorMessage = 'The analysis service is temporarily unavailable. Please try again later.';
-      } else {
-        errorMessage = error.message || 'Failed to analyze the document. Please try again.';
+      console.error('Edge function transport error:', error.message);
+      // A 504 means the Edge Function hit the ~150s gateway timeout — almost
+      // always a very large statement. Guide the user to a shorter period.
+      const status = (error as any)?.context?.status;
+      const message = String((error as any)?.message || '');
+      if (status === 504 || /timeout|timed out|504/i.test(message)) {
+        return {
+          success: false,
+          subscriptions: [],
+          error: t('bankScan.errors.tooLargeTimeout'),
+          errorKey: 'bankScan.errors.tooLargeTimeout',
+        };
       }
-      return {
-        success: false,
-        subscriptions: [],
-        error: errorMessage,
-      };
+      return serviceError();
+    }
+    if (!data || typeof data !== 'object') return serviceError();
+
+    // Business failure envelope
+    if (data.ok === false) {
+      const code = String(data.errorCode || 'UPSTREAM_ERROR');
+      const errorKey = ERROR_CODE_KEYS[code] ?? 'bankScan.errors.serviceError';
+      // A "busy" signal means OpenAI was overloaded — let the user retry for free.
+      if (code !== 'UPSTREAM_BUSY') await recordScan();
+      return { success: false, subscriptions: [], error: t(errorKey), errorKey };
     }
 
-    if (!data?.subscriptions || !Array.isArray(data.subscriptions)) {
-      return { 
-        success: false, 
-        subscriptions: [], 
-        error: 'Invalid response from extraction service' 
-      };
-    }
+    if (!Array.isArray(data.subscriptions)) return serviceError();
 
-    // Step 6: Validate and clean results
+    // Success — count this scan against the quota.
+    await recordScan();
+
+    // Thin sanitization only; the server already validated/gated/grouped.
     const subscriptions: ExtractedSubscription[] = data.subscriptions
-      .filter((s: any) => 
-        s.name && 
-        typeof s.amount === 'number' && 
-        s.amount > 0 &&
-        s.confidence >= 0.6  // Only return ≥ 0.60 confidence
-      )
+      .filter((s: any) => s && s.name && Number.isFinite(Number(s.amount)) && Number(s.amount) > 0)
       .map((s: any) => ({
         name: String(s.name),
         amount: Number(s.amount),
-        currency: String(s.currency || 'TRY'),
-        cycle: validateCycle(s.cycle),
-        confidence: Math.min(1, Math.max(0, Number(s.confidence))),
+        currency: String(s.currency || 'USD'),
+        cycle: coerceCycle(s.cycle),
+        confidence: Math.min(1, Math.max(0, Number(s.confidence) || 0)),
         merchantName: s.merchantName || undefined,
         lastChargeDate: s.lastChargeDate || undefined,
-        occurrenceCount: s.occurrenceCount || 1,
-        chargedDates: s.chargedDates || [],
-        isRecurring: s.isRecurring || false,
-        potentialNew: s.potentialNew || false,
+        occurrenceCount: Number(s.occurrenceCount) || 1,
+        chargedDates: Array.isArray(s.chargedDates) ? s.chargedDates : [],
+        cycleInferred: s.cycleInferred !== false,
       }));
 
     return {
@@ -423,17 +451,18 @@ export async function extractSubscriptionsFromStatement(
       monthsCovered: data.monthsCovered || 1,
     };
   } catch (error: any) {
-    console.error('Extraction error:', error);
-    return { success: false, subscriptions: [], error: error.message };
+    console.error('Extraction error:', error?.message);
+    return serviceError();
   }
 }
 
 // ─── Helpers ──────────────────────────────────────────────
 
-/**
- * Validate billing cycle value
- */
-function validateCycle(cycle: string): 'weekly' | 'monthly' | 'quarterly' | 'yearly' {
-  const valid = ['weekly', 'monthly', 'quarterly', 'yearly'];
-  return valid.includes(cycle) ? cycle as any : 'monthly';
+const VALID_CYCLES: BillingCycle[] = ['weekly', 'monthly', 'quarterly', 'yearly'];
+
+/** Trust the server's cycle enum, but guard against anything unexpected. */
+function coerceCycle(cycle: unknown): BillingCycle {
+  return typeof cycle === 'string' && (VALID_CYCLES as string[]).includes(cycle)
+    ? (cycle as BillingCycle)
+    : 'monthly';
 }

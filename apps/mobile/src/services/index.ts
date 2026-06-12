@@ -4,10 +4,14 @@
 
 export {
   signInWithGoogle,
+  signInWithApple,
+  isAppleSignInAvailable,
+  deleteAccount,
   signOut,
   getCurrentUser,
   isSignedIn,
   type AuthUser,
+  type AuthResult,
 } from './AuthService';
 
 export {
@@ -59,12 +63,13 @@ export {
   initPurchases,
   isPurchasesConfigured,
   getCustomerInfo,
-  checkProStatus,
+  getProStatus,
   getOfferings,
   purchasePackage,
   restorePurchases,
   identifyUser,
   logoutUser,
+  addProStatusListener,
   formatPackagePrice,
   getPackageType,
   PRODUCT_IDS,
