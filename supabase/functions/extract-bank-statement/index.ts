@@ -28,7 +28,7 @@ const MODEL = Deno.env.get("OPENAI_VISION_MODEL") || "gpt-5-mini";
 // take 90-150s and hit the Edge Function gateway timeout (504). "low" keeps
 // extraction accuracy while cutting latency well under the limit. Env-tunable;
 // drop to "minimal" if very large statements still time out.
-const REASONING_EFFORT = Deno.env.get("OPENAI_REASONING_EFFORT") || "minimal";
+const REASONING_EFFORT = Deno.env.get("OPENAI_REASONING_EFFORT") || "low";
 const IS_REASONING_MODEL = /^(gpt-5|o\d)/.test(MODEL);
 
 // Client caps files at 10MB; guard the base64 length defensively (~13MB of bytes).
