@@ -398,6 +398,18 @@ export async function extractSubscriptionsFromStatement(
     // Transport / platform failure (network, function crash, timeout)
     if (error) {
       console.error('Edge function transport error:', error.message);
+      // A 504 means the Edge Function hit the ~150s gateway timeout — almost
+      // always a very large statement. Guide the user to a shorter period.
+      const status = (error as any)?.context?.status;
+      const message = String((error as any)?.message || '');
+      if (status === 504 || /timeout|timed out|504/i.test(message)) {
+        return {
+          success: false,
+          subscriptions: [],
+          error: t('bankScan.errors.tooLargeTimeout'),
+          errorKey: 'bankScan.errors.tooLargeTimeout',
+        };
+      }
       return serviceError();
     }
     if (!data || typeof data !== 'object') return serviceError();
