@@ -32,14 +32,13 @@ import { t } from '../i18n';
 
 interface FeatureRowProps {
   icon: string;
-  iconColor: string;
   title: string;
   standardValue: string | boolean;
   proValue: string | boolean;
   index: number;
 }
 
-function FeatureRow({ icon, iconColor, title, standardValue, proValue, index }: FeatureRowProps) {
+function FeatureRow({ icon, title, standardValue, proValue, index }: FeatureRowProps) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const renderValue = (value: string | boolean, isPro: boolean) => {
@@ -57,8 +56,8 @@ function FeatureRow({ icon, iconColor, title, standardValue, proValue, index }: 
 
   return (
     <View style={styles.featureRow}>
-      <View style={[styles.featureIcon, { backgroundColor: `${iconColor}20` }]}>
-        <Ionicons name={icon as any} size={18} color={iconColor} />
+      <View style={styles.featureIcon}>
+        <Ionicons name={icon as any} size={18} color={colors.primary} />
       </View>
       <Text style={styles.featureTitle}>{title}</Text>
       <View style={styles.featureValues}>
@@ -79,13 +78,13 @@ export function PaywallScreen({ navigation, route }: any) {
   const fromOnboarding = route?.params?.fromOnboarding === true;
 
   const FEATURES = [
-    { icon: 'document-text', iconColor: colors.amber, title: t('paywall.features.bankScan'), standard: false, pro: true },
-    { icon: 'cloud', iconColor: colors.primary, title: t('paywall.features.cloudSync'), standard: false, pro: true },
-    { icon: 'download', iconColor: colors.emerald, title: t('paywall.features.dataExport'), standard: false, pro: 'CSV/PDF' },
-    { icon: 'color-palette', iconColor: colors.pink, title: t('paywall.features.biometricLock'), standard: false, pro: true },
-    { icon: 'lock-closed', iconColor: colors.primary, title: t('paywall.features.biometricLock'), standard: false, pro: true },
-    { icon: 'infinite', iconColor: colors.cyan, title: t('paywall.features.unlimitedSubs'), standard: '10', pro: t('common.upgrade') },
-    { icon: 'remove-circle', iconColor: colors.red, title: t('paywall.features.noAds'), standard: false, pro: true },
+    { icon: 'document-text', title: t('paywall.features.bankScan'), standard: false, pro: true },
+    { icon: 'cloud', title: t('paywall.features.cloudSync'), standard: false, pro: true },
+    { icon: 'download', title: t('paywall.features.dataExport'), standard: false, pro: 'CSV/PDF' },
+    { icon: 'pricetags', title: t('paywall.features.customCategories'), standard: false, pro: true },
+    { icon: 'lock-closed', title: t('paywall.features.biometricLock'), standard: false, pro: true },
+    { icon: 'infinite', title: t('paywall.features.unlimitedSubs'), standard: '10', pro: t('common.upgrade') },
+    { icon: 'remove-circle', title: t('paywall.features.noAds'), standard: false, pro: true },
   ];
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [isLoading, setIsLoading] = useState(false);
@@ -323,7 +322,6 @@ export function PaywallScreen({ navigation, route }: any) {
           <FeatureRow
             key={feature.title}
             icon={feature.icon}
-            iconColor={feature.iconColor}
             title={feature.title}
             standardValue={feature.standard}
             proValue={feature.pro}
@@ -529,6 +527,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
+    backgroundColor: `${colors.primary}14`,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
