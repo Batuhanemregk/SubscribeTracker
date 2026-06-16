@@ -357,11 +357,11 @@ export function PaywallScreen({ navigation, route }: any) {
         </Text>
 
         <View style={styles.legalLinks}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
             <Text style={styles.legalLink}>{t('settings.privacyPolicy')}</Text>
           </TouchableOpacity>
           <Text style={styles.legalDivider}>•</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('TermsOfService')}>
             <Text style={styles.legalLink}>{t('settings.termsOfService')}</Text>
           </TouchableOpacity>
         </View>

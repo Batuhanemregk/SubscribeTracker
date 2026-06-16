@@ -48,11 +48,11 @@ export default function PrivacyPolicyScreen() {
         <Text style={styles.bullet}>• To display and manage your subscription tracking</Text>
         <Text style={styles.bullet}>• To send billing reminders (with your permission)</Text>
         <Text style={styles.bullet}>• To provide spending insights and budget tracking</Text>
-        <Text style={styles.bullet}>• To sync data across devices (Pro feature, optional)</Text>
+        <Text style={styles.bullet}>• To sync data across devices (Premium feature, optional)</Text>
 
         <Text style={styles.heading}>4. Data Storage and Security</Text>
         <Text style={styles.paragraph}>
-          Your data is primarily stored locally on your device. If you enable cloud sync (Pro feature), 
+          Your data is primarily stored locally on your device. If you enable cloud sync (Premium feature),
           data is encrypted and stored securely using Supabase with row-level security.
           OAuth tokens are stored using platform-secure storage (iOS Keychain / Android Keystore).
           We never store secrets in our codebase.

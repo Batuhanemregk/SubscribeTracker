@@ -7,6 +7,21 @@
 
 ## 🔴 HIGH PRIORITY
 
+### App Store Go-Live — Pre-Flight Findings (v1.0 first submission)
+
+- **Date:** 2026-06-17
+- **Area:** Release / iOS / App Store Connect
+- **Current State:** Ran an ASC pre-flight (code + RevenueCat MCP + URL checks) before first App Review submission. **3 blockers** found:
+  1. **Privacy Policy URL not hosted (BLOCKING, Guideline 5.1.1):** `https://finify.app/privacy` returns a blank SPA shell (114 bytes; every path 200s with the same empty body). ASC App Information requires a public HTTPS privacy policy; reviewers would see a blank page. The in-app `PrivacyPolicyScreen` / `TermsOfServiceScreen` have real content (not enough — ASC needs the URL too). Support URL (`finify.app/support`) is also blank.
+  2. **Subscriptions must be attached to v1.0 + "Missing Metadata" cleared:** both `finify_premium_monthly` / `finify_premium_yearly` must be "Ready to Submit" AND selected on the version page (first-subscription rule; clears once v1.0 + subs go to review together).
+  3. **iPad screenshots were required:** `app.json ios.supportsTablet` was `true` → ASC demanded iPad Pro 12.9" shots. **FIXED in repo** → set to `false` (iPhone-only). ⚠️ Only takes effect in a **new build**; TestFlight **#23 was built with `supportsTablet:true`**, so submitting #23 as-is would STILL require iPad screenshots. Must rebuild (#24) before submitting, or provide iPad shots for #23.
+- **Fixes applied this session (typecheck green):** (a) `app.json` `supportsTablet:false`; (b) wired the non-functional Paywall legal links — `PaywallScreen.tsx:360/364` `TouchableOpacity` now `onPress`-navigate to `PrivacyPolicy` / `TermsOfService` (were dead, no handler); (c) `PrivacyPolicyScreen` residual "Pro feature" → "Premium feature" (Pro→Premium rebrand had missed 2 lines).
+- **Verified OK (no action):** export compliance declared; Restore Purchases implemented+wired; subscription renewal/terms disclosure present in paywall; no alt-payment bypass; **no prod trial mismatch** (trial is `__DEV__`-only, no ASC intro offer — consistent); premium gating uses the correct entitlement key `'SubscribeTracker Pro'` (matches RC); paywall uses `offerings.current` + `purchasePackage`; RC current offering `premium` set with both packages + iOS products + entitlement attached. RC note: App Store monthly product `duration` is `null` (metadata not synced — ASC sub still Missing Metadata + no ASC API key); RC `app_store_connect_api_key_configured:false` (see Premium/IAP item).
+- **Why It Matters:** These are the exact gates between "TestFlight working" and "live on the App Store." Blocker #1 was not previously tracked and will hard-reject the submission.
+- **Next Action:** (1) Host real Privacy Policy + Terms + Support pages at `finify.app/*` (content already exists in repo — convert the two screens to static HTML); (2) rebuild production (`supportsTablet:false`) → submit v1.0 with both subs attached + Review Notes explaining sandbox/premium access; (3) manual ASC: iPhone screenshots showing real app usage, App Privacy labels matching (AdMob/Google/Supabase), age rating, category, pricing.
+
+---
+
 ### Startup Black-Screen Fix (App.tsx readiness gate)
 
 - **Date:** 2026-06-06
