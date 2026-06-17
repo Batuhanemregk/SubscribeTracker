@@ -209,7 +209,12 @@
     "addToSeeInsights": "Harcama analizlerini görmek için abonelik ekleyin",
     "averagePerSub": "Abonelik Başına Ortalama",
     "mostExpensive": "En Pahalı",
-    "cheapest": "En Ucuz"
+    "cheapest": "En Ucuz",
+    "topSpenders": "En Çok Harcayanlar",
+    "next30Days": "Önümüzdeki 30 Gün",
+    "perDay": "/gün",
+    "possibleOverlaps": "Olası Örtüşmeler",
+    "overlapHint": "Yinelenen kapsam için gözden geçir"
   },
   "budget": {
     "title": "Bütçe",

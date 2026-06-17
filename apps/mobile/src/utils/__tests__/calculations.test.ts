@@ -13,6 +13,8 @@ import {
   advanceToNextBillingDate,
   addBillingCycles,
   getSubscriptionBillingDatesInMonth,
+  getTopSubscriptions,
+  getSubscriptionOverlaps,
 } from '../calculations';
 
 // ---------------------------------------------------------------------------
@@ -540,5 +542,67 @@ describe('getSubscriptionBillingDatesInMonth', () => {
   it('returns nothing for inactive subscriptions', () => {
     const sub = makeSub({ cycle: 'monthly', nextBillingDate: '2026-01-31', status: 'cancelled' });
     expect(getSubscriptionBillingDatesInMonth(sub, 2026, 5)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getTopSubscriptions
+// ---------------------------------------------------------------------------
+
+describe('getTopSubscriptions', () => {
+  it('ranks active subs by monthly-equivalent cost and limits the count', () => {
+    const subs: Subscription[] = [
+      makeSub({ id: '1', amount: 120, cycle: 'yearly' }),  // 10/mo
+      makeSub({ id: '2', amount: 15, cycle: 'monthly' }),  // 15/mo
+      makeSub({ id: '3', amount: 5, cycle: 'monthly' }),   // 5/mo
+      makeSub({ id: '4', amount: 30, cycle: 'monthly', status: 'cancelled' }),
+    ];
+    const top = getTopSubscriptions(subs, 2);
+    expect(top).toHaveLength(2);
+    expect(top[0].subscription.id).toBe('2');
+    expect(top[0].monthlyAmount).toBeCloseTo(15, 2);
+    expect(top[1].subscription.id).toBe('1');
+    expect(top[1].monthlyAmount).toBeCloseTo(10, 2);
+  });
+
+  it('excludes inactive subscriptions', () => {
+    const subs: Subscription[] = [
+      makeSub({ id: '1', amount: 10, cycle: 'monthly', status: 'paused' }),
+      makeSub({ id: '2', amount: 20, cycle: 'monthly', status: 'cancelled' }),
+    ];
+    expect(getTopSubscriptions(subs)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getSubscriptionOverlaps
+// ---------------------------------------------------------------------------
+
+describe('getSubscriptionOverlaps', () => {
+  it('flags categories with 2+ active subscriptions, sorted by count', () => {
+    const subs: Subscription[] = [
+      makeSub({ id: '1', amount: 10, cycle: 'monthly', category: 'Entertainment' }),
+      makeSub({ id: '2', amount: 12, cycle: 'monthly', category: 'Entertainment' }),
+      makeSub({ id: '3', amount: 8, cycle: 'monthly', category: 'Entertainment' }),
+      makeSub({ id: '4', amount: 5, cycle: 'monthly', category: 'Music' }),
+      makeSub({ id: '5', amount: 6, cycle: 'monthly', category: 'Music' }),
+      makeSub({ id: '6', amount: 9, cycle: 'monthly', category: 'Productivity' }),
+    ];
+    const overlaps = getSubscriptionOverlaps(subs);
+    expect(overlaps).toHaveLength(2);
+    expect(overlaps[0].category).toBe('Entertainment');
+    expect(overlaps[0].count).toBe(3);
+    expect(overlaps[0].monthlyTotal).toBeCloseTo(30, 2);
+    expect(overlaps[1].category).toBe('Music');
+    expect(overlaps[1].count).toBe(2);
+  });
+
+  it('returns empty when no category has 2+ active subs', () => {
+    const subs: Subscription[] = [
+      makeSub({ id: '1', category: 'A', status: 'active' }),
+      makeSub({ id: '2', category: 'B', status: 'active' }),
+      makeSub({ id: '3', category: 'A', status: 'cancelled' }),
+    ];
+    expect(getSubscriptionOverlaps(subs)).toEqual([]);
   });
 });

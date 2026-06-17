@@ -209,7 +209,12 @@
     "addToSeeInsights": "Add subscriptions to see spending analytics",
     "averagePerSub": "Average Per Subscription",
     "mostExpensive": "Most Expensive",
-    "cheapest": "Cheapest"
+    "cheapest": "Cheapest",
+    "topSpenders": "Top Spenders",
+    "next30Days": "Next 30 Days",
+    "perDay": "/day",
+    "possibleOverlaps": "Possible Overlaps",
+    "overlapHint": "Review for duplicate coverage"
   },
   "budget": {
     "title": "Budget",

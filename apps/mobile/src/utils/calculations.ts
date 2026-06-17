@@ -335,6 +335,45 @@ export function calculatePotentialSavings(subscriptions: Subscription[]): {
 }
 
 /**
+ * Rank active subscriptions by their monthly-equivalent cost (highest first)
+ * and return the top `limit`. Lets the Insights screen surface the biggest
+ * spenders and derive each one's share of the monthly total. Like
+ * getSpendingByCategory, this sums raw amounts and does not convert currencies.
+ */
+export function getTopSubscriptions(
+  subscriptions: Subscription[],
+  limit: number = 5
+): { subscription: Subscription; monthlyAmount: number }[] {
+  return subscriptions
+    .filter(s => s.status === 'active')
+    .map(s => ({ subscription: s, monthlyAmount: toMonthlyAmount(s.amount, s.cycle) }))
+    .sort((a, b) => b.monthlyAmount - a.monthlyAmount)
+    .slice(0, limit);
+}
+
+/**
+ * Detect categories where the user has 2+ active subscriptions — a signal of
+ * possible overlap (e.g. several streaming services). Sorted by count, then
+ * monthly total, descending, so the most overlap-prone category surfaces first.
+ */
+export function getSubscriptionOverlaps(
+  subscriptions: Subscription[]
+): { category: string; count: number; monthlyTotal: number }[] {
+  const byCategory = new Map<string, { count: number; monthlyTotal: number }>();
+  for (const s of subscriptions) {
+    if (s.status !== 'active') continue;
+    const entry = byCategory.get(s.category) || { count: 0, monthlyTotal: 0 };
+    entry.count += 1;
+    entry.monthlyTotal += toMonthlyAmount(s.amount, s.cycle);
+    byCategory.set(s.category, entry);
+  }
+  return Array.from(byCategory.entries())
+    .filter(([, v]) => v.count >= 2)
+    .map(([category, v]) => ({ category, count: v.count, monthlyTotal: v.monthlyTotal }))
+    .sort((a, b) => b.count - a.count || b.monthlyTotal - a.monthlyTotal);
+}
+
+/**
  * Get billing cycle breakdown
  */
 export function getBillingCycleBreakdown(subscriptions: Subscription[]): {
