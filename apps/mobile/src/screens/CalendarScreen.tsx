@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header, GradientStatCard } from '../components';
 import { useTheme, borderRadius, type ThemeColors } from '../theme';
 import { useSubscriptionStore, useSettingsStore, useCurrencyStore } from '../state';
-import { getUpcomingPayments, getDaysUntilBilling, getMonthSubscriptionMap, formatCurrency, getCurrencySymbol } from '../utils';
+import { getUpcomingPayments, getDaysUntilBilling, getMonthSubscriptionMap, formatCurrency, getCurrencySymbol, advanceToNextBillingDate } from '../utils';
 import type { Subscription } from '../types';
 import { t, getLocale } from '../i18n';
 
@@ -139,6 +139,9 @@ function PaymentItem({ sub, index }: { sub: Subscription; index: number }) {
   const { app } = useSettingsStore();
   const currency = app.currency;
   const daysUntil = getDaysUntilBilling(sub.nextBillingDate, sub.cycle);
+  // Show the projected NEXT billing date (advanced past any stale stored date)
+  // so it matches the "due in N days" label below it.
+  const nextDate = advanceToNextBillingDate(sub.nextBillingDate, sub.cycle);
 
   return (
     <View style={styles.paymentItem}>
@@ -155,7 +158,7 @@ function PaymentItem({ sub, index }: { sub: Subscription; index: number }) {
       <View style={styles.paymentInfo}>
         <Text style={styles.paymentName}>{sub.name}</Text>
         <Text style={styles.paymentDate}>
-          {new Date(sub.nextBillingDate).toLocaleDateString(getLocale() === 'tr' ? 'tr-TR' : 'en-US', {
+          {nextDate.toLocaleDateString(getLocale() === 'tr' ? 'tr-TR' : 'en-US', {
             month: 'short',
             day: 'numeric',
           })}
