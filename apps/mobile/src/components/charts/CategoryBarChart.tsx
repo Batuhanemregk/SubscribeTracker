@@ -6,6 +6,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
+import { DonutChart } from '../DonutChart';
 import { useTheme, borderRadius, type ThemeColors } from '../../theme';
 import { useSettingsStore } from '../../state';
 import { getCurrencySymbol } from '../../utils';
@@ -58,7 +59,12 @@ export function CategoryBarChart({ data, title }: CategoryBarChartProps) {
         <Ionicons name="pie-chart" size={18} color={colors.primary} />
         <Text style={styles.title}>{title || t('insights.spendingByCategory')}</Text>
       </View>
-      
+
+      {/* Proportional share (complements the absolute-value bars below) */}
+      <View style={styles.donutWrap}>
+        <DonutChart data={data.slice(0, 5)} size={120} />
+      </View>
+
       <BarChart
         data={barData}
         width={chartWidth}
@@ -110,6 +116,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
+  },
+  donutWrap: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
   emptyState: {
     height: 150,

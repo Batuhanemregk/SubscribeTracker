@@ -28,7 +28,7 @@ export function DonutChart({ data, size = 100 }: DonutChartProps) {
         
         return (
           <Circle
-            key={item.category}
+            key={item.name}
             cx={size / 2}
             cy={size / 2}
             r={radius}

@@ -99,15 +99,43 @@ export function InsightsScreen() {
 
         {/* Quick insight stats */}
         <View style={styles.quickRow}>
-          <View style={styles.quickTile}>
-            <Text style={styles.quickValue} numberOfLines={1}>{formatCurrency(avgPerSub, currency)}</Text>
+          <View style={[styles.quickTile, { borderLeftColor: colors.emerald }]}>
+            <View style={styles.quickIconRow}>
+              <Ionicons name="calculator-outline" size={15} color={colors.emerald} />
+              <Text style={styles.quickValue} numberOfLines={1}>{formatCurrency(avgPerSub, currency)}</Text>
+            </View>
             <Text style={styles.quickLabel}>{t('insights.averagePerSub')}</Text>
           </View>
-          <View style={styles.quickTile}>
-            <Text style={styles.quickValue} numberOfLines={1}>{formatCurrency(next30Total, currency)}</Text>
+          <View style={[styles.quickTile, { borderLeftColor: colors.amber }]}>
+            <View style={styles.quickIconRow}>
+              <Ionicons name="time-outline" size={15} color={colors.amber} />
+              <Text style={styles.quickValue} numberOfLines={1}>{formatCurrency(next30Total, currency)}</Text>
+            </View>
             <Text style={styles.quickLabel}>{t('insights.next30Days')}</Text>
           </View>
         </View>
+
+        {/* Most expensive subscription highlight */}
+        {topSpenders.length > 0 && (
+          <View style={styles.highlightCard}>
+            <View style={[styles.highlightIcon, { backgroundColor: `${colors.amber}20` }]}>
+              <Ionicons name="flame" size={20} color={colors.amber} />
+            </View>
+            <View style={styles.highlightInfo}>
+              <Text style={styles.highlightLabel}>{t('insights.mostExpensive')}</Text>
+              <Text style={styles.highlightName} numberOfLines={1}>{topSpenders[0].subscription.name}</Text>
+            </View>
+            <Text style={styles.highlightAmount}>
+              {formatCurrency(
+                toMonthlyAmount(
+                  convert(topSpenders[0].subscription.amount, topSpenders[0].subscription.currency || 'TRY', currency),
+                  topSpenders[0].subscription.cycle
+                ),
+                currency
+              )}{t('common.perMonth')}
+            </Text>
+          </View>
+        )}
 
         {/* Spending by Category Chart */}
         <CategoryBarChart data={categoryData} />
@@ -261,6 +289,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: colors.border,
+    borderLeftWidth: 3,
+  },
+  quickIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   quickValue: {
     fontSize: 18,
@@ -271,6 +305,42 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 12,
     color: colors.textMuted,
     marginTop: 4,
+  },
+  highlightCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.bgCard,
+    borderRadius: borderRadius['2xl'],
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  highlightIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  highlightInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  highlightLabel: {
+    fontSize: 12,
+    color: colors.textMuted,
+  },
+  highlightName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 2,
+  },
+  highlightAmount: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.amber,
   },
   card: {
     backgroundColor: colors.bgCard,
