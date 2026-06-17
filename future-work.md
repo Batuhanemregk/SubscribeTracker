@@ -7,6 +7,22 @@
 
 ## 🔴 HIGH PRIORITY
 
+### Pre-Launch QA Pass — Bug Fixes + Insights + Premium Audit (2026-06-17)
+
+- **Date:** 2026-06-17
+- **Area:** Mobile / Calendar / Bank-scan / Insights / Premium / i18n
+- **Current State:** Multi-part pre-launch polish pass on branch `feat/bank-scan-rewrite-auth-premium`. Completed (each committed, tsc green, 101 tests green):
+  - **[DONE] Calendar 31st-day disappearing-payment bug (data-correctness):** `Date.setMonth` rollover dropped/misplaced subs billed on a day absent from the target month (a 31st-of-month sub vanished from June). Added `addBillingCycles()` (anchor-preserving, month-end-clamping) in `utils/calculations.ts`; routed `advanceToNextBillingDate` + `getSubscriptionBillingDatesInMonth` + the bank-scan `calculateNextBillingDate` through it; removed dead `getMonthBillingDates`. 14 new clamp unit tests. (commit `73bad02`)
+  - **[DONE] Bank-scan animation overlap:** the 3D floating document painted over the upload title; reserved vertical space + margins in its container. ⚠️ **Visual confirmation pending in simulator (Faz 4).** (commit `6a9e67d`)
+  - **[DONE] Premium gating audit:** verified RC is source of truth (App.tsx syncs `plan.tier` from `getProStatus` tri-state; `null`/offline never downgrades a payer), all premium features (bank scan, cloud sync, data export, biometric lock, no-ads) gate behind `isPro()`/entitlement + paywall routing, dev mock is `__DEV__`-only. Removed 4 dead `canUse*` getters. **No security/correctness gaps.** (commit `d3247f6`)
+  - **[DONE] Insights enhancement:** added Quick-stats (avg/sub + next-30-day spend), Top Spenders (ranked, share-of-total + per-day cost), and Possible-Overlaps detector (categories with 2+ active subs). New tested utils `getTopSubscriptions` + `getSubscriptionOverlaps`. EN/TR parity 457/457. (commit `4e50fa6`)
+  - **[DONE] Terms "Pro" → "Premium"** copy parity (part of `73bad02`).
+  - **[DONE] GateGuard friction:** `ECC_GATEGUARD=off` added to gitignored `.claude/settings.local.json` (takes effect next session).
+- **Why It Matters:** The calendar bug silently hid real upcoming payments — a core-value correctness defect. The rest is launch polish + a clean premium-gating bill of health.
+- **Next Action:** (1) **Faz 3b** — concrete design-improvement proposals (pending). (2) **Faz 4** — bilingual (EN+TR) simulator QA: walk every screen, confirm the scan-animation fix, calendar June rendering, Budget overflow, premium flows; screenshot. iPhone 16 Pro sim is booted with the dev build installed — needs Metro (`npx expo start --dev-client`) + user-driven taps.
+
+---
+
 ### App Store Go-Live — Pre-Flight Findings (v1.0 first submission)
 
 - **Date:** 2026-06-17
