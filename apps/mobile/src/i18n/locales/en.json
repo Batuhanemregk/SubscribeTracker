@@ -234,8 +234,6 @@
     "setBudgetMessage": "Set a monthly budget to track your spending",
     "budgetPlaceholder": "Enter monthly budget",
     "saveBudget": "Save Budget",
-    "alertsTitle": "Budget Alerts",
-    "alertsDescription": "Get notified at {{percent}}% of your monthly budget",
     "categoryBudgets": "Category Budgets",
     "categoryBudgetsDesc": "Set a spending limit per category and track each with its own progress bar.",
     "unlockPremium": "Unlock with Premium",

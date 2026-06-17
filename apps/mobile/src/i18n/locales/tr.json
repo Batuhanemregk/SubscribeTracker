@@ -234,8 +234,6 @@
     "setBudgetMessage": "Harcamalarınızı takip etmek için aylık bütçe belirleyin",
     "budgetPlaceholder": "Aylık bütçeyi girin",
     "saveBudget": "Bütçeyi Kaydet",
-    "alertsTitle": "Bütçe Uyarıları",
-    "alertsDescription": "Aylık bütçenizin {{percent}}%'ine ulaştığınızda bildirim alın",
     "categoryBudgets": "Kategori Bütçeleri",
     "categoryBudgetsDesc": "Her kategori için harcama limiti belirleyin ve her birini kendi ilerleme çubuğuyla takip edin.",
     "unlockPremium": "Premium ile Aç",

@@ -37,8 +37,6 @@ interface SettingsState {
   // Budget settings actions
   setBudgetLimit: (limit: number) => void;
   setBudgetCurrency: (currency: string) => void;
-  setBudgetAlertThreshold: (threshold: number) => void;
-  setBudgetEnabled: (enabled: boolean) => void;
   setCategoryBudget: (category: string, limit: number) => void;
   removeCategoryBudget: (category: string) => void;
   
@@ -101,12 +99,6 @@ export const useSettingsStore = create<SettingsState>()(
 
       setBudgetCurrency: (currency) =>
         set((state) => ({ budget: { ...state.budget, currency } })),
-
-      setBudgetAlertThreshold: (alertThreshold) =>
-        set((state) => ({ budget: { ...state.budget, alertThreshold } })),
-
-      setBudgetEnabled: (isEnabled) =>
-        set((state) => ({ budget: { ...state.budget, isEnabled } })),
 
       setCategoryBudget: (category, limit) =>
         set((state) => ({

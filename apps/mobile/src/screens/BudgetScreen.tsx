@@ -17,7 +17,7 @@ export function BudgetScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const { subscriptions, getActiveSubscriptions, calculateMonthlyTotalConverted } = useSubscriptionStore();
-  const { budget, setBudgetLimit, setBudgetEnabled, setCategoryBudget, removeCategoryBudget, app } = useSettingsStore();
+  const { budget, setBudgetLimit, setCategoryBudget, removeCategoryBudget, app } = useSettingsStore();
   const { convert } = useCurrencyStore();
   const { isPro, isTrialActive } = usePlanStore();
   const navigation = useNavigation<any>();
@@ -288,23 +288,6 @@ export function BudgetScreen() {
             </LinearGradient>
           </TouchableOpacity>
         )}
-
-        {/* Alert Settings */}
-        <View style={styles.settingsCard}>
-          <View style={styles.settingsHeader}>
-            <Ionicons name="notifications-outline" size={20} color={colors.primary} />
-            <Text style={styles.settingsTitle}>{t('budget.alertsTitle')}</Text>
-          </View>
-          <Text style={styles.settingsDescription}>
-            {t('budget.alertsDescription', { percent: (budget.alertThreshold * 100).toFixed(0) })}
-          </Text>
-          <TouchableOpacity 
-            style={[styles.toggle, budget.isEnabled && styles.toggleActive]}
-            onPress={() => setBudgetEnabled(!budget.isEnabled)}
-          >
-            <View style={[styles.toggleDot, budget.isEnabled && styles.toggleDotActive]} />
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
       {/* Budget Edit Modal */}
@@ -544,54 +527,6 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 16,
     color: colors.textMuted,
     marginTop: 12,
-  },
-  settingsCard: {
-    backgroundColor: colors.bgCard,
-    borderRadius: borderRadius.xl,
-    padding: 20,
-    marginTop: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-    position: 'relative',
-  },
-  settingsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 6,
-  },
-  settingsTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  settingsDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    paddingRight: 60,
-  },
-  toggle: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    width: 50,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.border,
-    justifyContent: 'center',
-    paddingHorizontal: 2,
-  },
-  toggleActive: {
-    backgroundColor: colors.emerald,
-  },
-  toggleDot: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: colors.text,
-  },
-  toggleDotActive: {
-    alignSelf: 'flex-end',
   },
   categorySectionTitle: {
     marginTop: 8,
