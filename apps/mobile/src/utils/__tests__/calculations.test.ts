@@ -572,6 +572,13 @@ describe('getTopSubscriptions', () => {
     ];
     expect(getTopSubscriptions(subs)).toEqual([]);
   });
+
+  it('applies the convert fn to amounts when provided (currency consistency)', () => {
+    const subs: Subscription[] = [makeSub({ id: '1', amount: 10, cycle: 'monthly', currency: 'USD' })];
+    const convert = (amount: number) => amount * 2; // pretend 1 USD -> 2 target units
+    const top = getTopSubscriptions(subs, 5, convert, 'TRY');
+    expect(top[0].monthlyAmount).toBeCloseTo(20, 2);
+  });
 });
 
 // ---------------------------------------------------------------------------

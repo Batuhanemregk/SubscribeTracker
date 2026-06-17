@@ -64,13 +64,18 @@ export function calculateYearlyTotal(subscriptions: Subscription[]): number {
 /**
  * Get spending by category
  */
-export function getSpendingByCategory(subscriptions: Subscription[]): CategoryData[] {
+export function getSpendingByCategory(
+  subscriptions: Subscription[],
+  convert?: (amount: number, from: string, to: string) => number,
+  toCurrency?: string
+): CategoryData[] {
   const categoryTotals: Record<string, number> = {};
-  
+
   subscriptions
     .filter(s => s.status === 'active')
     .forEach(sub => {
-      const monthlyAmt = toMonthlyAmount(sub.amount, sub.cycle);
+      const base = convert && toCurrency ? convert(sub.amount, sub.currency || 'TRY', toCurrency) : sub.amount;
+      const monthlyAmt = toMonthlyAmount(base, sub.cycle);
       categoryTotals[sub.category] = (categoryTotals[sub.category] || 0) + monthlyAmt;
     });
 
@@ -342,11 +347,16 @@ export function calculatePotentialSavings(subscriptions: Subscription[]): {
  */
 export function getTopSubscriptions(
   subscriptions: Subscription[],
-  limit: number = 5
+  limit: number = 5,
+  convert?: (amount: number, from: string, to: string) => number,
+  toCurrency?: string
 ): { subscription: Subscription; monthlyAmount: number }[] {
   return subscriptions
     .filter(s => s.status === 'active')
-    .map(s => ({ subscription: s, monthlyAmount: toMonthlyAmount(s.amount, s.cycle) }))
+    .map(s => {
+      const base = convert && toCurrency ? convert(s.amount, s.currency || 'TRY', toCurrency) : s.amount;
+      return { subscription: s, monthlyAmount: toMonthlyAmount(base, s.cycle) };
+    })
     .sort((a, b) => b.monthlyAmount - a.monthlyAmount)
     .slice(0, limit);
 }
@@ -357,14 +367,17 @@ export function getTopSubscriptions(
  * monthly total, descending, so the most overlap-prone category surfaces first.
  */
 export function getSubscriptionOverlaps(
-  subscriptions: Subscription[]
+  subscriptions: Subscription[],
+  convert?: (amount: number, from: string, to: string) => number,
+  toCurrency?: string
 ): { category: string; count: number; monthlyTotal: number }[] {
   const byCategory = new Map<string, { count: number; monthlyTotal: number }>();
   for (const s of subscriptions) {
     if (s.status !== 'active') continue;
     const entry = byCategory.get(s.category) || { count: 0, monthlyTotal: 0 };
+    const base = convert && toCurrency ? convert(s.amount, s.currency || 'TRY', toCurrency) : s.amount;
     entry.count += 1;
-    entry.monthlyTotal += toMonthlyAmount(s.amount, s.cycle);
+    entry.monthlyTotal += toMonthlyAmount(base, s.cycle);
     byCategory.set(s.category, entry);
   }
   return Array.from(byCategory.entries())

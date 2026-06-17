@@ -30,7 +30,6 @@ import {
   getTopSubscriptions,
   getSubscriptionOverlaps,
   getUpcomingPayments,
-  toMonthlyAmount,
 } from '../utils';
 import { t } from '../i18n';
 
@@ -47,14 +46,14 @@ export function InsightsScreen() {
   const yearlyTotal = calculateYearlyTotalConverted(convert, currency);
 
   // Get analytics data using utils
-  const categoryData = getSpendingByCategory(subscriptions);
+  const categoryData = getSpendingByCategory(subscriptions, convert, currency);
   const forecastData = getForecastData(monthlyTotal);
   const savings = calculatePotentialSavings(subscriptions);
   const breakdown = getBillingCycleBreakdown(subscriptions);
 
   // Differentiated insights: biggest spenders, near-term cost, category overlaps.
-  const topSpenders = getTopSubscriptions(subscriptions, 5);
-  const overlaps = getSubscriptionOverlaps(subscriptions);
+  const topSpenders = getTopSubscriptions(subscriptions, 5, convert, currency);
+  const overlaps = getSubscriptionOverlaps(subscriptions, convert, currency);
   const next30Total = getUpcomingPayments(subscriptions, 30).reduce(
     (sum, s) => sum + convert(s.amount, s.currency || 'TRY', currency),
     0
@@ -126,13 +125,7 @@ export function InsightsScreen() {
               <Text style={styles.highlightName} numberOfLines={1}>{topSpenders[0].subscription.name}</Text>
             </View>
             <Text style={styles.highlightAmount}>
-              {formatCurrency(
-                toMonthlyAmount(
-                  convert(topSpenders[0].subscription.amount, topSpenders[0].subscription.currency || 'TRY', currency),
-                  topSpenders[0].subscription.cycle
-                ),
-                currency
-              )}{t('common.perMonth')}
+              {formatCurrency(topSpenders[0].monthlyAmount, currency)}{t('common.perMonth')}
             </Text>
           </View>
         )}
@@ -144,8 +137,7 @@ export function InsightsScreen() {
         {topSpenders.length > 0 && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>{t('insights.topSpenders')}</Text>
-            {topSpenders.map(({ subscription: s }, i) => {
-              const m = toMonthlyAmount(convert(s.amount, s.currency || 'TRY', currency), s.cycle);
+            {topSpenders.map(({ subscription: s, monthlyAmount: m }, i) => {
               const pct = monthlyTotal > 0 ? Math.round((m / monthlyTotal) * 100) : 0;
               const daily = (m * 12) / 365;
               return (
