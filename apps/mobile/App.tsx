@@ -82,12 +82,12 @@ function MainTabs() {
           tabBarStyle: {
             position: 'absolute' as const,
             bottom: Platform.OS === 'ios' ? 24 : 16,
-            left: 20,
-            right: 20,
+            left: 32,
+            right: 32,
             height: 64,
             borderRadius: 24,
             borderTopWidth: 0,
-            backgroundColor: isDark ? 'rgba(26, 26, 36, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+            backgroundColor: isDark ? 'rgba(26, 26, 36, 0.7)' : 'rgba(255, 255, 255, 0.72)',
             borderWidth: 1,
             borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
             paddingBottom: 0,
@@ -107,7 +107,7 @@ function MainTabs() {
           tabBarBackground: () => (
             Platform.OS === 'ios' ? (
               <BlurView
-                intensity={isDark ? 60 : 80}
+                intensity={isDark ? 70 : 95}
                 tint={isDark ? 'dark' : 'light'}
                 style={{
                   ...StyleSheet.absoluteFillObject,

@@ -224,6 +224,9 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 8,
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   actionButton: {
     width: 70,
@@ -236,8 +239,6 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: '#EF4444', // red - same in both themes
-    borderTopRightRadius: 20,
-    borderBottomRightRadius: 20,
   },
   actionText: {
     color: '#FFF',

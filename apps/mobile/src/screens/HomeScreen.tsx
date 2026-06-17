@@ -207,9 +207,17 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
       {/* Section Title */}
       <View style={styles.sectionHeader}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('home.yourSubscriptions')}</Text>
-        <TouchableOpacity onPress={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}>
+        <TouchableOpacity
+          onPress={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+          style={styles.viewToggle}
+        >
+          <Ionicons
+            name={viewMode === 'list' ? 'grid-outline' : 'list-outline'}
+            size={15}
+            color={colors.primary}
+          />
           <Text style={[styles.seeAll, { color: colors.primary }]}>
-            {viewMode === 'list' ? t('home.seeAll') : t('home.listView')}
+            {viewMode === 'list' ? t('home.gridView') : t('home.listView')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -366,6 +374,11 @@ const styles = StyleSheet.create({
   seeAll: {
     fontSize: 14,
     fontWeight: "500",
+  },
+  viewToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   notificationButton: {
     width: 40,

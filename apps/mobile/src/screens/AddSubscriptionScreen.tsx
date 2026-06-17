@@ -13,6 +13,7 @@ import {
   ColorGrid,
   PrimaryButton,
   SecondaryButton,
+  DatePickerModal,
 } from '../components';
 import { useTheme, type ThemeColors } from '../theme';
 import { useSubscriptionStore, useSettingsStore, createSubscription, generateId } from '../state';
@@ -64,6 +65,12 @@ export function AddSubscriptionScreen({ navigation, route }: AddSubscriptionScre
   const [colorKey, setColorKey] = useState('#8B5CF6');
   const [logoUrl, setLogoUrl] = useState<string | undefined>(undefined);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nextBillingDate, setNextBillingDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    return d;
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   // Load existing subscription for edit mode OR prefill from template
   useEffect(() => {
@@ -77,6 +84,7 @@ export function AddSubscriptionScreen({ navigation, route }: AddSubscriptionScre
         setIconKey(existing.iconKey);
         setColorKey(existing.colorKey);
         if (existing.logoUrl) setLogoUrl(existing.logoUrl);
+        if (existing.nextBillingDate) setNextBillingDate(new Date(existing.nextBillingDate));
       }
     } else if (prefillData) {
       // Prefill from ServicePicker/PlanPicker
@@ -119,32 +127,13 @@ export function AddSubscriptionScreen({ navigation, route }: AddSubscriptionScre
     setIsSubmitting(true);
 
     try {
-      // Calculate next billing date (today + 1 cycle)
-      const today = new Date();
-      let nextBillingDate: Date;
-      switch (cycle) {
-        case 'weekly':
-          nextBillingDate = new Date(today.setDate(today.getDate() + 7));
-          break;
-        case 'monthly':
-          nextBillingDate = new Date(today.setMonth(today.getMonth() + 1));
-          break;
-        case 'quarterly':
-          nextBillingDate = new Date(today.setMonth(today.getMonth() + 3));
-          break;
-        case 'yearly':
-          nextBillingDate = new Date(today.setFullYear(today.getFullYear() + 1));
-          break;
-        default:
-          nextBillingDate = new Date(today.setMonth(today.getMonth() + 1));
-      }
-
       if (editMode && subscriptionId) {
         // Update existing
         updateSubscription(subscriptionId, {
           name: name.trim(),
           amount: parseFloat(amount),
           cycle,
+          nextBillingDate: nextBillingDate.toISOString(),
           category,
           iconKey,
           colorKey,
@@ -215,6 +204,22 @@ export function AddSubscriptionScreen({ navigation, route }: AddSubscriptionScre
           value={cycle}
           onChange={setCycle}
         />
+
+        {/* Next Billing Date */}
+        <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', marginBottom: 8, marginTop: 16 }}>
+          {t('addSubscription.nextBillingDate')}
+        </Text>
+        <TouchableOpacity
+          style={styles.dateField}
+          onPress={() => setShowDatePicker(true)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+          <Text style={styles.dateFieldText}>
+            {nextBillingDate.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' })}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color={colors.textMuted} />
+        </TouchableOpacity>
 
         {/* Category Picker */}
         <Text style={{ color: colors.text, fontSize: 14, fontWeight: '600', marginBottom: 8, marginTop: 16 }}>
@@ -363,6 +368,13 @@ export function AddSubscriptionScreen({ navigation, route }: AddSubscriptionScre
           />
         </View>
       </ScrollView>
+
+      <DatePickerModal
+        visible={showDatePicker}
+        value={nextBillingDate}
+        onConfirm={(d) => { setNextBillingDate(d); setShowDatePicker(false); }}
+        onClose={() => setShowDatePicker(false)}
+      />
     </View>
   );
 }
@@ -382,6 +394,24 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   content: {
     padding: 16,
     paddingBottom: 40,
+  },
+  dateField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: colors.bgElevated,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginBottom: 16,
+  },
+  dateFieldText: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+    fontWeight: '500',
   },
   buttonRow: {
     flexDirection: 'row',

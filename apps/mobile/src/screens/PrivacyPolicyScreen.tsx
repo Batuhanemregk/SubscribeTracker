@@ -13,7 +13,9 @@ export default function PrivacyPolicyScreen() {
   const styles = createStyles(colors);
   return (
     <View style={styles.container}>
-      <Header title={t('privacy.title')} />
+      <View style={styles.headerWrap}>
+        <Header title={t('privacy.title')} />
+      </View>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
         <Text style={styles.lastUpdated}>Last Updated: February 7, 2026</Text>
 
@@ -112,6 +114,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.bg,
+  },
+  headerWrap: {
+    paddingTop: 50,
+    paddingHorizontal: 16,
   },
   scroll: {
     flex: 1,

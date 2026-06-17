@@ -13,6 +13,7 @@ import {
   FlatList,
   Alert,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -459,7 +460,11 @@ export function BankStatementScanScreen({ navigation }: any) {
 
   // ─── Upload Step ───────────────────────────────────────
   const renderUploadStep = () => (
-    <View style={styles.stepContainer}>
+    <ScrollView
+      style={styles.stepScroll}
+      contentContainerStyle={styles.uploadScrollContent}
+      showsVerticalScrollIndicator={false}
+    >
       <FloatingDocument colors={colors} step={step} />
 
       <Animated.Text entering={FadeInDown.delay(200)} style={styles.mainTitle}>
@@ -527,7 +532,7 @@ export function BankStatementScanScreen({ navigation }: any) {
       <Animated.Text entering={FadeIn.delay(700)} style={[styles.remainingText, { color: colors.textMuted }]}>
         {t('bankScan.remainingScans', { count: remaining.today })}
       </Animated.Text>
-    </View>
+    </ScrollView>
   );
 
   // ─── Scanning Step ─────────────────────────────────────
@@ -734,6 +739,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
 
   // Steps
   stepContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  stepScroll: { flex: 1 },
+  // flexGrow centers the content when it fits and lets it scroll (clipped below
+  // the header) when it doesn't — so the floating document never overlaps the title.
+  uploadScrollContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 24 },
   mainTitle: { fontSize: 26, fontWeight: '800', color: colors.text, textAlign: 'center', letterSpacing: -0.5 },
   mainSubtitle: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', marginTop: 8, marginBottom: 20, lineHeight: 22 },
 

@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components';
 import { borderRadius, useTheme, type ThemeColors } from '../theme';
 import { useSettingsStore, usePlanStore, useSubscriptionStore, useAccountStore } from '../state';
-import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signInWithApple, isAppleSignInAvailable, deleteAccount, signOut as authSignOut, identifyUser, logoutUser, type AuthResult } from '../services';
+import { scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signInWithApple, isAppleSignInAvailable, deleteAccount, signOut as authSignOut, identifyUser, logoutUser, type AuthResult } from '../services';
 import { t } from '../i18n';
 
 
@@ -109,27 +109,6 @@ export function SettingsScreen({ navigation }: any) {
     } finally {
       setIsSigningIn(false);
     }
-  };
-
-  // Disconnect: revoke access + stop sync, but KEEP local data.
-  const handleDisconnectAccount = () => {
-    Alert.alert(
-      t('settings.disconnectAlertTitle'),
-      t('settings.disconnectAlertMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settings.disconnectAlertButton'),
-          style: 'destructive',
-          onPress: async () => {
-            await authSignOut();
-            await logoutUser();
-            useAccountStore.getState().clearAccount();
-            Alert.alert(t('settings.disconnected'), t('settings.disconnectedMessage'));
-          },
-        },
-      ]
-    );
   };
 
   // Delete account: server-side deletion (if signed in) + wipe all local data.
@@ -246,8 +225,8 @@ export function SettingsScreen({ navigation }: any) {
                 <Text style={styles.upgradeText}>{t('settings.upgradeToPro')}</Text>
               </TouchableOpacity>
             )}
-            {isPro() && (
-              <TouchableOpacity 
+            {isPro() && __DEV__ && (
+              <TouchableOpacity
                 style={styles.debugButton}
                 onPress={handleResetPlan}
               >
@@ -461,17 +440,6 @@ export function SettingsScreen({ navigation }: any) {
           />
           <View style={styles.divider} />
           <SettingsRow
-            icon="send"
-            iconColor={colors.emerald}
-            title={t('settings.testNotification')}
-            subtitle={t('settings.testNotifSubtitle')}
-            onPress={() => {
-              sendTestNotification();
-              Alert.alert(t('settings.notifSent'), t('settings.notifSentMessage'));
-            }}
-          />
-          <View style={styles.divider} />
-          <SettingsRow
             icon="finger-print"
             iconColor={colors.pink}
             title={t('settings.biometricLock')}
@@ -540,22 +508,6 @@ export function SettingsScreen({ navigation }: any) {
         {/* Data Section */}
         <Text style={styles.sectionTitle}>{t('settings.data')}</Text>
         <View style={styles.card}>
-          <SettingsRow
-            icon="download"
-            iconColor={colors.cyan}
-            title={t('settings.exportData')}
-            subtitle={t('settings.exportDataSubtitle')}
-            onPress={() => {/* TODO: Export */}}
-          />
-          <View style={styles.divider} />
-          <SettingsRow
-            icon="unlink"
-            iconColor={colors.amber}
-            title={t('settings.disconnectAccount')}
-            subtitle={t('settings.disconnectSubtitle')}
-            onPress={handleDisconnectAccount}
-          />
-          <View style={styles.divider} />
           <SettingsRow
             icon="trash"
             iconColor={colors.red}

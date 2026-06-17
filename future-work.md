@@ -341,6 +341,25 @@
 
 ## ✅ COMPLETED
 
+### TestFlight #24 feedback — round 2 (2026-06-18)
+
+- **Date:** 2026-06-18
+- **Area:** Mobile (Settings / AddSubscription / Scan / Home / legal / nav)
+- **Status:** [DONE] (in build #25)
+- **Fixed:**
+  - **[#7 — date picker, was the biggest gap]** There was **no billing-date field anywhere** — manual add, edit, and presets all auto-set `nextBillingDate` to "today + 1 cycle" with no way to change it. Built a pure-JS `DatePickerModal` (calendar grid, no native module → works in any build) and wired it into AddSubscription (manual + edit + prefill); edit now loads the existing date and `updateSubscription` persists it.
+  - **[#1 — export]** CSV/PDF export crashed ("Cannot read property 'UTF8' of undefined") — SDK 54 moved the classic file API to `expo-file-system/legacy`; updated the import.
+  - **[#10 — scan title]** Floating document still overlapped the "Document Scan" header: the upload step vertically-centered tall content with `flex:1`, overflowing up into the header. Wrapped it in a ScrollView (`flexGrow:1` + center) so it centers when it fits and scrolls (clipped below the header) when it doesn't. Verified in sim.
+  - **[#11 — legal headers]** Privacy/Terms titles overlapped the status bar — added the app's standard top padding wrapper.
+  - **[#8 — nav bar]** Widened side margins (20→32, more centered) and lowered opacity (0.85→~0.7) + stronger blur.
+  - **[#9 — swipe actions]** Rounded the Edit/Delete block (all corners + clip + 8px gap) instead of only the delete's right edge.
+  - **[#6 — view toggle]** Relabeled the confusing "See all" to the target view name ("Grid view" / "List view") + icon. (Scroll-jump on toggle deferred — see below.)
+  - **[#3/#4/#5 — Settings declutter]** Removed the debug "Test Notification" row, the non-functional "Export Data" TODO placeholder, and the redundant "Disconnect Account" row (Sign Out already does disconnect). Gated the "Reset to Standard (Debug)" button behind `__DEV__` so it never ships to users. Removed 13 now-dead i18n keys (EN+TR) + deleted 2 dead card components (`AnimatedSubscriptionCard`, `SwipeableSubscriptionCard`).
+- **Deferred (not yet done):**
+  - **#6 scroll-jump:** toggling list↔grid remounts the FlatList (different `key` for `numColumns` change) → resets scroll to top. Real fix = single FlatList with `numColumns:1` + chunked rows for grid; deferred to avoid risking the Home layout in this build.
+  - **#9 premature reveal:** the "actions flash on first touch" is likely press-dim feedback; `activeOffsetX={[-20,20]}` already gates the swipe. Needs live device testing to confirm/repro.
+  - **#2 (Sync to Cloud):** explained to user (it pushes subscriptions to Supabase for signed-in Premium users) — kept as-is, no change.
+
 ### Category Budgets (per-category limits) — Premium
 
 - **Date:** 2026-06-17
