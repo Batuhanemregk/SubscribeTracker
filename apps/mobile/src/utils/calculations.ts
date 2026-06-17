@@ -7,6 +7,22 @@ import type { Subscription, CategoryData, BillingCycle } from '../types';
 // Constants
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+/** Stable color per spending category (shared across charts and budgets) */
+export const CATEGORY_COLORS: Record<string, string> = {
+  Entertainment: '#EC4899',
+  Development: '#8B5CF6',
+  Design: '#F59E0B',
+  Productivity: '#10B981',
+  Music: '#06B6D4',
+  Storage: '#3B82F6',
+  Finance: '#F97316',
+  Health: '#22C55E',
+  Education: '#A855F7',
+  Other: '#6B7280',
+};
+
+const DEFAULT_CATEGORY_COLOR = '#8B5CF6';
+
 /**
  * Convert subscription amount to monthly equivalent
  */
@@ -81,24 +97,11 @@ export function getSpendingByCategory(
 
   const totalSpending = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
 
-  const categoryColors: Record<string, string> = {
-    Entertainment: '#EC4899',
-    Development: '#8B5CF6',
-    Design: '#F59E0B',
-    Productivity: '#10B981',
-    Music: '#06B6D4',
-    Storage: '#3B82F6',
-    Finance: '#F97316',
-    Health: '#22C55E',
-    Education: '#A855F7',
-    Other: '#6B7280',
-  };
-
   return Object.entries(categoryTotals)
     .map(([name, amount]) => ({
       name,
       amount,
-      color: categoryColors[name] || '#8B5CF6',
+      color: CATEGORY_COLORS[name] || DEFAULT_CATEGORY_COLOR,
       percentage: totalSpending > 0 ? (amount / totalSpending) * 100 : 0,
     }))
     .sort((a, b) => b.amount - a.amount);
@@ -426,8 +429,55 @@ export function getBudgetStatus(spent: number, limit: number): {
   let status: 'safe' | 'warning' | 'danger' = 'safe';
   if (percentage >= 90) status = 'danger';
   else if (percentage >= 75) status = 'warning';
-  
+
   return { percentage, remaining, status };
+}
+
+export interface CategoryBudgetRow {
+  name: string;
+  color: string;
+  spent: number;
+  limit: number | null;                                  // null = no limit set
+  percentage: number;                                    // 0 when no limit
+  remaining: number;                                     // 0 when no limit
+  status: 'safe' | 'warning' | 'danger' | 'none';        // 'none' = no limit set
+}
+
+/**
+ * Per-category budget status. Combines current category spending with the
+ * user's per-category limits, reusing getBudgetStatus thresholds.
+ * Includes categories that have spending OR a configured limit. Budgeted
+ * categories sort first (highest usage % first); unbudgeted by spend.
+ */
+export function getCategoryBudgetStatus(
+  categorySpending: CategoryData[],
+  categoryBudgets: Record<string, number>
+): CategoryBudgetRow[] {
+  const spendByName: Record<string, CategoryData> = {};
+  categorySpending.forEach(c => { spendByName[c.name] = c; });
+
+  const budgetedNames = Object.keys(categoryBudgets).filter(k => categoryBudgets[k] > 0);
+  const names = Array.from(new Set([...categorySpending.map(c => c.name), ...budgetedNames]));
+
+  const rows: CategoryBudgetRow[] = names.map(name => {
+    const spent = spendByName[name]?.amount ?? 0;
+    const color = spendByName[name]?.color ?? CATEGORY_COLORS[name] ?? DEFAULT_CATEGORY_COLOR;
+    const limit = categoryBudgets[name];
+
+    if (!limit || limit <= 0) {
+      return { name, color, spent, limit: null, percentage: 0, remaining: 0, status: 'none' };
+    }
+
+    const { percentage, remaining, status } = getBudgetStatus(spent, limit);
+    return { name, color, spent, limit, percentage, remaining, status };
+  });
+
+  return rows.sort((a, b) => {
+    if (a.limit !== null && b.limit === null) return -1;
+    if (a.limit === null && b.limit !== null) return 1;
+    if (a.limit !== null && b.limit !== null) return b.percentage - a.percentage;
+    return b.spent - a.spent;
+  });
 }
 
 /**

@@ -215,7 +215,7 @@
 - **Date:** 2026-06-17
 - **Area:** Mobile / Insights / Calendar / Budget
 - **Shipped this session:** icon-accented Insights quick-stats + "Most Expensive" card; category **donut** above the bar (fixed `DonutChart`'s undefined React key → `item.name`); removed truncated bar-chart x-labels; **calendar heatmap** (billing days tinted by spend); **currency-consistent** Insights totals (optional `convert` param on `getSpendingByCategory`/`getTopSubscriptions`/`getSubscriptionOverlaps`).
-- **Deferred — `categoryBudgets` feature (was design proposal #5):** per-category budget limits is a *feature*, not polish — intentionally NOT crammed into this large PR. Build plan: (1) extend settings store with `categoryBudgets: Record<string, number>`; (2) Budget → Edit UI to set a limit per category; (3) render per-category progress bars (reuse `getSpendingByCategory` + `getBudgetStatus`); (4) optional over-limit warnings. Worth its own focused PR.
+- **[DONE] `categoryBudgets` feature (was design proposal #5):** shipped as a **Premium** feature — see COMPLETED entry below.
 - **Not a code bug — dev-warning toast (proposal #3):** the "Open debugger to view warnings" toast is benign dev noise (`ExpoAppleAuthentication` view-manager dev quirk, missing dev env vars, and a `[RevenueCat] "default" offering has no packages` warning). The only real cleanup is **archiving the leftover RC "default"/Test-Store offering** in the RevenueCat dashboard (the app's current offering is `premium`); not an app-code change.
 - **Minor — Insights empty state (proposal #8):** currently adequate (charts show "No data", top-spenders/overlaps hidden when empty, stat cards show zeros). A dedicated full-screen empty CTA using `insights.noSubscriptions` / `insights.addToSeeInsights` is a small nice-to-have.
 - **Why It Matters:** Captures what shipped vs. what's a deliberate follow-up so the next session doesn't re-derive it.
@@ -339,6 +339,15 @@
 ---
 
 ## ✅ COMPLETED
+
+### Category Budgets (per-category limits) — Premium
+
+- **Date:** 2026-06-17
+- **Area:** Mobile / Budget / Premium / i18n
+- **Status:** [DONE]
+- **Summary:** Per-category monthly budget limits, gated behind the Premium entitlement (`isPro() || isTrialActive()`). Added `categoryBudgets: Record<string, number>` to `BudgetSettings` (default `{}`; rehydration-safe via `?? {}` in store + screen) with `setCategoryBudget`/`removeCategoryBudget` store actions. New pure helper `getCategoryBudgetStatus(categorySpending, categoryBudgets)` in `calculations.ts` (reuses `getBudgetStatus` thresholds; unions spending + budgeted categories; budgeted sort first by usage % then unbudgeted by spend; status `'safe'|'warning'|'danger'|'none'`) + exported `CategoryBudgetRow`. Extracted shared `CATEGORY_COLORS` const (removed the duplicated inline map in `getSpendingByCategory`). BudgetScreen renders, for Premium users, a "Category Budgets" list (colored dot, translated `categories.*` name, spent/limit, status-tinted progress bar, over-budget/near-limit warning, tap-to-edit modal with Remove-Limit); for free users a locked gradient card (PREMIUM badge → Paywall). 6 new unit tests (108 total green), tsc clean, i18n parity 466/466 (9 new `budget.*` keys EN+TR). Verified both states in the iOS simulator (TR locale).
+- **Why It Matters:** Spendee-style power feature and a natural upsell that strengthens the Premium tier ahead of go-live.
+- **Follow-ups:** the per-category alert thresholds are visual-only (no push notifications yet); could feed `NotificationService` later. Could surface a category-budget summary on Home/Insights.
 
 ### Premium Floating Glass Tab Bar
 

@@ -15,6 +15,7 @@ import {
   getSubscriptionBillingDatesInMonth,
   getTopSubscriptions,
   getSubscriptionOverlaps,
+  getCategoryBudgetStatus,
 } from '../calculations';
 
 // ---------------------------------------------------------------------------
@@ -611,5 +612,69 @@ describe('getSubscriptionOverlaps', () => {
       makeSub({ id: '3', category: 'A', status: 'cancelled' }),
     ];
     expect(getSubscriptionOverlaps(subs)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getCategoryBudgetStatus
+// ---------------------------------------------------------------------------
+
+describe('getCategoryBudgetStatus', () => {
+  const spending = [
+    { name: 'Entertainment', amount: 22, color: '#EC4899', percentage: 55 },
+    { name: 'Music', amount: 10, color: '#06B6D4', percentage: 25 },
+    { name: 'Productivity', amount: 8, color: '#10B981', percentage: 20 },
+  ];
+
+  it('computes per-category status for budgeted categories', () => {
+    const rows = getCategoryBudgetStatus(spending, { Entertainment: 30, Music: 10 });
+
+    const ent = rows.find(r => r.name === 'Entertainment')!;
+    expect(ent.limit).toBe(30);
+    expect(ent.spent).toBe(22);
+    expect(ent.percentage).toBeCloseTo(73.3, 1);
+    expect(ent.remaining).toBeCloseTo(8, 2);
+    expect(ent.status).toBe('safe');
+    expect(ent.color).toBe('#EC4899');
+
+    const music = rows.find(r => r.name === 'Music')!;
+    expect(music.percentage).toBe(100);
+    expect(music.remaining).toBe(0);
+    expect(music.status).toBe('danger');
+  });
+
+  it('marks categories without a limit as status "none"', () => {
+    const rows = getCategoryBudgetStatus(spending, { Entertainment: 30 });
+    const prod = rows.find(r => r.name === 'Productivity')!;
+    expect(prod.limit).toBeNull();
+    expect(prod.status).toBe('none');
+    expect(prod.percentage).toBe(0);
+    expect(prod.spent).toBe(8);
+  });
+
+  it('includes budgeted categories with no current spending (spent 0)', () => {
+    const rows = getCategoryBudgetStatus(spending, { Health: 50 });
+    const health = rows.find(r => r.name === 'Health')!;
+    expect(health).toBeDefined();
+    expect(health.spent).toBe(0);
+    expect(health.limit).toBe(50);
+    expect(health.status).toBe('safe');
+  });
+
+  it('ignores zero or negative budgets (treated as no limit)', () => {
+    const rows = getCategoryBudgetStatus(spending, { Entertainment: 0, Music: -5 });
+    expect(rows.find(r => r.name === 'Entertainment')!.limit).toBeNull();
+    expect(rows.find(r => r.name === 'Music')!.limit).toBeNull();
+  });
+
+  it('sorts budgeted categories first (by percentage desc), then unbudgeted by spend', () => {
+    const rows = getCategoryBudgetStatus(spending, { Entertainment: 30, Music: 10 });
+    expect(rows[0].name).toBe('Music');          // 100% (budgeted)
+    expect(rows[1].name).toBe('Entertainment');  // 73% (budgeted)
+    expect(rows[2].name).toBe('Productivity');   // unbudgeted, last
+  });
+
+  it('returns empty for empty inputs', () => {
+    expect(getCategoryBudgetStatus([], {})).toEqual([]);
   });
 });

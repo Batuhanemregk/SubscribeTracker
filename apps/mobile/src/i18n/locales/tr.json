@@ -235,7 +235,16 @@
     "budgetPlaceholder": "Aylık bütçeyi girin",
     "saveBudget": "Bütçeyi Kaydet",
     "alertsTitle": "Bütçe Uyarıları",
-    "alertsDescription": "Aylık bütçenizin {{percent}}%'ine ulaştığınızda bildirim alın"
+    "alertsDescription": "Aylık bütçenizin {{percent}}%'ine ulaştığınızda bildirim alın",
+    "categoryBudgets": "Kategori Bütçeleri",
+    "categoryBudgetsDesc": "Her kategori için harcama limiti belirleyin ve her birini kendi ilerleme çubuğuyla takip edin.",
+    "unlockPremium": "Premium ile Aç",
+    "setLimit": "Limit belirle",
+    "nearLimit": "Limite yakın",
+    "overBudget": "Bütçe aşıldı",
+    "setCategoryLimit": "Kategori Limiti Belirle",
+    "categoryLimitFor": "{{category}} için aylık limit",
+    "removeLimit": "Limiti Kaldır"
   },
   "settings": {
     "title": "Ayarlar",

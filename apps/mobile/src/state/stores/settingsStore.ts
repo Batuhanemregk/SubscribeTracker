@@ -39,6 +39,8 @@ interface SettingsState {
   setBudgetCurrency: (currency: string) => void;
   setBudgetAlertThreshold: (threshold: number) => void;
   setBudgetEnabled: (enabled: boolean) => void;
+  setCategoryBudget: (category: string, limit: number) => void;
+  removeCategoryBudget: (category: string) => void;
   
   // Custom categories (Pro)
   addCustomCategory: (category: CustomCategory) => void;
@@ -105,6 +107,20 @@ export const useSettingsStore = create<SettingsState>()(
 
       setBudgetEnabled: (isEnabled) =>
         set((state) => ({ budget: { ...state.budget, isEnabled } })),
+
+      setCategoryBudget: (category, limit) =>
+        set((state) => ({
+          budget: {
+            ...state.budget,
+            categoryBudgets: { ...(state.budget.categoryBudgets ?? {}), [category]: limit },
+          },
+        })),
+
+      removeCategoryBudget: (category) =>
+        set((state) => {
+          const { [category]: _removed, ...rest } = state.budget.categoryBudgets ?? {};
+          return { budget: { ...state.budget, categoryBudgets: rest } };
+        }),
 
       // Custom categories
       addCustomCategory: (category: CustomCategory) =>
