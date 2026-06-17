@@ -13,10 +13,6 @@ interface PlanState {
   // Getters
   isPro: () => boolean;
   isTrialActive: () => boolean;
-  canUseBankStatementScan: () => boolean;
-  canUseCloudSync: () => boolean;
-  canUseDataExport: () => boolean;
-  canUseBiometricLock: () => boolean;
   shouldShowAds: () => boolean;
   
   // Actions
@@ -44,10 +40,6 @@ export const usePlanStore = create<PlanState>()(
         return new Date(trialEndsAt) > new Date();
       },
 
-      canUseBankStatementScan: () => get().plan.entitlements.bankStatementScan,
-      canUseCloudSync: () => get().plan.entitlements.cloudSync,
-      canUseDataExport: () => get().plan.entitlements.dataExport,
-      canUseBiometricLock: () => get().plan.entitlements.biometricLock,
       shouldShowAds: () => !get().plan.entitlements.noAds,
 
       // Actions
