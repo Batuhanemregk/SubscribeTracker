@@ -36,6 +36,18 @@ function Calendar({ subscriptions, onDayPress }: { subscriptions: Subscription[]
     [subscriptions, year, month]
   );
 
+  // Heatmap: tint each billing day by its total amount relative to the busiest day.
+  const { dayTotals, maxDayTotal } = React.useMemo(() => {
+    const totals = new Map<number, number>();
+    let max = 0;
+    daySubsMap.forEach((daySubs, day) => {
+      const total = daySubs.reduce((sum, s) => sum + s.amount, 0);
+      totals.set(day, total);
+      if (total > max) max = total;
+    });
+    return { dayTotals: totals, maxDayTotal: max };
+  }, [daySubsMap]);
+
   const isToday = (day: number) => {
     const today = new Date();
     return day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
@@ -59,6 +71,10 @@ function Calendar({ subscriptions, onDayPress }: { subscriptions: Subscription[]
     } else if (hasBilling) {
       cellStyles.push(styles.billingDayCell);
       textStyleList.push(styles.billingDayText);
+      // Hotter background for higher-spend days.
+      const intensity = maxDayTotal > 0 ? (dayTotals.get(day) || 0) / maxDayTotal : 0;
+      const alphaHex = Math.round((0.1 + 0.35 * intensity) * 255).toString(16).padStart(2, '0');
+      cellStyles.push({ backgroundColor: `${colors.primary}${alphaHex}` });
     }
 
     // Show first subscription's icon and a "+N" badge if multiple
