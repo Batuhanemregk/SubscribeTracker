@@ -19,7 +19,9 @@
   - **[DONE] Terms "Pro" → "Premium"** copy parity (part of `73bad02`).
   - **[DONE] GateGuard friction:** `ECC_GATEGUARD=off` added to gitignored `.claude/settings.local.json` (takes effect next session).
 - **Why It Matters:** The calendar bug silently hid real upcoming payments — a core-value correctness defect. The rest is launch polish + a clean premium-gating bill of health.
-- **Next Action:** (1) **Faz 3b** — concrete design-improvement proposals (pending). (2) **Faz 4** — bilingual (EN+TR) simulator QA: walk every screen, confirm the scan-animation fix, calendar June rendering, Budget overflow, premium flows; screenshot. iPhone 16 Pro sim is booted with the dev build installed — needs Metro (`npx expo start --dev-client`) + user-driven taps.
+- **[DONE] Faz 4 — bilingual simulator QA (iPhone 16 Pro):** self-drove every screen via a temporary `initialRouteName` + relaunch (no taps; `idb`/deep-links unavailable). Home/Insights/Budget/Calendar/Settings/Scan all render cleanly in **TR and EN** — scan-animation fix confirmed (the "Döküman Tara" title sits clear of the floating document), June renders with 30 days, premium-gating PREMIUM badges + "Premium" rebrand correct, no text overflow either language. All temp QA scaffolding reverted, clean boot verified, tsc green.
+- **[DONE] Faz 3b — design fix shipped:** category bar-chart x-axis labels were hard-sliced to 5 chars ("Desig"/"Enter"/"Devel"); removed them since the legend already lists full names (commit `3466bad`).
+- **Next Action (optional design polish, LOW priority):** quick-stat tiles on Insights could gain small icons for visual parity with the gradient cards above; consider a category donut (reuse `DonutChart`) beside the bar; the "next 30 days" stat could link to the upcoming-payments list. None blocking.
 
 ---
 
