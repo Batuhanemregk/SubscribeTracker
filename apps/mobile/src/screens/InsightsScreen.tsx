@@ -180,7 +180,7 @@ export function InsightsScreen() {
                 style={[styles.overlapRow, i === overlaps.length - 1 && styles.lastRow]}
               >
                 <View style={[styles.dot, { backgroundColor: colors.amber }]} />
-                <Text style={styles.overlapCategory}>{o.category}</Text>
+                <Text style={styles.overlapCategory}>{t(`categories.${o.category}`, { defaultValue: o.category })}</Text>
                 <Text style={styles.overlapCount}>{o.count} {t('insights.subscriptions')}</Text>
               </View>
             ))}

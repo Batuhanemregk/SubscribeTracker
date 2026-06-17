@@ -151,6 +151,9 @@
     "Finance": "Finans",
     "Health": "Sağlık",
     "Education": "Eğitim",
+    "News": "Haberler",
+    "Security": "Güvenlik",
+    "Marketing": "Pazarlama",
     "Other": "Diğer"
   },
   "calendar": {

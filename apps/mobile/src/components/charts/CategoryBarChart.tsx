@@ -89,7 +89,7 @@ export function CategoryBarChart({ data, title }: CategoryBarChartProps) {
         {data.slice(0, 5).map((item) => (
           <View key={item.name} style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-            <Text style={styles.legendText}>{item.name}</Text>
+            <Text style={styles.legendText}>{t(`categories.${item.name}`, { defaultValue: item.name })}</Text>
           </View>
         ))}
       </View>

@@ -151,6 +151,9 @@
     "Finance": "Finance",
     "Health": "Health",
     "Education": "Education",
+    "News": "News",
+    "Security": "Security",
+    "Marketing": "Marketing",
     "Other": "Other"
   },
   "calendar": {

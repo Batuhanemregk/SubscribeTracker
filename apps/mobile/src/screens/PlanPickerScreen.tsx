@@ -131,7 +131,7 @@ export function PlanPickerScreen({ navigation: navProp, route }: PlanPickerScree
             )}
           </View>
           <Text style={styles.serviceName}>{service.name}</Text>
-          <Text style={styles.serviceCategory}>{service.category}</Text>
+          <Text style={styles.serviceCategory}>{t(`categories.${service.category}`, { defaultValue: service.category })}</Text>
         </View>
 
         {/* Plans List */}
