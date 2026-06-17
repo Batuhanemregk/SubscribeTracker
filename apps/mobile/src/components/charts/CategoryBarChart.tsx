@@ -27,7 +27,10 @@ export function CategoryBarChart({ data, title }: CategoryBarChartProps) {
   // Transform data for gifted-charts
   const barData = data.slice(0, 5).map((item) => ({
     value: item.amount,
-    label: item.name.slice(0, 5),
+    // Category names are shown in full in the legend below; truncating them to
+    // fit under a 40px bar produced unreadable labels ("Desig", "Enter"), so the
+    // x-axis label is intentionally omitted and the legend carries the names.
+    label: '',
     frontColor: item.color,
     gradientColor: `${item.color}80`,
     topLabelComponent: () => (
