@@ -180,7 +180,10 @@ function FloatingDocument({ colors, step }: { colors: ThemeColors; step: ScanSte
 }
 
 const docStyles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center', height: DOC_HEIGHT + 40, marginBottom: 16 },
+  // Extra vertical reserve + margins so the floating/3D-tilting card (and its
+  // drop shadow) stay within this block and never paint over the title below
+  // or the header above as it animates.
+  container: { alignItems: 'center', justifyContent: 'center', height: DOC_HEIGHT + 72, marginTop: 16, marginBottom: 28 },
   glow: { position: 'absolute', width: DOC_WIDTH * 0.8, height: 20, borderRadius: 100, bottom: 0 },
   document: {
     width: DOC_WIDTH, height: DOC_HEIGHT, borderRadius: 12, borderWidth: 1,
