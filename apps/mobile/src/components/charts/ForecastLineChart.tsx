@@ -32,6 +32,10 @@ export function ForecastLineChart({ data, title }: ForecastLineChartProps) {
     dataPointText: `$${item.value.toFixed(0)}`,
   }));
 
+  // Add headroom above the peak so data labels don't collide with the top axis label.
+  const maxVal = Math.max(...data.map((d) => d.value), 0);
+  const niceMax = maxVal > 0 ? Math.ceil((maxVal * 1.3) / 100) * 100 : 100;
+
   if (data.length === 0) {
     return (
       <View style={styles.container}>
@@ -65,11 +69,16 @@ export function ForecastLineChart({ data, title }: ForecastLineChartProps) {
         startOpacity={0.8}
         endOpacity={0.1}
         initialSpacing={20}
+        endSpacing={20}
+        maxValue={niceMax}
         yAxisTextStyle={styles.yAxisText}
         xAxisLabelTextStyle={styles.xAxisLabel}
         hideDataPoints={false}
         dataPointsColor={colors.primary}
         dataPointsRadius={5}
+        textColor={colors.textSecondary}
+        textFontSize={9}
+        textShiftY={-8}
         curved
         areaChart
         noOfSections={4}
