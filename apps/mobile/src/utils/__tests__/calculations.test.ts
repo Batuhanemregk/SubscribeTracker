@@ -11,6 +11,8 @@ import {
   formatCurrency,
   getDaysUntilBilling,
   advanceToNextBillingDate,
+  addBillingCycles,
+  getSubscriptionBillingDatesInMonth,
 } from '../calculations';
 
 // ---------------------------------------------------------------------------
@@ -432,5 +434,111 @@ describe('advanceToNextBillingDate', () => {
     expect(result.getFullYear()).toBe(2026);
     expect(result.getMonth()).toBe(5); // June
     expect(result.getDate()).toBe(15);
+  });
+
+  it('preserves a 31st-of-month anchor when advancing (no drift)', () => {
+    // Jan 31 -> Feb 28 (clamped) -> Mar 31 (anchor restored, not Mar 28).
+    // First occurrence >= Mar 18 is Mar 31.
+    const result = advanceToNextBillingDate('2026-01-31', 'monthly');
+    expect(result.getFullYear()).toBe(2026);
+    expect(result.getMonth()).toBe(2); // March
+    expect(result.getDate()).toBe(31);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// addBillingCycles (month-end clamping, anchor-preserving)
+// ---------------------------------------------------------------------------
+
+describe('addBillingCycles', () => {
+  it('clamps a 31st anchor to the last day of a shorter month', () => {
+    // Jan 31 + 1 monthly cycle -> Feb 28 (2026 is not a leap year)
+    const r = addBillingCycles(new Date(2026, 0, 31), 'monthly', 1);
+    expect(r.getMonth()).toBe(1);
+    expect(r.getDate()).toBe(28);
+  });
+
+  it('preserves the original anchor day across multiple cycles', () => {
+    // Jan 31 + 2 monthly cycles -> Mar 31 (NOT Mar 28 — anchor not lost)
+    const r = addBillingCycles(new Date(2026, 0, 31), 'monthly', 2);
+    expect(r.getMonth()).toBe(2);
+    expect(r.getDate()).toBe(31);
+  });
+
+  it('handles the June (30-day) case for a 31st anchor', () => {
+    // Jan 31 + 5 monthly cycles -> Jun 30 (the original disappearing-payment bug)
+    const r = addBillingCycles(new Date(2026, 0, 31), 'monthly', 5);
+    expect(r.getMonth()).toBe(5); // June
+    expect(r.getDate()).toBe(30);
+  });
+
+  it('advances weekly by 7 days per cycle', () => {
+    const r = addBillingCycles(new Date(2026, 0, 15), 'weekly', 1);
+    expect(r.getMonth()).toBe(0);
+    expect(r.getDate()).toBe(22);
+  });
+
+  it('clamps a Feb-29 yearly anchor to Feb 28 in a non-leap year', () => {
+    const r = addBillingCycles(new Date(2024, 1, 29), 'yearly', 1);
+    expect(r.getFullYear()).toBe(2025);
+    expect(r.getMonth()).toBe(1);
+    expect(r.getDate()).toBe(28);
+  });
+
+  it('advances quarterly by 3 months with clamping', () => {
+    // Jan 31 + 1 quarterly cycle -> Apr 30 (April has 30 days)
+    const r = addBillingCycles(new Date(2026, 0, 31), 'quarterly', 1);
+    expect(r.getMonth()).toBe(3);
+    expect(r.getDate()).toBe(30);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getSubscriptionBillingDatesInMonth (month-end clamp, in-phase projection)
+// ---------------------------------------------------------------------------
+
+describe('getSubscriptionBillingDatesInMonth', () => {
+  it('shows a 31st-of-month subscription on June 30 (the disappearing-payment bug)', () => {
+    const sub = makeSub({ cycle: 'monthly', nextBillingDate: '2026-01-31' });
+    const dates = getSubscriptionBillingDatesInMonth(sub, 2026, 5); // June
+    expect(dates).toHaveLength(1);
+    expect(dates[0].getDate()).toBe(30);
+  });
+
+  it('clamps a 31st anchor to Feb 28 but keeps 31 in 31-day months', () => {
+    const sub = makeSub({ cycle: 'monthly', nextBillingDate: '2026-01-31' });
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 1)[0].getDate()).toBe(28); // Feb
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 2)[0].getDate()).toBe(31); // March
+  });
+
+  it('returns exactly one date per month for a normal monthly sub', () => {
+    const sub = makeSub({ cycle: 'monthly', nextBillingDate: '2026-04-15' });
+    const dates = getSubscriptionBillingDatesInMonth(sub, 2026, 8); // September
+    expect(dates).toHaveLength(1);
+    expect(dates[0].getDate()).toBe(15);
+  });
+
+  it('emits a quarterly sub only in in-phase months', () => {
+    const sub = makeSub({ cycle: 'quarterly', nextBillingDate: '2026-01-20' });
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 3)).toHaveLength(1); // April (in phase)
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 1)).toHaveLength(0); // Feb (off phase)
+  });
+
+  it('emits a yearly sub only in its anniversary month', () => {
+    const sub = makeSub({ cycle: 'yearly', nextBillingDate: '2026-03-10' });
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 2)).toHaveLength(1); // March
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 3)).toHaveLength(0); // April
+  });
+
+  it('emits all weekly occurrences within the month', () => {
+    const sub = makeSub({ cycle: 'weekly', nextBillingDate: '2026-06-01' });
+    const dates = getSubscriptionBillingDatesInMonth(sub, 2026, 5); // June
+    expect(dates.length).toBeGreaterThanOrEqual(4);
+    expect(dates.every(d => d.getMonth() === 5)).toBe(true);
+  });
+
+  it('returns nothing for inactive subscriptions', () => {
+    const sub = makeSub({ cycle: 'monthly', nextBillingDate: '2026-01-31', status: 'cancelled' });
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 5)).toEqual([]);
   });
 });

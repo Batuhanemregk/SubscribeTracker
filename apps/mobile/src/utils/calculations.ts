@@ -139,35 +139,78 @@ export function getUpcomingPayments(subscriptions: Subscription[], days: number)
 }
 
 /**
+ * Add `count` billing cycles to a date, anchored on the start date's
+ * day-of-month and clamped to the target month's length.
+ *
+ * This avoids the JS `Date.setMonth` rollover bug: naively, Jan 31 + 1 month
+ * becomes Mar 3 (Feb has no 31st), which makes a 31st-of-month subscription
+ * disappear from 30-day months entirely. Here the anchor day is preserved and
+ * only clamped per target month:
+ *   Jan 31 + 1 (monthly)  -> Feb 28/29   (clamped)
+ *   Jan 31 + 2 (monthly)  -> Mar 31      (anchor preserved, not Mar 28)
+ *   Jan 31 + 5 (monthly)  -> Jun 30      (clamped)
+ *
+ * `count` may be negative. Always call it from the ORIGINAL anchor date (not a
+ * previously-clamped result) so the day-of-month does not drift.
+ */
+export function addBillingCycles(start: Date, cycle: BillingCycle, count: number): Date {
+  if (cycle === 'weekly') {
+    const d = new Date(start);
+    d.setDate(d.getDate() + 7 * count);
+    return d;
+  }
+
+  const monthsPerCycle = cycle === 'quarterly' ? 3 : cycle === 'yearly' ? 12 : 1;
+  const anchorDay = start.getDate();
+  const totalMonths = start.getMonth() + monthsPerCycle * count;
+  const targetYear = start.getFullYear() + Math.floor(totalMonths / 12);
+  const targetMonth = ((totalMonths % 12) + 12) % 12;
+  const daysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+
+  const result = new Date(start);
+  // setFullYear(y, m, d) sets all three atomically — no intermediate rollover.
+  result.setFullYear(targetYear, targetMonth, Math.min(anchorDay, daysInTargetMonth));
+  return result;
+}
+
+/**
  * Advance a past billing date forward by cycle until it's in the future.
  * Handles edge case where nextBillingDate is in the past (e.g. payment
  * was charged to a different card and didn't appear in the scanned statement).
+ *
+ * Cycles are applied from the original anchor in one shot (via addBillingCycles)
+ * so the day-of-month anchor is preserved rather than drifting via repeated
+ * month-end clamping.
  */
 export function advanceToNextBillingDate(
   nextBillingDate: string,
   cycle: BillingCycle
 ): Date {
-  const billing = new Date(nextBillingDate);
+  const start = new Date(nextBillingDate);
   const now = new Date();
+  if (start >= now) return start;
 
-  while (billing < now) {
-    switch (cycle) {
-      case 'weekly':
-        billing.setDate(billing.getDate() + 7);
-        break;
-      case 'monthly':
-        billing.setMonth(billing.getMonth() + 1);
-        break;
-      case 'quarterly':
-        billing.setMonth(billing.getMonth() + 3);
-        break;
-      case 'yearly':
-        billing.setFullYear(billing.getFullYear() + 1);
-        break;
-    }
+  // Estimate how many whole cycles separate `start` from `now`.
+  let count: number;
+  if (cycle === 'weekly') {
+    count = Math.floor((now.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
+  } else {
+    const monthsPerCycle = cycle === 'quarterly' ? 3 : cycle === 'yearly' ? 12 : 1;
+    const monthsApart =
+      (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+    count = Math.floor(monthsApart / monthsPerCycle);
   }
+  count = Math.max(0, count);
 
-  return billing;
+  // Nudge forward until strictly in the future (covers estimate undershoot).
+  let candidate = addBillingCycles(start, cycle, count);
+  let guard = 0;
+  while (candidate < now && guard < 24) {
+    count += 1;
+    candidate = addBillingCycles(start, cycle, count);
+    guard += 1;
+  }
+  return candidate;
 }
 
 /**
@@ -184,16 +227,6 @@ export function getDaysUntilBilling(nextBillingDate: string, cycle?: BillingCycl
 }
 
 /**
- * Get billing dates for current month (legacy - uses raw nextBillingDate only)
- */
-export function getMonthBillingDates(subscriptions: Subscription[], year: number, month: number): Date[] {
-  return subscriptions
-    .filter(s => s.status === 'active')
-    .map(s => new Date(s.nextBillingDate))
-    .filter(d => d.getFullYear() === year && d.getMonth() === month);
-}
-
-/**
  * Project all billing dates for a subscription within a specific month.
  * Advances the billing date forward (or backward) from nextBillingDate
  * using the subscription's cycle to find all occurrences in the target month.
@@ -205,43 +238,35 @@ export function getSubscriptionBillingDatesInMonth(
 ): Date[] {
   if (sub.status !== 'active') return [];
 
-  const dates: Date[] = [];
-  const billing = new Date(sub.nextBillingDate);
-  const monthStart = new Date(year, month, 1);
-  const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
+  const anchor = new Date(sub.nextBillingDate);
 
-  // Rewind billing date to before the target month start
-  const rewound = new Date(billing);
-  while (rewound > monthStart) {
-    switch (sub.cycle) {
-      case 'weekly': rewound.setDate(rewound.getDate() - 7); break;
-      case 'monthly': rewound.setMonth(rewound.getMonth() - 1); break;
-      case 'quarterly': rewound.setMonth(rewound.getMonth() - 3); break;
-      case 'yearly': rewound.setFullYear(rewound.getFullYear() - 1); break;
-    }
-  }
-
-  // Advance through the target month collecting all dates that fall within it
-  const cursor = new Date(rewound);
-  const maxIterations = 200; // Safety limit
-  let iterations = 0;
-  while (cursor <= monthEnd && iterations < maxIterations) {
-    iterations++;
-    if (cursor >= monthStart && cursor <= monthEnd) {
+  // Weekly: walk every 7 days through the target month.
+  if (sub.cycle === 'weekly') {
+    const dates: Date[] = [];
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0, 23, 59, 59);
+    const cursor = new Date(anchor);
+    while (cursor > monthStart) cursor.setDate(cursor.getDate() - 7);
+    while (cursor < monthStart) cursor.setDate(cursor.getDate() + 7);
+    while (cursor <= monthEnd) {
       dates.push(new Date(cursor));
+      cursor.setDate(cursor.getDate() + 7);
     }
-    // Advance by cycle
-    switch (sub.cycle) {
-      case 'weekly': cursor.setDate(cursor.getDate() + 7); break;
-      case 'monthly': cursor.setMonth(cursor.getMonth() + 1); break;
-      case 'quarterly': cursor.setMonth(cursor.getMonth() + 3); break;
-      case 'yearly': cursor.setFullYear(cursor.getFullYear() + 1); break;
-    }
-    // Break if we've passed the month
-    if (cursor > monthEnd) break;
+    return dates;
   }
 
-  return dates;
+  // Monthly / quarterly / yearly: at most one occurrence per month, on the
+  // anchor day-of-month clamped to the month length. Only emit it when the
+  // target month is in phase with the anchor month (so quarterly/yearly skip
+  // off-cycle months). This clamps a 31st anchor to e.g. June 30 instead of
+  // letting it roll over and disappear.
+  const monthsPerCycle = sub.cycle === 'quarterly' ? 3 : sub.cycle === 'yearly' ? 12 : 1;
+  const monthsDiff = (year - anchor.getFullYear()) * 12 + (month - anchor.getMonth());
+  if ((((monthsDiff % monthsPerCycle) + monthsPerCycle) % monthsPerCycle) !== 0) return [];
+
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const day = Math.min(anchor.getDate(), daysInMonth);
+  return [new Date(year, month, day)];
 }
 
 /**

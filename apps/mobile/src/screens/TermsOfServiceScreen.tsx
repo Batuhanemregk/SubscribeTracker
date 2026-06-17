@@ -27,7 +27,7 @@ export default function TermsOfServiceScreen() {
         <Text style={styles.paragraph}>
           Finify is a subscription and expense tracking application that helps users monitor 
           recurring payments, manage budgets, and gain insights into their spending habits. 
-          The App offers both free (Standard) and paid (Pro) tiers.
+          The App offers both free (Standard) and paid (Premium) tiers.
         </Text>
 
         <Text style={styles.heading}>3. User Accounts</Text>
@@ -39,7 +39,7 @@ export default function TermsOfServiceScreen() {
 
         <Text style={styles.heading}>4. Subscriptions and Payments</Text>
         <Text style={styles.paragraph}>
-          Pro features are available through auto-renewable subscriptions managed by Apple's 
+          Premium features are available through auto-renewable subscriptions managed by Apple's
           App Store or Google Play Store. Subscription pricing is displayed in the App before 
           purchase. Subscriptions automatically renew unless cancelled at least 24 hours before 
           the end of the current period. You can manage and cancel subscriptions through your 

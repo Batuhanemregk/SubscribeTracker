@@ -699,12 +699,20 @@ function getStatusLabel(item: AnalyzedSubscription): string {
 
 function calculateNextBillingDate(lastDate: string, cycle: string): string {
   const date = new Date(lastDate);
-  switch (cycle) {
-    case 'weekly': date.setDate(date.getDate() + 7); break;
-    case 'monthly': date.setMonth(date.getMonth() + 1); break;
-    case 'quarterly': date.setMonth(date.getMonth() + 3); break;
-    case 'yearly': date.setFullYear(date.getFullYear() + 1); break;
+  if (cycle === 'weekly') {
+    date.setDate(date.getDate() + 7);
+    return date.toISOString();
   }
+  // Anchor on the original day-of-month and clamp to the target month length so
+  // a 31st-of-month charge doesn't roll over (e.g. Jan 31 -> Mar 3) and land in
+  // the wrong month. Mirrors addBillingCycles() in utils/calculations.
+  const monthsPerCycle = cycle === 'quarterly' ? 3 : cycle === 'yearly' ? 12 : 1;
+  const anchorDay = date.getDate();
+  const totalMonths = date.getMonth() + monthsPerCycle;
+  const targetYear = date.getFullYear() + Math.floor(totalMonths / 12);
+  const targetMonth = ((totalMonths % 12) + 12) % 12;
+  const daysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+  date.setFullYear(targetYear, targetMonth, Math.min(anchorDay, daysInTargetMonth));
   return date.toISOString();
 }
 
