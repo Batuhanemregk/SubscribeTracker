@@ -427,7 +427,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
             />
           )}
           numColumns={2}
-          ListHeaderComponent={renderHeader}
+          ListHeaderComponent={renderHeader()}
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={[styles.listContent, { paddingBottom: 140 }]}
           showsVerticalScrollIndicator={false}
@@ -446,7 +446,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
           data={visibleSubs}
           keyExtractor={(item) => item.id}
           renderItem={renderSubscriptionItem}
-          ListHeaderComponent={renderHeader}
+          ListHeaderComponent={renderHeader()}
           ListEmptyComponent={renderEmpty}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}

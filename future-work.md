@@ -7,6 +7,19 @@
 
 ## 🔴 HIGH PRIORITY
 
+### Pre-Launch QA Fixes: Settings scroll-reset, details currency, ScanBanner flicker — [DONE] (2026-06-19)
+
+- **Date:** 2026-06-19
+- **Area:** Mobile / Settings / SubscriptionDetails / Home (ScanBanner)
+- **Status:** [DONE] — tsc green, 118 tests pass. Commits 851787e (settings+details) and the ScanBanner header fix.
+- **Shipped (3 bugs):**
+  1. **Settings ScrollView snapped to top on every toggle.** `SettingsRow`/`Toggle` were declared *inside* the SettingsScreen component, so each state change gave them new component identities and remounted the whole list. Moved both to module scope (read theme via `useTheme`) → stable identity, scroll preserved.
+  2. **Subscription details showed the stored currency (e.g. "$") after switching display currency.** Details screen formatted amounts with `sub.currency`; now converts to `app.currency` via `useCurrencyStore` (matches the list cards) — hero, monthly/yearly, payment history, total paid.
+  3. **ScanBanner flickered/froze on pull-to-refresh.** `ListHeaderComponent={renderHeader}` (function form) changed identity each render → header remounted → ScanBanner remounted (reset `visible`, replayed `FadeInDown`, re-read AsyncStorage). Changed to element form `renderHeader()` → reconcile instead of remount.
+- **Why it matters:** All three are visible jank/incorrectness on core flows; pre-launch polish.
+- **Decision (not a bug):** Duplicate subscriptions (same name/amount appearing twice) are left **intentionally** — a user may legitimately have two of the same service, so no auto-dedupe or hard add-block was added. The scan review already flags already-tracked items (dimmed, not auto-selected) to avoid *accidental* double-adds. Revisit only if accidental dupes become a real complaint.
+- **Next action:** Device-verify in the next build (toggle Settings rows without scroll jump; switch currency → details reflects it; pull-to-refresh Home → banner stable).
+
 ### Subscription List Filters (search + category + cycle + sort) — [DONE] (2026-06-19)
 
 - **Date:** 2026-06-19
