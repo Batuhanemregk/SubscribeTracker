@@ -473,6 +473,12 @@ export function BankStatementScanScreen({ navigation }: any) {
       <Animated.Text entering={FadeInDown.delay(300)} style={styles.mainSubtitle}>
         {t('bankScan.uploadSubtitle')}
       </Animated.Text>
+      <Animated.Text
+        entering={FadeInDown.delay(350)}
+        style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 8, paddingHorizontal: 12, fontStyle: 'italic' }}
+      >
+        {t('bankScan.accuracyNote')}
+      </Animated.Text>
 
       {/* Format badges */}
       <Animated.View entering={FadeInDown.delay(400)} style={styles.formatRow}>
@@ -530,7 +536,7 @@ export function BankStatementScanScreen({ navigation }: any) {
 
       {/* Remaining scans counter */}
       <Animated.Text entering={FadeIn.delay(700)} style={[styles.remainingText, { color: colors.textMuted }]}>
-        {t('bankScan.remainingScans', { count: remaining.today })}
+        {t('bankScan.remainingScans', { count: remaining.month })}
       </Animated.Text>
     </ScrollView>
   );
