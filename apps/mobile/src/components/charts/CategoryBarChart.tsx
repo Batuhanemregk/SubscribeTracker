@@ -47,7 +47,7 @@ export function CategoryBarChart({ data, title }: CategoryBarChartProps) {
           <Text style={styles.title}>{title || t('insights.spendingByCategory')}</Text>
         </View>
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No data to display</Text>
+          <Text style={styles.emptyText}>{t('insights.noDataToDisplay')}</Text>
         </View>
       </View>
     );

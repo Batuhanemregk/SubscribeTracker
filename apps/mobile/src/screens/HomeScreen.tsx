@@ -10,6 +10,7 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import {
@@ -24,6 +25,7 @@ import { AddMethodSheet } from "../components/AddMethodSheet";
 import { ScanBanner } from "../components/ScanBanner";
 import { useTheme } from "../theme";
 import { useSubscriptionStore, useSettingsStore, usePlanStore, useCurrencyStore } from "../state";
+import { FREE_SUBSCRIPTION_LIMIT } from "../state/stores/planStore";
 import { formatCurrency } from "../utils";
 import { SEED_SUBSCRIPTIONS } from "../data/seed";
 import type { Subscription } from "../types";
@@ -136,11 +138,30 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
     }
   };
 
+  // Standard (free) users can track up to FREE_SUBSCRIPTION_LIMIT subscriptions;
+  // adding beyond that routes to the paywall (Premium is unlimited).
+  const promptIfAtFreeLimit = (): boolean => {
+    if (!isPro() && getActiveSubscriptions().length >= FREE_SUBSCRIPTION_LIMIT) {
+      Alert.alert(
+        t('paywall.limitReachedTitle'),
+        t('paywall.limitReachedBody', { limit: FREE_SUBSCRIPTION_LIMIT }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          { text: t('settings.upgradeToPro'), onPress: () => navigation.navigate('Paywall') },
+        ]
+      );
+      return true;
+    }
+    return false;
+  };
+
   const handleBrowseServices = () => {
+    if (promptIfAtFreeLimit()) return;
     navigation.navigate('ServicePicker');
   };
 
   const handleCustomEntry = () => {
+    if (promptIfAtFreeLimit()) return;
     navigation.navigate('AddSubscription');
   };
 

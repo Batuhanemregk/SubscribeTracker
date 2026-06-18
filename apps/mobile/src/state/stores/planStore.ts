@@ -7,6 +7,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { UserPlan, PlanTier } from '../../types';
 import { DEFAULT_STANDARD_PLAN, DEFAULT_PRO_PLAN } from '../../types';
 
+/** Standard (free) plan can track up to this many subscriptions; Premium is unlimited. */
+export const FREE_SUBSCRIPTION_LIMIT = 10;
+
 interface PlanState {
   plan: UserPlan;
   

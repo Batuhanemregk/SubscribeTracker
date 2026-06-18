@@ -7,6 +7,20 @@
 
 ## 🔴 HIGH PRIORITY
 
+### Pre-Launch Polish — Insights i18n, Free Sub Limit, Onboarding Theme Picker, Native-Module Resilience — [DONE] (2026-06-18)
+
+- **Date:** 2026-06-18
+- **Area:** Mobile / Insights / Home / Onboarding / BankStatementService / i18n
+- **Status:** [DONE] — `tsc` green, 108 tests pass, verified in the iOS simulator (TR).
+- **Shipped:**
+  1. **Insights chart i18n:** `ForecastLineChart` ("Average", "Projected Total", "No forecast data", and a hardcoded `$`) and `CategoryBarChart` ("No data to display") were hardcoded English. Now routed through `t()` + the user's currency (`formatCurrency`/`getCurrencySymbol`). 4 new keys (`insights.forecastAverage/forecastProjectedTotal/noForecastData/noDataToDisplay`) EN+TR.
+  2. **Free subscription limit enforced (was advertised but unenforced):** the paywall sells "Standard = 10 / Premium = unlimited" but nothing enforced the 10. Added `FREE_SUBSCRIPTION_LIMIT = 10` in `planStore`; `HomeScreen` now gates both add paths (Browse Services + Custom Entry) — a Standard user at the limit gets an alert → Paywall (Premium unlimited; the scan path is already Premium-only). New keys `paywall.limitReachedTitle/limitReachedBody`.
+  3. **Onboarding live theme picker:** new final carousel slide — a mini app-preview mockup (recolors live) above 3 tappable options (Dark/Light/System) that apply the theme instantly app-wide via `setTheme` → `ThemeProvider`. Keys `onboarding.themeTitle/themeSubtitle`. Verified in the simulator.
+  4. **Native-module resilience (bonus, found during QA):** `expo-image-picker` was a top-level import in `BankStatementService`, so any client missing that native module (e.g. a dev client older than build #26) crashed the ENTIRE app at startup ("Cannot find native module 'ExponentImagePicker'"). Made it a guarded lazy `require()` inside `pickFromGallery` — a missing module now only disables that one action (key `bankScan.galleryUnavailable`). This also unblocked simulator QA.
+- **Why It Matters:** i18n correctness for TR users; closes a monetization hole (unlimited subs for free); a requested onboarding personalization; and removes a whole-app startup-crash risk from an optional native module.
+- **Next Action:** Commit + new TestFlight build for device verification. Then go-live (host Terms/Privacy/Support at finify.app, ASC v1.0 submit). The "hook" go-live item still needs the user to clarify what it refers to.
+
+
 ### Paywall self-guard for already-Premium users — [DONE] (2026-06-18)
 
 - **Date:** 2026-06-18

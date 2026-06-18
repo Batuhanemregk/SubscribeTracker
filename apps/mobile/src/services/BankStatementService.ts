@@ -20,7 +20,6 @@
  * Function and discarded; only derived subscription fields are kept.
  */
 import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
 import { File } from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
@@ -292,6 +291,17 @@ export async function pickFromGallery(): Promise<{
   mimeType?: string;
   error?: string;
 }> {
+  // Lazy native-module load: expo-image-picker is a native module that may be
+  // absent on an older/stale client build. Requiring it here (instead of a
+  // top-level import) means a missing module only disables this one action
+  // rather than crashing the entire app at startup.
+  let ImagePicker: typeof import('expo-image-picker');
+  try {
+    ImagePicker = require('expo-image-picker');
+  } catch {
+    return { success: false, error: t('bankScan.galleryUnavailable') };
+  }
+
   try {
     // Open the actual Photos library (so users can pick a screenshot of their
     // statement), not the Files document picker.

@@ -7,6 +7,8 @@ import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, borderRadius, type ThemeColors } from '../../theme';
+import { useSettingsStore } from '../../state';
+import { formatCurrency, getCurrencySymbol } from '../../utils';
 import { t } from '../../i18n';
 
 interface ForecastData {
@@ -23,13 +25,16 @@ export function ForecastLineChart({ data, title }: ForecastLineChartProps) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const chartWidth = Dimensions.get('window').width - 80;
+  const { app } = useSettingsStore();
+  const currency = app.currency;
+  const symbol = getCurrencySymbol(currency);
 
   // Transform data for gifted-charts
   const lineData = data.map((item) => ({
     value: item.value,
     label: item.month,
     dataPointColor: colors.primary,
-    dataPointText: `$${item.value.toFixed(0)}`,
+    dataPointText: `${symbol}${item.value.toFixed(0)}`,
   }));
 
   // Add headroom above the peak so data labels don't collide with the top axis label.
@@ -44,7 +49,7 @@ export function ForecastLineChart({ data, title }: ForecastLineChartProps) {
           <Text style={styles.title}>{title || t('insights.forecastTitle')}</Text>
         </View>
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No forecast data</Text>
+          <Text style={styles.emptyText}>{t('insights.noForecastData')}</Text>
         </View>
       </View>
     );
@@ -102,7 +107,7 @@ export function ForecastLineChart({ data, title }: ForecastLineChartProps) {
             return (
               <View style={styles.tooltip}>
                 <Text style={styles.tooltipText}>
-                  ${items[0].value.toFixed(2)}
+                  {formatCurrency(items[0].value, currency)}
                 </Text>
               </View>
             );
@@ -113,15 +118,15 @@ export function ForecastLineChart({ data, title }: ForecastLineChartProps) {
       {/* Summary */}
       <View style={styles.summary}>
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Average</Text>
+          <Text style={styles.summaryLabel}>{t('insights.forecastAverage')}</Text>
           <Text style={styles.summaryValue}>
-            ${(data.reduce((a, b) => a + b.value, 0) / data.length).toFixed(2)}
+            {formatCurrency(data.reduce((a, b) => a + b.value, 0) / data.length, currency)}
           </Text>
         </View>
         <View style={styles.summaryItem}>
-          <Text style={styles.summaryLabel}>Projected Total</Text>
+          <Text style={styles.summaryLabel}>{t('insights.forecastProjectedTotal')}</Text>
           <Text style={styles.summaryValue}>
-            ${data.reduce((a, b) => a + b.value, 0).toFixed(2)}
+            {formatCurrency(data.reduce((a, b) => a + b.value, 0), currency)}
           </Text>
         </View>
       </View>
