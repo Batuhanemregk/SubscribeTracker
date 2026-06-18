@@ -195,7 +195,7 @@ export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  theme: 'dark',
+  theme: 'light',
   currency: 'USD',
   language: 'system',
   notificationsEnabled: true,

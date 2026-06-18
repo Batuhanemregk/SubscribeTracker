@@ -13,7 +13,6 @@ import {
   signInWithGoogle,
   signInWithApple,
   isAppleSignInAvailable,
-  identifyUser,
   type AuthResult,
 } from '../services';
 import { t } from '../i18n';
@@ -32,7 +31,9 @@ export default function BackupSignInScreen({ navigation }: any) {
       const result: AuthResult =
         provider === 'apple' ? await signInWithApple() : await signInWithGoogle();
       if (result.success && result.user) {
-        await identifyUser(result.user.id);
+        // Do NOT call Purchases.logIn() here — see the note in SettingsScreen.
+        // Premium is Apple-ID-anchored; identifying RevenueCat with the app
+        // account would drop the entitlement.
         useAccountStore.getState().setAccount({
           id: result.user.id,
           email: result.user.email,

@@ -67,7 +67,6 @@ export {
   getOfferings,
   purchasePackage,
   restorePurchases,
-  identifyUser,
   logoutUser,
   addProStatusListener,
   formatPackagePrice,

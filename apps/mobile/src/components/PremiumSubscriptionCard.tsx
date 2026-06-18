@@ -8,7 +8,7 @@
  * - Swipe to reveal actions (fixed gesture handling)
  */
 import React, { useRef, useCallback, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Pressable, Platform, Image } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Pressable, Platform, Image, Animated as RNAnimated } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -35,7 +35,10 @@ interface PremiumSubscriptionCardProps {
   swipeableRef?: (ref: Swipeable | null) => void;
 }
 
-export function PremiumSubscriptionCard({ 
+// Total horizontal footprint of the swipe actions (marginLeft 8 + two 70px buttons).
+const ACTIONS_WIDTH = 148;
+
+export function PremiumSubscriptionCard({
   item, 
   index, 
   onPress, 
@@ -85,31 +88,39 @@ export function PremiumSubscriptionCard({
     day: 'numeric',
   });
 
-  // Swipe action buttons
-  const renderRightActions = () => (
-    <View style={styles.actionsContainer}>
-      <TouchableOpacity 
-        style={[styles.actionButton, styles.editButton]} 
-        onPress={() => {
-          swipeableRef.current?.close();
-          onEdit();
-        }}
-      >
-        <Ionicons name="pencil" size={20} color="#FFF" />
-        <Text style={styles.actionText}>{t('common.edit')}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={[styles.actionButton, styles.deleteButton]} 
-        onPress={() => {
-          swipeableRef.current?.close();
-          onDelete();
-        }}
-      >
-        <Ionicons name="trash" size={20} color="#FFF" />
-        <Text style={styles.actionText}>{t('common.delete')}</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  // Swipe action buttons. Track the swipe progress (0 closed -> 1 open) so the
+  // actions slide in with the finger instead of popping/flashing in statically.
+  const renderRightActions = (progress: any) => {
+    const translateX = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [ACTIONS_WIDTH, 0],
+      extrapolate: 'clamp',
+    });
+    return (
+      <RNAnimated.View style={[styles.actionsContainer, { transform: [{ translateX }] }]}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.editButton]}
+          onPress={() => {
+            swipeableRef.current?.close();
+            onEdit();
+          }}
+        >
+          <Ionicons name="pencil" size={20} color="#FFF" />
+          <Text style={styles.actionText}>{t('common.edit')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.deleteButton]}
+          onPress={() => {
+            swipeableRef.current?.close();
+            onDelete();
+          }}
+        >
+          <Ionicons name="trash" size={20} color="#FFF" />
+          <Text style={styles.actionText}>{t('common.delete')}</Text>
+        </TouchableOpacity>
+      </RNAnimated.View>
+    );
+  };
 
   // Combined ref callback - register with parent + internal ref
   const handleRef = useCallback((ref: Swipeable | null) => {

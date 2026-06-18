@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components';
 import { borderRadius, useTheme, type ThemeColors } from '../theme';
 import { useSettingsStore, usePlanStore, useSubscriptionStore, useAccountStore } from '../state';
-import { scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signInWithApple, isAppleSignInAvailable, deleteAccount, signOut as authSignOut, identifyUser, logoutUser, type AuthResult } from '../services';
+import { scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signInWithApple, isAppleSignInAvailable, deleteAccount, signOut as authSignOut, logoutUser, type AuthResult } from '../services';
 import { t } from '../i18n';
 
 
@@ -91,7 +91,11 @@ export function SettingsScreen({ navigation }: any) {
       const result: AuthResult =
         provider === 'apple' ? await signInWithApple() : await signInWithGoogle();
       if (result.success && result.user) {
-        await identifyUser(result.user.id);
+        // Do NOT call Purchases.logIn() here. Premium is tied to the Apple ID
+        // (App Store), not this app-account login; identifying RevenueCat with
+        // the app user switches away from the anonymous user that holds the
+        // entitlement and drops Premium (twin of the sign-out logOut bug).
+        // RevenueCat stays anonymous; restore handles new devices.
         useAccountStore.getState().setAccount({
           id: result.user.id,
           email: result.user.email,

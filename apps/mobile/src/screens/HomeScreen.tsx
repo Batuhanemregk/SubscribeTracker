@@ -83,11 +83,12 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
 
   // Seed data only on first-ever app launch, never again
   useEffect(() => {
-    if (!app.dataSeeded && subscriptions.length === 0) {
-      setSubscriptions(SEED_SUBSCRIPTIONS);
-      setDataSeeded(true);
-    } else if (!app.dataSeeded) {
-      // Subscriptions already exist (e.g. from persist), just mark as seeded
+    if (!app.dataSeeded) {
+      // Demo subscriptions are for development/screenshots only — real users
+      // start with an empty list.
+      if (__DEV__ && subscriptions.length === 0) {
+        setSubscriptions(SEED_SUBSCRIPTIONS);
+      }
       setDataSeeded(true);
     }
   }, []);

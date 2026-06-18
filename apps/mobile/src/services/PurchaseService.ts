@@ -259,19 +259,6 @@ export async function restorePurchases(): Promise<{
 }
 
 /**
- * Identify user (call after login)
- */
-export async function identifyUser(userId: string): Promise<void> {
-  if (!purchasesAvailable || !Purchases) return;
-  try {
-    await Purchases.logIn(userId);
-    console.log('User identified:', userId);
-  } catch (error) {
-    console.error('Failed to identify user:', error);
-  }
-}
-
-/**
  * Logout user (call after logout)
  */
 export async function logoutUser(): Promise<void> {

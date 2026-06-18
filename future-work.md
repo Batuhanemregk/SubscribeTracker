@@ -7,6 +7,19 @@
 
 ## 🔴 HIGH PRIORITY
 
+### Premium-on-Sign-In Fix + Light Default + Seed Gate + Swipe Polish — [DONE] (2026-06-19)
+
+- **Date:** 2026-06-19
+- **Area:** Mobile / RevenueCat / Onboarding / Home / PremiumSubscriptionCard
+- **Status:** [DONE] — tsc green, 108 tests pass. In build #31.
+- **Shipped:**
+  1. **🔴 Premium lost on SIGN-IN (critical):** signing in called `identifyUser()` → `Purchases.logIn(supabaseUserId)`, switching the RC user away from the anonymous one that holds the Apple-ID entitlement → the customer-info listener saw "not pro" → downgraded. Twin of the sign-out `logOut` bug. **Fix: removed `identifyUser` entirely** (function + export + both sign-in call sites). **PRINCIPLE: never call `Purchases.logIn`/`logOut` on app account sign-in/out — Premium is Apple-ID-anchored; `restorePurchases` handles new devices.** (`logoutUser` remains only on account deletion.) Trade-off: drops cross-platform (iOS↔Android) entitlement sharing — not launch-critical; revisit with a `logIn`+restore flow later if needed. Already-identified users recover via Restore Purchases.
+  2. **Default theme → Light** (`DEFAULT_APP_SETTINGS.theme` 'dark'→'light') so new installs launch white (was dark-first). The ~1s native splash stays dark — `splash-icon.png` has a baked-in dark bg + white wordmark, so a white splash needs a NEW asset (light/transparent bg). See below.
+  3. **Demo subscriptions gated to `__DEV__`:** `HomeScreen` auto-seeded `SEED_SUBSCRIPTIONS` (Netflix/Spotify) on first launch — real users now start EMPTY; demo data only in dev builds (screenshots).
+  4. **Swipe reveal smoothed:** `PremiumSubscriptionCard.renderRightActions` ignored the drag (actions popped/flashed in). Now interpolates `translateX` with the swipe progress so they slide in with the finger.
+- **Next Action:** (a) NEW white-compatible splash asset for a fully-white launch screen; (b) device verify (#31): premium survives sign-in, white default, empty start, smooth swipe.
+
+
 ### Pre-Launch Polish — Insights i18n, Free Sub Limit, Onboarding Theme Picker, Native-Module Resilience — [DONE] (2026-06-18)
 
 - **Date:** 2026-06-18
