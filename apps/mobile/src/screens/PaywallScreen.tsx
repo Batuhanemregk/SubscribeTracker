@@ -112,11 +112,25 @@ export function PaywallScreen({ navigation, route }: any) {
   // Reactive Premium status — re-renders when the plan store flips to Pro.
   const isProNow = usePlanStore((s) => s.isPro());
 
-  // Force a fresh entitlement check when the paywall opens. On a fresh install the
-  // Apple receipt may not have synced when the launch check ran, so a returning
-  // Premium user can be shown the paywall; confirm with RevenueCat and reflect it.
+  // Resolve Premium for a returning user when the paywall opens. On a fresh
+  // install RevenueCat starts a NEW anonymous user, so getCustomerInfo() reports
+  // "not Premium" until the StoreKit receipt is re-synced — restorePurchases()
+  // forces that sync (silent on StoreKit 2). The reactive effect below then
+  // leaves the paywall the instant the entitlement resolves.
   useEffect(() => {
-    getProStatus().then((p) => { if (p === true) upgradeToPro(); });
+    (async () => {
+      const status = await getProStatus();
+      if (status === true) {
+        upgradeToPro();
+        return;
+      }
+      // Fresh install / reinstall path — force a receipt sync to detect a sub
+      // already tied to this Apple ID.
+      if (fromOnboarding) {
+        const restored = await restorePurchases();
+        if (restored.isPro) upgradeToPro();
+      }
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
