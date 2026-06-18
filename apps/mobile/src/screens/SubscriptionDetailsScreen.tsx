@@ -13,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Header, GradientHeroCard, GradientStatCard, PrimaryButton, SecondaryButton } from '../components';
 import { useTheme, borderRadius, type ThemeColors } from '../theme';
-import { useSubscriptionStore, useSettingsStore } from '../state';
+import { useSubscriptionStore, useSettingsStore, useCurrencyStore } from '../state';
 import { formatCurrency, getCurrencySymbol } from '../utils';
 import type { Subscription } from '../types';
 import { t, getLocale } from '../i18n';
@@ -47,6 +47,8 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
   const { subscriptionId } = route.params;
   const { getSubscriptionById, deleteSubscription } = useSubscriptionStore();
   const { app } = useSettingsStore();
+  const { convert } = useCurrencyStore();
+  const displayCurrency = app.currency;
   const dateLocale = getLocale() === 'tr' ? 'tr-TR' : 'en-US';
   
   const sub = getSubscriptionById(subscriptionId);
@@ -62,11 +64,14 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
     );
   }
 
+  // Show every amount in the user's selected display currency (the cards do the
+  // same) — otherwise a USD-priced sub keeps showing "$" after switching currency.
   const subCurrency = sub.currency || 'TRY';
-  const monthlyAmt = sub.cycle === 'monthly' ? sub.amount
-    : sub.cycle === 'weekly' ? sub.amount * 4.33
-    : sub.cycle === 'quarterly' ? sub.amount / 3
-    : sub.amount / 12;
+  const displayAmount = convert(sub.amount, subCurrency, displayCurrency);
+  const monthlyAmt = sub.cycle === 'monthly' ? displayAmount
+    : sub.cycle === 'weekly' ? displayAmount * 4.33
+    : sub.cycle === 'quarterly' ? displayAmount / 3
+    : displayAmount / 12;
   const yearlyAmt = monthlyAmt * 12;
   const daysUntil = Math.ceil(
     (new Date(sub.nextBillingDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)
@@ -138,8 +143,8 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
           icon={sub.iconKey}
           logoUrl={sub.logoUrl || undefined}
           name={sub.name}
-          amount={sub.amount}
-          currency={subCurrency}
+          amount={displayAmount}
+          currency={displayCurrency}
           cycle={sub.cycle}
           category={sub.category}
           colorKey={sub.colorKey}
@@ -152,14 +157,14 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
             icon="cash-outline"
             iconColor={colors.emerald}
             label={t('subscription.monthlyCost')}
-            value={formatCurrency(monthlyAmt, subCurrency)}
+            value={formatCurrency(monthlyAmt, displayCurrency)}
             delay={0}
           />
           <GradientStatCard
             icon="trending-up"
             iconColor={colors.primary}
             label={t('subscription.yearlyCost')}
-            value={formatCurrency(yearlyAmt, subCurrency)}
+            value={formatCurrency(yearlyAmt, displayCurrency)}
             delay={0}
           />
         </View>
@@ -203,8 +208,8 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
             <PaymentHistoryItem
               key={index}
               date={payment.date}
-              amount={payment.amount}
-              currency={subCurrency}
+              amount={convert(payment.amount, subCurrency, displayCurrency)}
+              currency={displayCurrency}
             />
           ))}
         </View>
@@ -214,7 +219,7 @@ export function SubscriptionDetailsScreen({ navigation, route }: SubscriptionDet
           <Text style={styles.statsTitle}>{t('subscription.statistics')}</Text>
           <View style={styles.statsRowItem}>
             <Text style={styles.statsLabel}>{t('subscription.totalPaid')}</Text>
-            <Text style={styles.statsValue}>{formatCurrency(totalPaid, subCurrency)}</Text>
+            <Text style={styles.statsValue}>{formatCurrency(convert(totalPaid, subCurrency, displayCurrency), displayCurrency)}</Text>
           </View>
           <View style={styles.statsRowItem}>
             <Text style={styles.statsLabel}>{t('subscription.memberSince')}</Text>

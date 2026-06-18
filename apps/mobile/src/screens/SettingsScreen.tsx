@@ -11,16 +11,17 @@ import { useSettingsStore, usePlanStore, useSubscriptionStore, useAccountStore }
 import { scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signInWithApple, isAppleSignInAvailable, deleteAccount, signOut as authSignOut, logoutUser, type AuthResult } from '../services';
 import { t } from '../i18n';
 
-
-export function SettingsScreen({ navigation }: any) {
-  const { colors, canUseLight, isDark } = useTheme();
+// Defined at module scope (NOT inside SettingsScreen) so their component identity
+// stays stable across re-renders. When these lived inside the component, every
+// state change (e.g. toggling a switch) re-created them as new component types,
+// remounting the whole list and snapping the ScrollView back to the top.
+function SettingsRow({ icon, iconColor, title, subtitle, onPress, rightElement, destructive }: {
+  icon: string; iconColor: string; title: string; subtitle?: string;
+  onPress?: () => void; rightElement?: React.ReactNode; destructive?: boolean;
+}) {
+  const { colors } = useTheme();
   const styles = createStyles(colors);
-
-  // --- Sub-components with access to dynamic styles/colors ---
-  const SettingsRow = ({ icon, iconColor, title, subtitle, onPress, rightElement, destructive }: {
-    icon: string; iconColor: string; title: string; subtitle?: string;
-    onPress?: () => void; rightElement?: React.ReactNode; destructive?: boolean;
-  }) => (
+  return (
     <TouchableOpacity style={styles.row} onPress={onPress} disabled={!onPress} activeOpacity={0.7}>
       <View style={[styles.rowIcon, { backgroundColor: `${colors.text}08` }]}>
         <Ionicons name={icon as any} size={20} color={iconColor} />
@@ -34,12 +35,21 @@ export function SettingsScreen({ navigation }: any) {
       )}
     </TouchableOpacity>
   );
+}
 
-  const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  return (
     <TouchableOpacity style={[styles.toggle, value && styles.toggleActive]} onPress={() => onChange(!value)}>
       <View style={[styles.toggleDot, value && styles.toggleDotActive]} />
     </TouchableOpacity>
   );
+}
+
+export function SettingsScreen({ navigation }: any) {
+  const { colors, canUseLight, isDark } = useTheme();
+  const styles = createStyles(colors);
 
   const { app, setNotifications, setBiometricLock, resetToDefaults, setCurrency, setTheme, setLanguage } = useSettingsStore();
   const { plan, isPro, downgradeToStandard } = usePlanStore();
