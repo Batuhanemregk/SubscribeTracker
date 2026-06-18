@@ -7,6 +7,17 @@
 
 ## 🔴 HIGH PRIORITY
 
+### Toggle scroll-reset REAL fix + per-cycle price labels — [DONE] (2026-06-19)
+
+- **Date:** 2026-06-19
+- **Area:** Mobile / App.tsx (tab navigator) / PremiumSubscriptionCard / CompactSubscriptionCard / utils/cycle.ts
+- **Status:** [DONE] — tsc green, 118 tests pass. For build #34. Supersedes the partial toggle fix below.
+- **Shipped:**
+  1. **Settings list STILL snapped to top on every toggle** (the earlier module-scope `SettingsRow`/`Toggle` change was necessary but NOT sufficient). **Real root cause:** in `App.tsx` the `AnimatedHome/Insights/Budget/Calendar/Settings` wrappers were declared **inside `MainTabs`**, so every re-render gave them new identities → React Navigation **remounted the whole tab screen** (reset scroll, replayed the fade). Toggling notifications/biometric re-renders the app via the settings store (`AppContent` subscribes to `notificationsEnabled`/`biometricLockEnabled`), which re-rendered MainTabs and remounted Settings. **Fix: moved all five tab-screen wrappers to module scope** → stable identity → no remount. Also stops every tab screen remounting on unrelated app re-renders.
+  2. **Weekly/quarterly subs showed "/yr" on cards.** `PremiumSubscriptionCard` + `CompactSubscriptionCard` used a binary `cycle === 'monthly' ? '/mo' : '/yr'`, so any non-monthly cycle read "/yr" (a weekly sub looked yearly). Added `cyclePeriodShort(cycle)` (`utils/cycle.ts`) mapping all four cycles (/wk, /mo, /qtr, /yr); used in both cards. (GradientHeroCard already handled all four.)
+- **Why it matters:** Toggle jump was a constant irritant on a core screen; the "/yr" mislabel made weekly subs look yearly and explained the "4 identical subs in the calendar" confusion (a weekly sub bills ~4×/month).
+- **Next action:** Verify in build #34 — toggle Settings rows (no scroll jump); weekly/quarterly subs show /wk//qtr on cards.
+
 ### Pre-Launch QA Fixes: Settings scroll-reset, details currency, ScanBanner flicker — [DONE] (2026-06-19)
 
 - **Date:** 2026-06-19

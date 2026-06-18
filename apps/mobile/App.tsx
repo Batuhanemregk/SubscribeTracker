@@ -62,16 +62,21 @@ const TAB_CONFIG: Record<string, { icon: keyof typeof Ionicons.glyphMap; labelKe
   Settings: { icon: 'settings', labelKey: 'tabs.settings' },
 };
 
+// Tab screen wrappers — MODULE scope so their identity is stable across renders.
+// If they live inside MainTabs, every re-render gives them new identities, which
+// makes React Navigation REMOUNT each tab screen (resetting scroll position,
+// replaying the fade, re-running mount effects). That is why the Settings list
+// snapped to the top on every toggle: a toggle re-renders the app via the settings
+// store, which re-rendered MainTabs and remounted the screen.
+const AnimatedHome = (props: any) => (<AnimatedTabScreen><HomeScreen {...props} /></AnimatedTabScreen>);
+const AnimatedInsights = (props: any) => (<AnimatedTabScreen><InsightsScreen {...props} /></AnimatedTabScreen>);
+const AnimatedBudget = (props: any) => (<AnimatedTabScreen><BudgetScreen {...props} /></AnimatedTabScreen>);
+const AnimatedCalendar = (props: any) => (<AnimatedTabScreen><CalendarScreen {...props} /></AnimatedTabScreen>);
+const AnimatedSettings = (props: any) => (<AnimatedTabScreen><SettingsScreen {...props} /></AnimatedTabScreen>);
+
 // Premium floating glass tab bar
 function MainTabs() {
   const { colors, isDark } = useTheme();
-
-  // Wrap screens with fade animation
-  const AnimatedHome = (props: any) => (<AnimatedTabScreen><HomeScreen {...props} /></AnimatedTabScreen>);
-  const AnimatedInsights = (props: any) => (<AnimatedTabScreen><InsightsScreen {...props} /></AnimatedTabScreen>);
-  const AnimatedBudget = (props: any) => (<AnimatedTabScreen><BudgetScreen {...props} /></AnimatedTabScreen>);
-  const AnimatedCalendar = (props: any) => (<AnimatedTabScreen><CalendarScreen {...props} /></AnimatedTabScreen>);
-  const AnimatedSettings = (props: any) => (<AnimatedTabScreen><SettingsScreen {...props} /></AnimatedTabScreen>);
 
   return (
     <Tab.Navigator

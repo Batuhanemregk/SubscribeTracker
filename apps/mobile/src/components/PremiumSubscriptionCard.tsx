@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
 import { useSettingsStore, useCurrencyStore } from '../state';
 import { formatCurrency, advanceToNextBillingDate } from '../utils';
+import { cyclePeriodShort } from '../utils/cycle';
 import type { Subscription } from '../types';
 import { t, getLocale } from '../i18n';
 
@@ -209,7 +210,7 @@ export function PremiumSubscriptionCard({
                 <View style={styles.priceRow}>
                   <View style={styles.priceContainer}>
                     <Text style={[styles.price, { color: colors.text }]}>{formattedPrice}</Text>
-                    <Text style={[styles.period, { color: colors.textMuted }]}>{item.cycle === 'monthly' ? t('common.perMonth') : t('common.perYear')}</Text>
+                    <Text style={[styles.period, { color: colors.textMuted }]}>{cyclePeriodShort(item.cycle)}</Text>
                   </View>
 
                   {/* Next billing date */}
