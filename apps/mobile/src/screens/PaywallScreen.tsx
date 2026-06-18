@@ -128,19 +128,24 @@ export function PaywallScreen({ navigation, route }: any) {
   // forces that sync (silent on StoreKit 2). The reactive effect below then
   // leaves the paywall the instant the entitlement resolves.
   useEffect(() => {
+    let cancelled = false;
     (async () => {
-      const status = await getProStatus();
-      if (status === true) {
-        upgradeToPro();
-        return;
-      }
-      // Fresh install / reinstall path — force a receipt sync to detect a sub
-      // already tied to this Apple ID.
+      if ((await getProStatus()) === true) { upgradeToPro(); return; }
+      // Fresh install / reinstall: RevenueCat may still be initializing right
+      // after onboarding and the StoreKit receipt sync lags, so a single check
+      // returns "not Premium". Force one restore, then poll a few times while it
+      // settles — the reactive effect dismisses the instant Premium resolves.
       if (fromOnboarding) {
         const restored = await restorePurchases();
-        if (restored.isPro) upgradeToPro();
+        if (!cancelled && restored.isPro) { upgradeToPro(); return; }
+        for (let i = 0; i < 4 && !cancelled; i++) {
+          await new Promise((r) => setTimeout(r, 1500));
+          if (cancelled) return;
+          if ((await getProStatus()) === true) { upgradeToPro(); return; }
+        }
       }
     })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
