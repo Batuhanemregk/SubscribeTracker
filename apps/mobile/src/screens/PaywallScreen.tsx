@@ -19,11 +19,12 @@ import Animated, {
 import { Header, PrimaryButton, SecondaryButton } from '../components';
 import { useTheme, borderRadius, type ThemeColors } from '../theme';
 import { usePlanStore } from '../state';
-import { 
+import {
   showPaywallDismissAd,
   getOfferings,
   purchasePackage,
   restorePurchases,
+  getProStatus,
   formatPackagePrice,
   getPackageType,
   isPurchasesConfigured,
@@ -107,6 +108,27 @@ export function PaywallScreen({ navigation, route }: any) {
       navigation.goBack();
     }
   };
+
+  // Reactive Premium status — re-renders when the plan store flips to Pro.
+  const isProNow = usePlanStore((s) => s.isPro());
+
+  // Force a fresh entitlement check when the paywall opens. On a fresh install the
+  // Apple receipt may not have synced when the launch check ran, so a returning
+  // Premium user can be shown the paywall; confirm with RevenueCat and reflect it.
+  useEffect(() => {
+    getProStatus().then((p) => { if (p === true) upgradeToPro(); });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-leave the paywall the moment Premium resolves (already-owned, the Apple
+  // receipt syncing, or the app-wide listener firing) — unless the user is
+  // mid-purchase, where the success handler already manages navigation.
+  useEffect(() => {
+    if (isProNow && !isLoading) {
+      handleSuccess();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isProNow]);
 
   // Fallback prices (TRY) - used when RevenueCat not configured
   const [monthlyPrice, setMonthlyPrice] = useState('₺99');

@@ -475,7 +475,7 @@ export function BankStatementScanScreen({ navigation }: any) {
       </Animated.Text>
       <Animated.Text
         entering={FadeInDown.delay(350)}
-        style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', marginTop: 8, paddingHorizontal: 12, fontStyle: 'italic' }}
+        style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', marginBottom: 16, paddingHorizontal: 12, fontStyle: 'italic' }}
       >
         {t('bankScan.accuracyNote')}
       </Animated.Text>
@@ -750,7 +750,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   // the header) when it doesn't — so the floating document never overlaps the title.
   uploadScrollContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 24 },
   mainTitle: { fontSize: 26, fontWeight: '800', color: colors.text, textAlign: 'center', letterSpacing: -0.5 },
-  mainSubtitle: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', marginTop: 8, marginBottom: 20, lineHeight: 22 },
+  mainSubtitle: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', marginTop: 8, marginBottom: 10, lineHeight: 22 },
 
   // Format badges
   formatRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
