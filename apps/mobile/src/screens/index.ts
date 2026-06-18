@@ -15,3 +15,4 @@ export { PlanPickerScreen } from './PlanPickerScreen';
 export { BankStatementScanScreen } from './BankStatementScanScreen';
 export { default as PrivacyPolicyScreen } from './PrivacyPolicyScreen';
 export { default as TermsOfServiceScreen } from './TermsOfServiceScreen';
+export { default as BackupSignInScreen } from './BackupSignInScreen';

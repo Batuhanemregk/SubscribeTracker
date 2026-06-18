@@ -46,6 +46,7 @@ import {
   BankStatementScanScreen,
   PrivacyPolicyScreen,
   TermsOfServiceScreen,
+  BackupSignInScreen,
 } from './src/screens';
 
 // Navigation setup
@@ -379,6 +380,11 @@ function AppContent() {
             name="Paywall"
             component={PaywallScreen}
             options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+          />
+          <Stack.Screen
+            name="BackupSignIn"
+            component={BackupSignInScreen}
+            options={{ animation: 'slide_from_bottom', gestureEnabled: false }}
           />
           <Stack.Screen
             name="ServicePicker"

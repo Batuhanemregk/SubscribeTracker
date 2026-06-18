@@ -18,7 +18,7 @@ import Animated, {
 // PurchasesPackage type - use any for Expo Go compatibility
 import { Header, PrimaryButton, SecondaryButton } from '../components';
 import { useTheme, borderRadius, type ThemeColors } from '../theme';
-import { usePlanStore } from '../state';
+import { usePlanStore, useAccountStore } from '../state';
 import {
   showPaywallDismissAd,
   getOfferings,
@@ -109,6 +109,16 @@ export function PaywallScreen({ navigation, route }: any) {
     }
   };
 
+  // After a real purchase, nudge optional cloud backup (sign-in) — unless the
+  // user is already signed in, in which case just finish.
+  const finishAfterPurchase = () => {
+    if (!useAccountStore.getState().isSignedIn()) {
+      navigation.replace('BackupSignIn');
+    } else {
+      handleSuccess();
+    }
+  };
+
   // Reactive Premium status — re-renders when the plan store flips to Pro.
   const isProNow = usePlanStore((s) => s.isPro());
 
@@ -195,7 +205,7 @@ export function PaywallScreen({ navigation, route }: any) {
           Alert.alert(
             t('paywall.welcomePro'),
             t('paywall.welcomeProMessage'),
-            [{ text: t('common.continue') || 'Continue', onPress: handleSuccess }]
+            [{ text: t('common.continue') || 'Continue', onPress: finishAfterPurchase }]
           );
         } else if (result.errorType === 'cancelled') {
           // User cancelled - do nothing, no alert
@@ -207,7 +217,7 @@ export function PaywallScreen({ navigation, route }: any) {
             Alert.alert(
               t('paywall.welcomePro'),
               t('paywall.welcomeProMessage'),
-              [{ text: t('common.continue') || 'Continue', onPress: handleSuccess }]
+              [{ text: t('common.continue') || 'Continue', onPress: finishAfterPurchase }]
             );
           } else {
             Alert.alert(

@@ -508,5 +508,13 @@
     "system": "System Default",
     "english": "English",
     "turkish": "Türkçe"
+  },
+  "backupSignIn": {
+    "title": "Back up your subscriptions",
+    "subtitle": "Sign in so your subscriptions are safe — get them back instantly on a new phone or after reinstalling.",
+    "skip": "Maybe later",
+    "benefitReinstall": "Restore everything after a reinstall",
+    "benefitDevices": "Sync across your devices",
+    "benefitSafe": "Your data, safely backed up"
   }
 }

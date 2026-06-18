@@ -508,5 +508,13 @@
     "system": "Sistem Varsayılanı",
     "english": "English",
     "turkish": "Türkçe"
+  },
+  "backupSignIn": {
+    "title": "Aboneliklerini yedekle",
+    "subtitle": "Giriş yap, aboneliklerin güvende olsun — yeni telefonda veya yeniden kurulumda anında geri gelsin.",
+    "skip": "Belki sonra",
+    "benefitReinstall": "Yeniden kurulumdan sonra her şeyi geri yükle",
+    "benefitDevices": "Cihazların arasında senkronla",
+    "benefitSafe": "Verin güvenle yedeklenir"
   }
 }
