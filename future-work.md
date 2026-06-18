@@ -7,6 +7,15 @@
 
 ## 🔴 HIGH PRIORITY
 
+### Paywall self-guard for already-Premium users (deferred, 2026-06-18)
+
+- **Date:** 2026-06-18
+- **Area:** Mobile / PaywallScreen
+- **Current state:** Onboarding no longer routes Premium users to the paywall (fixed in build #26), and other paywall entry points are `isPro`-gated. But the **Paywall screen itself doesn't self-guard** — if a Premium user somehow lands on it (e.g. RevenueCat restores Premium *while* the paywall is already open — a race), it still shows the purchase UI.
+- **Why it matters:** belt-and-suspenders so a paying user is never shown "buy" options. Low likelihood now that the onboarding path is fixed.
+- **Next action:** add a `useEffect` in `PaywallScreen` that, when `isPro()` becomes true, dismisses (`navigation.replace('MainTabs')` if `fromOnboarding`, else `goBack()`), being careful not to double-navigate with the purchase-success handler. User said "we'll add it later."
+
+
 ### Pre-Launch QA Pass — Bug Fixes + Insights + Premium Audit (2026-06-17)
 
 - **Date:** 2026-06-17
