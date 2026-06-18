@@ -358,7 +358,7 @@
 - **Deferred (not yet done):**
   - **#6 scroll-jump:** toggling list↔grid remounts the FlatList (different `key` for `numColumns` change) → resets scroll to top. Real fix = single FlatList with `numColumns:1` + chunked rows for grid; deferred to avoid risking the Home layout in this build.
   - **#9 premature reveal:** the "actions flash on first touch" is likely press-dim feedback; `activeOffsetX={[-20,20]}` already gates the swipe. Needs live device testing to confirm/repro.
-  - **#2 (Sync to Cloud):** explained to user (it pushes subscriptions to Supabase for signed-in Premium users) — kept as-is, no change.
+  - **#2 (Sync to Cloud) → [DONE] made automatic (2026-06-18):** was manual-only (tap the button). Now auto-syncs for signed-in Premium users: a **debounced push (2.5s)** after add/update/delete (coalesces rapid edits, Premium+signed-in gated, no-op otherwise) in `subscriptionStore`, plus a **one-shot full sync on app launch** (`App.tsx` prepare effect, after RevenueCat pro-status resolves). The manual "Sync to Cloud" button stays as a force-sync. Not sim-verifiable (needs real auth + Premium + Supabase) — verify on device.
 
 ### Category Budgets (per-category limits) — Premium
 

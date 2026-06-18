@@ -17,7 +17,7 @@ import * as Haptics from 'expo-haptics';
 import { ThemeProvider, useTheme } from './src/theme';
 import { AnimatedTabScreen } from './src/components';
 import { initData } from './src/data/repository';
-import { useSettingsStore, useSubscriptionStore, useCurrencyStore, usePlanStore, migrateSubscriptionIds } from './src/state';
+import { useSettingsStore, useSubscriptionStore, useCurrencyStore, usePlanStore, useAccountStore, migrateSubscriptionIds } from './src/state';
 import { t, initLocaleFromSettings } from './src/i18n';
 import {
   requestNotificationPermission,
@@ -266,6 +266,17 @@ function AppContent() {
         }
       } catch (e) {
         console.warn('[App] Purchases/pro sync failed:', e);
+      }
+
+      // One-shot cloud sync on launch so a signed-in Premium user gets the latest
+      // data (and pushes anything changed offline) without tapping "Sync to Cloud".
+      try {
+        const plan = usePlanStore.getState();
+        if (useAccountStore.getState().isSignedIn() && (plan.isPro() || plan.isTrialActive())) {
+          await useSubscriptionStore.getState().performFullSync();
+        }
+      } catch (e) {
+        console.warn('[App] Launch sync failed:', e);
       }
 
       // Fetch exchange rates + service catalog updates in background
