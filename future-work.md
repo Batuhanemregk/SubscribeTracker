@@ -7,13 +7,13 @@
 
 ## 🔴 HIGH PRIORITY
 
-### Paywall self-guard for already-Premium users (deferred, 2026-06-18)
+### Paywall self-guard for already-Premium users — [DONE] (2026-06-18)
 
 - **Date:** 2026-06-18
 - **Area:** Mobile / PaywallScreen
-- **Current state:** Onboarding no longer routes Premium users to the paywall (fixed in build #26), and other paywall entry points are `isPro`-gated. But the **Paywall screen itself doesn't self-guard** — if a Premium user somehow lands on it (e.g. RevenueCat restores Premium *while* the paywall is already open — a race), it still shows the purchase UI.
-- **Why it matters:** belt-and-suspenders so a paying user is never shown "buy" options. Low likelihood now that the onboarding path is fixed.
-- **Next action:** add a `useEffect` in `PaywallScreen` that, when `isPro()` becomes true, dismisses (`navigation.replace('MainTabs')` if `fromOnboarding`, else `goBack()`), being careful not to double-navigate with the purchase-success handler. User said "we'll add it later."
+- **Status:** [DONE] (build #27) — turned out to be the actual cause of the "reinstall → paywall → already-owned → features still locked → tap again fixes it" bug, not just a nicety.
+- **Root cause:** on a fresh install the local plan store is Standard and the Apple receipt hasn't synced when the paywall opens, so the first `getProStatus()`/`restore` returns false; RevenueCat resolves Premium a moment later but the open paywall never reacted (no listener, no reactive `isPro`).
+- **Fix:** PaywallScreen now (1) force-checks `getProStatus()` on mount and `upgradeToPro()` if confirmed, and (2) subscribes reactively to the plan store (`usePlanStore(s => s.isPro())`) and auto-dismisses the instant Premium resolves — unless mid-purchase (the success handler navigates). The plan store is reactive, so features also unlock automatically even if the paywall was already dismissed.
 
 
 ### Pre-Launch QA Pass — Bug Fixes + Insights + Premium Audit (2026-06-17)
