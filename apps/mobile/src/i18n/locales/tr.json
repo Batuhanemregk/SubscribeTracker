@@ -447,6 +447,7 @@
     "tip4": "Ekstreniz güvenli şekilde işlenir ve asla saklanmaz",
     "remainingScans": "Bu ay {{count}} tarama hakkınız kaldı",
     "accuracyNote": "İpucu: sonuçlar değişebilir — bazı abonelikler eksik görünüyorsa tekrar taramayı deneyin.",
+    "galleryPermission": "Ekran görüntüsü seçmek için fotoğraf erişimi gerekli. Ayarlar'dan izin verin.",
     "verifyCycle": "Faturalama dönemini doğrulayın",
     "retry": "Tekrar dene",
     "noSubscriptionsTitle": "Abonelik bulunamadı",

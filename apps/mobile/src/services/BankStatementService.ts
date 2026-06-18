@@ -20,6 +20,7 @@
  * Function and discarded; only derived subscription fields are kept.
  */
 import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { File } from 'expo-file-system';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
@@ -292,9 +293,16 @@ export async function pickFromGallery(): Promise<{
   error?: string;
 }> {
   try {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ['image/*'],
-      copyToCacheDirectory: true,
+    // Open the actual Photos library (so users can pick a screenshot of their
+    // statement), not the Files document picker.
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      return { success: false, error: t('bankScan.galleryPermission') };
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 1,
     });
 
     if (result.canceled) {
@@ -305,7 +313,7 @@ export async function pickFromGallery(): Promise<{
     return {
       success: true,
       uri: asset.uri,
-      name: asset.name,
+      name: asset.fileName || 'statement.jpg',
       mimeType: asset.mimeType || 'image/jpeg',
     };
   } catch (error: any) {

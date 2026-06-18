@@ -447,6 +447,7 @@
     "tip4": "Your statement is processed securely and never stored",
     "remainingScans": "{{count}} scans remaining this month",
     "accuracyNote": "Tip: results can vary — if some subscriptions look missing, try scanning again.",
+    "galleryPermission": "Photo access is needed to pick a screenshot. Enable it in Settings.",
     "verifyCycle": "Verify billing cycle",
     "retry": "Retry",
     "noSubscriptionsTitle": "No subscriptions found",
