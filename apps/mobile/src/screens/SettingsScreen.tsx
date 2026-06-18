@@ -254,8 +254,10 @@ export function SettingsScreen({ navigation }: any) {
               rightElement={
                 <TouchableOpacity
                   onPress={async () => {
+                    // Sign out of cloud sync only. Do NOT call Purchases.logOut():
+                    // Premium is tied to the Apple ID (App Store), not this login,
+                    // so logging out of RevenueCat would wrongly drop the entitlement.
                     await authSignOut();
-                    await logoutUser();
                     useAccountStore.getState().clearAccount();
                   }}
                   style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: `${colors.red}15` }}

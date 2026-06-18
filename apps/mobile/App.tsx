@@ -82,8 +82,8 @@ function MainTabs() {
           tabBarStyle: {
             position: 'absolute' as const,
             bottom: Platform.OS === 'ios' ? 24 : 16,
-            left: 32,
-            right: 32,
+            left: 48,
+            right: 48,
             height: 64,
             borderRadius: 24,
             borderTopWidth: 0,

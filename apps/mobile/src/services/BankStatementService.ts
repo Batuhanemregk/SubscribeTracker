@@ -414,12 +414,12 @@ export async function extractSubscriptionsFromStatement(
     }
     if (!data || typeof data !== 'object') return serviceError();
 
-    // Business failure envelope
+    // Business failure envelope — a failed scan never counts against the user's
+    // quota (the cooldown still prevents rapid retries). Only successful
+    // extractions below decrement the limit.
     if (data.ok === false) {
       const code = String(data.errorCode || 'UPSTREAM_ERROR');
       const errorKey = ERROR_CODE_KEYS[code] ?? 'bankScan.errors.serviceError';
-      // A "busy" signal means OpenAI was overloaded — let the user retry for free.
-      if (code !== 'UPSTREAM_BUSY') await recordScan();
       return { success: false, subscriptions: [], error: t(errorKey), errorKey };
     }
 

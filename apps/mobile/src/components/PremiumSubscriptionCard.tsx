@@ -123,10 +123,11 @@ export function PremiumSubscriptionCard({
         ref={handleRef}
         renderRightActions={renderRightActions}
         overshootRight={false}
-        friction={2}
+        friction={2.5}
+        rightThreshold={48}
         onSwipeableOpen={onSwipeOpen}
-        activeOffsetX={[-20, 20]}
-        failOffsetY={[-15, 15]}
+        activeOffsetX={[-28, 28]}
+        failOffsetY={[-12, 12]}
         onSwipeableWillOpen={() => { isSwiping.current = true; }}
         onSwipeableClose={() => { setTimeout(() => { isSwiping.current = false; }, 100); }}
       >

@@ -341,6 +341,19 @@
 
 ## ✅ COMPLETED
 
+### TestFlight #25 feedback — round 3 (2026-06-18)
+
+- **Date:** 2026-06-18
+- **Status:** [DONE] (for build #26)
+- **Fixed:**
+  - **[CRITICAL — Premium lost on sign-out]** The Cloud-Sync "Sign Out" button called `logoutUser()` → `Purchases.logOut()`, which reset RevenueCat to anonymous → the pro-status listener fired `isPro=false` → **downgraded Premium**. On iOS, Premium is tied to the **Apple ID**, not the app's cloud-sync login. Fix: sign-out no longer calls `Purchases.logOut()` — it only signs out of Supabase + clears the local account. Premium now survives sign-out / re-sign-in.
+  - **[Scan — failed scans no longer count]** A business-failure (`data.ok === false`) used to call `recordScan()` (counted against the daily/monthly quota) unless it was an `UPSTREAM_BUSY`. Now **no failure counts** — only a successful extraction decrements the quota. The per-scan cooldown still prevents rapid retries.
+  - **[Nav bar]** Side margins 32 → **48** (clearly narrower / more centered). *(Was hard to eyeball in-sim because the dev LogBox toast overlaps the bar; the real build has no toast.)*
+  - **[Swipe]** Tuned the Premium card Swipeable to stop the "actions pop on first touch": `activeOffsetX` 20→28 (needs a deliberate drag), added `rightThreshold={48}` (small drags spring back), `friction` 2→2.5 (smoother).
+- **Open decisions (need user input):**
+  - **Scan monthly limit:** currently `MAX_SCANS_PER_DAY=100`, `MAX_SCANS_PER_MONTH=30` for everyone — but Settings markets Premium as "unlimited scans" (mismatch). Decide the real Premium cap (recommend ~30–50/mo to bound OpenAI cost) and fix the copy.
+  - **Scan accuracy note:** the LLM is non-deterministic (same doc → 10 then 12 on re-scan). Proposed: add a small note like "Results can vary — if some look missing, scan again." (Now that failures are free and re-scans of a *successful* scan still count, consider whether re-scans should be discounted.)
+
 ### TestFlight #24 feedback — round 2 (2026-06-18)
 
 - **Date:** 2026-06-18
