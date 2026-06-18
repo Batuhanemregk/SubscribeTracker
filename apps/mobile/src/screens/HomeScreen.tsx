@@ -10,6 +10,7 @@ import {
   FlatList,
   RefreshControl,
   TouchableOpacity,
+  TextInput,
   Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -23,13 +24,17 @@ import {
 } from "../components";
 import { AddMethodSheet } from "../components/AddMethodSheet";
 import { ScanBanner } from "../components/ScanBanner";
+import { SubscriptionFilterSheet } from "../components/SubscriptionFilterSheet";
 import { useTheme } from "../theme";
 import { useSubscriptionStore, useSettingsStore, usePlanStore, useCurrencyStore } from "../state";
 import { FREE_SUBSCRIPTION_LIMIT } from "../state/stores/planStore";
-import { formatCurrency } from "../utils";
+import { formatCurrency, filterAndSortSubscriptions, type SubscriptionSortKey } from "../utils";
 import { SEED_SUBSCRIPTIONS } from "../data/seed";
-import type { Subscription } from "../types";
+import type { Subscription, BillingCycle } from "../types";
 import { t } from "../i18n";
+
+// Cycle filter order — only those present in the user's list are shown.
+const CYCLE_ORDER: BillingCycle[] = ['monthly', 'yearly', 'weekly', 'quarterly'];
 
 interface HomeScreenProps {
   navigation: any;
@@ -60,6 +65,13 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
   const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<'list' | 'grid'>('list');
   const [showAddSheet, setShowAddSheet] = useState(false);
+
+  // Subscription list filters (search stays inline & pinned; the rest live in the sheet)
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCycles, setSelectedCycles] = useState<BillingCycle[]>([]);
+  const [sortBy, setSortBy] = useState<SubscriptionSortKey>('soonest');
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
 
   // Track all swipeable refs and currently open card
   const swipeableRefs = useRef<{ [key: string]: any }>({});
@@ -105,6 +117,43 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
     );
     return daysUntil <= 7 && daysUntil >= 0;
   }).length;
+
+  // Derive filter options from the user's data, plus the filtered/sorted list.
+  const availableCategories = useMemo(
+    () => Array.from(new Set(activeSubs.map((s) => s.category))).sort(),
+    [activeSubs],
+  );
+  const availableCycles = useMemo(
+    () => CYCLE_ORDER.filter((c) => activeSubs.some((s) => s.cycle === c)),
+    [activeSubs],
+  );
+  const visibleSubs = useMemo(
+    () =>
+      filterAndSortSubscriptions(
+        activeSubs,
+        { query: searchQuery, categories: selectedCategories, cycles: selectedCycles, sortBy },
+        convert,
+        currency,
+      ),
+    [activeSubs, searchQuery, selectedCategories, selectedCycles, sortBy, convert, currency],
+  );
+  // Search is always visible, so it is not counted in the sheet's badge.
+  const activeFilterCount =
+    selectedCategories.length + selectedCycles.length + (sortBy !== 'soonest' ? 1 : 0);
+
+  const toggleCategory = (c: string) =>
+    setSelectedCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+  const toggleCycle = (c: BillingCycle) =>
+    setSelectedCycles((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+  const clearFilters = () => {
+    setSelectedCategories([]);
+    setSelectedCycles([]);
+    setSortBy('soonest');
+  };
+  const clearAll = () => {
+    clearFilters();
+    setSearchQuery('');
+  };
 
   const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -246,7 +295,27 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
     </>
   );
 
-  const renderEmpty = () => (
+  const renderEmpty = () => {
+    // Have subscriptions, but the active filter/search matched none.
+    if (activeSubs.length > 0) {
+      return (
+        <View style={styles.emptyContainer}>
+          <View style={[styles.emptyIconWrap, { backgroundColor: `${colors.primary}15` }]}>
+            <Ionicons name="search" size={48} color={colors.primary} />
+          </View>
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('home.noResultsTitle')}</Text>
+          <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+            {t('home.noResultsBody')}
+          </Text>
+          <TouchableOpacity onPress={clearAll} style={styles.emptyManualBtn}>
+            <Text style={[styles.emptyManualText, { color: colors.primary }]}>
+              {t('home.noResultsClear')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    return (
     <View style={styles.emptyContainer}>
       {/* Hero Icon */}
       <View style={[styles.emptyIconWrap, { backgroundColor: `${colors.primary}15` }]}> 
@@ -277,7 +346,8 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         </Text>
       </TouchableOpacity>
     </View>
-  );
+    );
+  };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.bg }]}>
@@ -300,11 +370,55 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         />
       </View>
 
+      {/* Pinned search + filter (only when the user has subscriptions) */}
+      {activeSubs.length > 0 && (
+        <View style={styles.filterRow}>
+          <View style={[styles.searchBox, { backgroundColor: colors.bgCard, borderColor: colors.border }]}>
+            <Ionicons name="search" size={18} color={colors.textMuted} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={t('home.searchPlaceholder')}
+              placeholderTextColor={colors.textMuted}
+              returnKeyType="search"
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={() => setSearchQuery('')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Ionicons name="close-circle" size={18} color={colors.textMuted} />
+              </TouchableOpacity>
+            )}
+          </View>
+          <TouchableOpacity
+            style={[
+              styles.filterButton,
+              { backgroundColor: colors.bgCard, borderColor: activeFilterCount > 0 ? colors.primary : colors.border },
+            ]}
+            onPress={() => setShowFilterSheet(true)}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name="options-outline"
+              size={20}
+              color={activeFilterCount > 0 ? colors.primary : colors.text}
+            />
+            {activeFilterCount > 0 && (
+              <View style={[styles.filterBadge, { backgroundColor: colors.primary }]}>
+                <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
       {/* Subscription List */}
       {viewMode === 'grid' ? (
         <FlatList
           key="grid"
-          data={activeSubs}
+          data={visibleSubs}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
             <CompactSubscriptionCard
@@ -329,7 +443,7 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
       ) : (
         <FlatList
           key="list"
-          data={activeSubs}
+          data={visibleSubs}
           keyExtractor={(item) => item.id}
           renderItem={renderSubscriptionItem}
           ListHeaderComponent={renderHeader}
@@ -361,6 +475,22 @@ export function HomeScreen({ navigation }: HomeScreenProps) {
         onBrowse={handleBrowseServices}
         onCustom={handleCustomEntry}
       />
+
+      {/* Filter & Sort Sheet */}
+      <SubscriptionFilterSheet
+        visible={showFilterSheet}
+        onClose={() => setShowFilterSheet(false)}
+        availableCategories={availableCategories}
+        availableCycles={availableCycles}
+        selectedCategories={selectedCategories}
+        selectedCycles={selectedCycles}
+        sortBy={sortBy}
+        resultCount={visibleSubs.length}
+        onToggleCategory={toggleCategory}
+        onToggleCycle={toggleCycle}
+        onSelectSort={setSortBy}
+        onClear={clearFilters}
+      />
     </View>
   );
 }
@@ -376,6 +506,53 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: 16,
     paddingBottom: 140,
+  },
+  filterRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  searchBox: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    height: 44,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    paddingVertical: 0,
+  },
+  filterButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  filterBadge: {
+    position: "absolute",
+    top: -5,
+    right: -5,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  filterBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 11,
+    fontWeight: "700",
   },
   statsRow: {
     flexDirection: "row",

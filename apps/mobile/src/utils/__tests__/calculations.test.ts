@@ -16,6 +16,7 @@ import {
   getTopSubscriptions,
   getSubscriptionOverlaps,
   getCategoryBudgetStatus,
+  filterAndSortSubscriptions,
 } from '../calculations';
 
 // ---------------------------------------------------------------------------
@@ -676,5 +677,64 @@ describe('getCategoryBudgetStatus', () => {
 
   it('returns empty for empty inputs', () => {
     expect(getCategoryBudgetStatus([], {})).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// filterAndSortSubscriptions
+// ---------------------------------------------------------------------------
+
+describe('filterAndSortSubscriptions', () => {
+  // Far-future billing dates so advanceToNextBillingDate returns them unchanged.
+  const netflix = makeSub({ id: 'a', name: 'Netflix', category: 'Entertainment', cycle: 'monthly', amount: 20, nextBillingDate: '2999-01-10' });
+  const spotify = makeSub({ id: 'b', name: 'Spotify', category: 'Music', cycle: 'monthly', amount: 10, nextBillingDate: '2999-01-05' });
+  const figma = makeSub({ id: 'c', name: 'Figma', category: 'Design', cycle: 'yearly', amount: 120, nextBillingDate: '2999-01-20' });
+  const subs = [netflix, spotify, figma];
+
+  it('returns all sorted by soonest billing date when no filters are set', () => {
+    expect(filterAndSortSubscriptions(subs, {}).map((s) => s.id)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('filters by case-insensitive name query', () => {
+    expect(filterAndSortSubscriptions(subs, { query: 'fig' }).map((s) => s.id)).toEqual(['c']);
+    expect(filterAndSortSubscriptions(subs, { query: 'NET' }).map((s) => s.id)).toEqual(['a']);
+  });
+
+  it('filters by category (multi-select)', () => {
+    expect(filterAndSortSubscriptions(subs, { categories: ['Music', 'Design'] }).map((s) => s.id).sort()).toEqual(['b', 'c']);
+  });
+
+  it('filters by billing cycle', () => {
+    expect(filterAndSortSubscriptions(subs, { cycles: ['yearly'] }).map((s) => s.id)).toEqual(['c']);
+  });
+
+  it('combines query + category + cycle with AND semantics', () => {
+    expect(
+      filterAndSortSubscriptions(subs, { query: 's', categories: ['Music'], cycles: ['monthly'] }).map((s) => s.id),
+    ).toEqual(['b']);
+  });
+
+  it('sorts by name A→Z', () => {
+    expect(filterAndSortSubscriptions(subs, { sortBy: 'name' }).map((s) => s.name)).toEqual(['Figma', 'Netflix', 'Spotify']);
+  });
+
+  it('sorts by monthly-equivalent price (high → low)', () => {
+    // Netflix 20/mo is highest; Figma 120/yr and Spotify 10/mo both ~10/mo.
+    expect(filterAndSortSubscriptions(subs, { sortBy: 'priceDesc' }).map((s) => s.id)[0]).toBe('a');
+  });
+
+  it('uses the currency converter for the price sort when provided', () => {
+    const convert = (amount: number) => amount * 30;
+    expect(filterAndSortSubscriptions(subs, { sortBy: 'priceDesc' }, convert, 'TRY').map((s) => s.id)[0]).toBe('a');
+  });
+
+  it('returns empty when nothing matches', () => {
+    expect(filterAndSortSubscriptions(subs, { query: 'zzz' })).toEqual([]);
+  });
+
+  it('does not mutate the input array', () => {
+    const original = [...subs];
+    filterAndSortSubscriptions(subs, { sortBy: 'name' });
+    expect(subs).toEqual(original);
   });
 });

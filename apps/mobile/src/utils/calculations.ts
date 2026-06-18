@@ -389,6 +389,66 @@ export function getSubscriptionOverlaps(
     .sort((a, b) => b.count - a.count || b.monthlyTotal - a.monthlyTotal);
 }
 
+export type SubscriptionSortKey = 'soonest' | 'name' | 'priceDesc';
+
+export interface SubscriptionListFilter {
+  query?: string;
+  categories?: string[];   // empty/undefined => all categories
+  cycles?: BillingCycle[]; // empty/undefined => all cycles
+  sortBy?: SubscriptionSortKey;
+}
+
+/**
+ * Filter a subscription list by name query, category, and billing cycle, then
+ * sort it. Pure and presentation-agnostic so the Home list and its tests share
+ * one code path. Like getTopSubscriptions, an optional currency converter makes
+ * the price sort comparable across mixed currencies (falls back to raw amount).
+ * Status is NOT filtered here — pass the already-active list in.
+ */
+export function filterAndSortSubscriptions(
+  subscriptions: Subscription[],
+  filter: SubscriptionListFilter,
+  convert?: (amount: number, from: string, to: string) => number,
+  toCurrency?: string
+): Subscription[] {
+  const query = filter.query?.trim().toLowerCase() ?? '';
+  const categorySet =
+    filter.categories && filter.categories.length ? new Set(filter.categories) : null;
+  const cycleSet = filter.cycles && filter.cycles.length ? new Set(filter.cycles) : null;
+  const sortBy = filter.sortBy ?? 'soonest';
+
+  const filtered = subscriptions.filter((s) => {
+    if (query && !s.name.toLowerCase().includes(query)) return false;
+    if (categorySet && !categorySet.has(s.category)) return false;
+    if (cycleSet && !cycleSet.has(s.cycle)) return false;
+    return true;
+  });
+
+  const monthlyOf = (s: Subscription) => {
+    const base = convert && toCurrency ? convert(s.amount, s.currency || 'TRY', toCurrency) : s.amount;
+    return toMonthlyAmount(base, s.cycle);
+  };
+
+  const sorted = [...filtered];
+  switch (sortBy) {
+    case 'name':
+      sorted.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case 'priceDesc':
+      sorted.sort((a, b) => monthlyOf(b) - monthlyOf(a));
+      break;
+    case 'soonest':
+    default:
+      sorted.sort(
+        (a, b) =>
+          advanceToNextBillingDate(a.nextBillingDate, a.cycle).getTime() -
+          advanceToNextBillingDate(b.nextBillingDate, b.cycle).getTime()
+      );
+      break;
+  }
+  return sorted;
+}
+
 /**
  * Get billing cycle breakdown
  */

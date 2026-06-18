@@ -7,6 +7,15 @@
 
 ## 🔴 HIGH PRIORITY
 
+### Subscription List Filters (search + category + cycle + sort) — [DONE] (2026-06-19)
+
+- **Date:** 2026-06-19
+- **Area:** Mobile / Home (subscription list)
+- **Status:** [DONE] — tsc green, 118 tests pass (10 new). Not yet device-verified; not in a build.
+- **Shipped:** Pinned inline search box on Home + a "Filter" button (active-count badge) that opens a bottom sheet (`SubscriptionFilterSheet`) with multi-select category chips, billing-cycle chips, and a sort selector (soonest payment / name A–Z / price high→low). New pure util `filterAndSortSubscriptions()` in `utils/calculations.ts` (optional currency converter for the price sort; unit-tested). Dashboard stat cards + scan banner intentionally stay on the full active set — the filter affects only the list. Separate "no results / clear filters" empty state, distinct from the onboarding empty. Filters are free (not Premium-gated). EN+TR i18n added. Hybrid UX chosen by the user (search always visible & pinned; category/cycle/sort live in the sheet).
+- **Why it matters:** As lists grow, an unfilterable/unsortable subscription list is hard to scan; pre-launch UX polish.
+- **Next action:** Device/sim verify (EN+TR, light+dark): search focus while typing, sheet chips, badge count, price sort across mixed currencies, no-results clear. Then fold into the next TestFlight build.
+
 ### Premium-on-Sign-In Fix + Light Default + Seed Gate + Swipe Polish — [DONE] (2026-06-19)
 
 - **Date:** 2026-06-19

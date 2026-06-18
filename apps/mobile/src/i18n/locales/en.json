@@ -58,7 +58,21 @@
     "findTitle": "Find Your Subscriptions",
     "findSubtitle": "Scan your bank document and we'll detect all your recurring payments automatically",
     "scanStatement": "Scan a Statement",
-    "enterManually": "Enter details manually"
+    "enterManually": "Enter details manually",
+    "searchPlaceholder": "Search subscriptions",
+    "filter": "Filter",
+    "filterTitle": "Filter & Sort",
+    "filterCategory": "Category",
+    "filterCycle": "Billing cycle",
+    "filterSortBy": "Sort by",
+    "sortSoonest": "Upcoming payment",
+    "sortName": "Name (A–Z)",
+    "sortPriceDesc": "Price (high to low)",
+    "filterClear": "Clear",
+    "filterShowResults": "Show {{count}} results",
+    "noResultsTitle": "No matches",
+    "noResultsBody": "Try adjusting your filters or search.",
+    "noResultsClear": "Clear filters"
   },
   "addMethod": {
     "title": "Add Subscription",

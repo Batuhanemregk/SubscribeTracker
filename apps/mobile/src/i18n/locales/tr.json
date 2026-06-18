@@ -58,7 +58,21 @@
     "findTitle": "Aboneliklerinizi Bulun",
     "findSubtitle": "Banka dökümanınızı tarayın, tekrarlayan ödemelerinizi otomatik olarak tespit edelim",
     "scanStatement": "Ekstre Tara",
-    "enterManually": "Manuel olarak girin"
+    "enterManually": "Manuel olarak girin",
+    "searchPlaceholder": "Abonelik ara",
+    "filter": "Filtrele",
+    "filterTitle": "Filtrele ve Sırala",
+    "filterCategory": "Kategori",
+    "filterCycle": "Faturalama döngüsü",
+    "filterSortBy": "Sırala",
+    "sortSoonest": "Yaklaşan ödeme",
+    "sortName": "İsim (A–Z)",
+    "sortPriceDesc": "Fiyat (yüksek → düşük)",
+    "filterClear": "Temizle",
+    "filterShowResults": "{{count}} sonucu göster",
+    "noResultsTitle": "Sonuç yok",
+    "noResultsBody": "Filtreleri veya aramayı değiştirmeyi dene.",
+    "noResultsClear": "Filtreleri temizle"
   },
   "addMethod": {
     "title": "Abonelik Ekle",
