@@ -25,7 +25,7 @@ import Animated, {
   SharedValue,
 } from 'react-native-reanimated';
 import { useTheme, borderRadius, type ThemeColors } from '../theme';
-import { useSettingsStore } from '../state';
+import { useSettingsStore, usePlanStore } from '../state';
 import { t } from '../i18n';
 
 const { width, height } = Dimensions.get('window');
@@ -141,6 +141,19 @@ export function OnboardingScreen({ navigation }: any) {
   const flatListRef = useRef<FlatList>(null);
   const scrollX = useSharedValue(0);
   const { setHasSeenOnboarding } = useSettingsStore();
+  const { isPro } = usePlanStore();
+
+  // Finish onboarding. Users who already own Premium (e.g. it was restored from
+  // their Apple ID after a reinstall, which wipes local "seen onboarding" state)
+  // must NOT be pitched the paywall — send them straight into the app.
+  const finishOnboarding = () => {
+    setHasSeenOnboarding(true);
+    if (isPro()) {
+      navigation.replace('MainTabs');
+    } else {
+      navigation.replace('Paywall', { fromOnboarding: true });
+    }
+  };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     scrollX.value = event.nativeEvent.contentOffset.x;
@@ -159,14 +172,12 @@ export function OnboardingScreen({ navigation }: any) {
   };
 
   const handleGetStarted = () => {
-    setHasSeenOnboarding(true);
-    // Route through paywall — user can dismiss to continue free
-    navigation.replace('Paywall', { fromOnboarding: true });
+    // Route through the paywall (unless already Premium); user can dismiss to continue free.
+    finishOnboarding();
   };
 
   const handleGoPro = () => {
-    setHasSeenOnboarding(true);
-    navigation.replace('Paywall', { fromOnboarding: true });
+    finishOnboarding();
   };
 
   const isLastSlide = currentIndex === SLIDES.length - 1;
