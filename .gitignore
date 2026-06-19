@@ -48,3 +48,4 @@ coverage/
 CLAUDE.local.md
 .claude/settings.local.json
 .playwright-mcp/
+.asc-shots/
