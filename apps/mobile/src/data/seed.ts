@@ -1,5 +1,8 @@
 /**
  * Seed Data - Sample subscriptions for testing
+ *
+ * Fictional brands only (no real third-party names or logos) so the data is safe
+ * to show in App Store marketing screenshots without trademark/IP concerns.
  */
 import type { Subscription } from '../types';
 import { generateId } from '../state';
@@ -15,7 +18,7 @@ function futureDate(days: number): string {
 export const SEED_SUBSCRIPTIONS: Subscription[] = [
   {
     id: generateId(),
-    name: 'Netflix',
+    name: 'Streamflix',
     amount: 15.99,
     currency: 'USD',
     cycle: 'monthly',
@@ -23,7 +26,7 @@ export const SEED_SUBSCRIPTIONS: Subscription[] = [
     category: 'Entertainment',
     iconKey: '🎬',
     colorKey: '#EF4444',
-    logoUrl: 'https://www.google.com/s2/favicons?domain=netflix.com&sz=128',
+    logoUrl: undefined,
     status: 'active',
     source: 'manual',
     detection: null,
@@ -35,7 +38,7 @@ export const SEED_SUBSCRIPTIONS: Subscription[] = [
   },
   {
     id: generateId(),
-    name: 'Spotify',
+    name: 'Tunewave',
     amount: 10.99,
     currency: 'USD',
     cycle: 'monthly',
@@ -43,7 +46,7 @@ export const SEED_SUBSCRIPTIONS: Subscription[] = [
     category: 'Music',
     iconKey: '🎵',
     colorKey: '#10B981',
-    logoUrl: 'https://www.google.com/s2/favicons?domain=spotify.com&sz=128',
+    logoUrl: undefined,
     status: 'active',
     source: 'manual',
     detection: null,
@@ -55,7 +58,7 @@ export const SEED_SUBSCRIPTIONS: Subscription[] = [
   },
   {
     id: generateId(),
-    name: 'Adobe CC',
+    name: 'Pixel Studio',
     amount: 54.99,
     currency: 'USD',
     cycle: 'monthly',
@@ -63,7 +66,7 @@ export const SEED_SUBSCRIPTIONS: Subscription[] = [
     category: 'Design',
     iconKey: '🎨',
     colorKey: '#F97316',
-    logoUrl: 'https://www.google.com/s2/favicons?domain=adobe.com&sz=128',
+    logoUrl: undefined,
     status: 'active',
     source: 'manual',
     detection: null,
@@ -75,7 +78,7 @@ export const SEED_SUBSCRIPTIONS: Subscription[] = [
   },
   {
     id: generateId(),
-    name: 'GitHub Pro',
+    name: 'CodeNest',
     amount: 4.0,
     currency: 'USD',
     cycle: 'monthly',
@@ -83,7 +86,7 @@ export const SEED_SUBSCRIPTIONS: Subscription[] = [
     category: 'Development',
     iconKey: '💻',
     colorKey: '#8B5CF6',
-    logoUrl: 'https://www.google.com/s2/favicons?domain=github.com&sz=128',
+    logoUrl: undefined,
     status: 'active',
     source: 'manual',
     detection: null,
@@ -95,7 +98,7 @@ export const SEED_SUBSCRIPTIONS: Subscription[] = [
   },
   {
     id: generateId(),
-    name: 'Claude Pro',
+    name: 'Aria AI',
     amount: 20.0,
     currency: 'USD',
     cycle: 'monthly',
@@ -103,7 +106,7 @@ export const SEED_SUBSCRIPTIONS: Subscription[] = [
     category: 'Productivity',
     iconKey: '🤖',
     colorKey: '#06B6D4',
-    logoUrl: 'https://www.google.com/s2/favicons?domain=anthropic.com&sz=128',
+    logoUrl: undefined,
     status: 'active',
     source: 'manual',
     detection: null,

@@ -7,6 +7,43 @@
 
 ## 🔴 HIGH PRIORITY
 
+### Privacy / Terms / Support pages hosted (App Store 5.1.1 blocker) — [DONE] (2026-06-19)
+
+- **Date:** 2026-06-19
+- **Area:** App Store / legal & support URLs / hosting
+- **Status:** [DONE] — static pages live on GitHub Pages from a new public repo `Batuhanemregk/finify-site` (source: `/Users/batuhanegk/Developer/finify-site`).
+- **URLs (for App Store Connect):**
+  - Privacy Policy: `https://batuhanemregk.github.io/finify-site/privacy.html`
+  - Terms of Service: `https://batuhanemregk.github.io/finify-site/terms.html`
+  - Support: `https://batuhanemregk.github.io/finify-site/support.html`
+  - Landing/Marketing (optional): `https://batuhanemregk.github.io/finify-site/`
+- **Content source:** transcribed verbatim from the in-app `PrivacyPolicyScreen` / `TermsOfServiceScreen` (kept in sync); support page is new (FAQ + `support@finify.app`).
+- **Why it matters:** Apple requires a Privacy Policy URL + functional Support URL (and subscriptions require Terms/EULA + Privacy links); this was the hard go-live blocker.
+- **Next action:** Paste these URLs into ASC (App Information → Privacy Policy URL; version → Support/Marketing URL). If `finify.app` is owned, add a `CNAME` file to the `finify-site` repo + DNS so URLs become `finify.app/privacy.html` (the in-app email already uses `support@finify.app`). Optionally rename the path later.
+
+### App Store screenshots (light + dark) + demo seed made copyright-safe — [DONE] (2026-06-19)
+
+- **Date:** 2026-06-19
+- **Area:** App Store assets / `src/data/seed.ts` / screenshot tooling
+- **Status:** [DONE] — 12 screenshots captured (Home, Insights, Budget, Calendar, Settings, Paywall × light+dark), 1320×2868 (6.9"), in `/Users/batuhanegk/finify-store-screenshots/`. tsc green, 118 tests pass.
+- **Shipped:**
+  1. **Seed data is now fictional** — `SEED_SUBSCRIPTIONS` changed from real brands (Netflix/Spotify/Adobe CC/GitHub Pro/Claude Pro, with real favicon `logoUrl`s) to invented brands (Streamflix/Tunewave/Pixel Studio/CodeNest/Aria AI, `logoUrl: undefined` → emoji icons). App Store screenshots are marketing material; real third-party logos risk **Guideline 5.2 (IP)** rejection + trademark issues. Fictional demo data is the industry norm and is safer for any future screenshots. Still `__DEV__`-gated (real users start empty). No code/tests depend on the brand names (test fixtures define their own).
+  2. **Screenshots captured from the dev build** with the LogBox dev banner suppressed (temporary `LogBox.ignoreAllLogs()` in `index.ts`, reverted) + sim locale forced to English + theme forced per set. Captured via `xcrun simctl io booted screenshot` (native res); tabs/paywall driven by `osascript` System Events clicks mapped from the Simulator window geometry.
+- **Why it matters:** First App Store submission needs the 6.9" iPhone screenshot set; the fictional seed removes IP risk permanently.
+- **Next action:** Upload the 12 PNGs to ASC (6.9" iPhone). ASC now accepts only the 6.9" size for iPhone; a localized TR set is optional. Use them as ad source material later (higgsfield).
+
+### Screenshot/build tooling blockers on this machine — [KNOWN LIMITATION] (2026-06-19)
+
+- **Date:** 2026-06-19
+- **Area:** Local build + UI automation tooling (macOS / Xcode 26.5)
+- **Status:** [KNOWN LIMITATION] — documented so the next attempt doesn't re-discover these.
+- **Blockers found:**
+  1. **EAS Free-plan iOS build quota exhausted** until **2026-07-01** → cloud `preview`/simulator builds fail with "used its iOS builds from the Free plan this month".
+  2. **Local Release build blocked** — Xcode 26.5 cannot enumerate the booted **iOS 18.6** simulator as a build destination ("iOS 26.5 is not installed. … install the platform from Xcode > Settings > Components"); only the 18.6 *runtime* is present, not the matching platform. Fix would be `xcodebuild -downloadPlatform iOS` (~7 GB) or installing an iOS 26.x sim runtime.
+  3. **Maestro 1.40.0 incompatible with Xcode 26.5** — its XCUITest runner fails to start (`XCTestDriverClient.restartXCTestRunner`). `idb`/`cliclick` not installed. Workaround used: `osascript` System Events clicks (needs Accessibility permission for the terminal) + `xcrun simctl` screenshots.
+- **Why it matters:** Until one of these is resolved, a true non-dev (Release/preview) build for the simulator isn't producible locally; the dev-build + LogBox-suppress path is the fallback for clean captures.
+- **Next action:** Either wait for the EAS quota reset (Jul 1) or run `xcodebuild -downloadPlatform iOS` once to unblock local Release builds.
+
 ### Toggle scroll-reset REAL fix + per-cycle price labels — [DONE] (2026-06-19)
 
 - **Date:** 2026-06-19
