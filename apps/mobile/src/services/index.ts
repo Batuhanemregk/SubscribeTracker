@@ -73,7 +73,7 @@ export {
   formatPackagePrice,
   getPackageType,
   openManageSubscriptions,
-  getActiveSubscriptionCycle,
+  getActiveSubscriptionInfo,
   PRODUCT_IDS,
 } from './PurchaseService';
 

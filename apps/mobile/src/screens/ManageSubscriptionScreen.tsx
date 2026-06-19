@@ -1,11 +1,12 @@
 /**
  * ManageSubscriptionScreen - Premium subscription management
  *
- * Lets an active subscriber:
- *  - switch monthly <-> yearly (StoreKit/Play cross-grade; both products live in
- *    the same subscription group, so the store prorates and never double-bills),
- *  - open the OS-native management sheet to cancel (App Store / Play Store),
- *  - restore purchases.
+ * Shows the active plan + renewal/expiry date, and routes plan changes AND
+ * cancellation to the OS-native manage-subscriptions sheet (App Store / Play
+ * Store). Apple's native UI is the single source of truth for billing: it shows
+ * the renewal date, lets the user switch between plans in the same group, and
+ * discloses the exact proration and effective date for each change — which a
+ * custom in-app switch cannot do reliably before purchase. Also offers Restore.
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
@@ -14,28 +15,26 @@ import { Header } from '../components';
 import { borderRadius, useTheme, type ThemeColors } from '../theme';
 import { usePlanStore } from '../state';
 import {
-  getOfferings,
-  purchasePackage,
   restorePurchases,
-  getPackageType,
-  formatPackagePrice,
   isPurchasesConfigured,
-  getActiveSubscriptionCycle,
+  getActiveSubscriptionInfo,
   openManageSubscriptions,
 } from '../services';
 import { t } from '../i18n';
 
-type Cycle = 'monthly' | 'yearly';
+type SubscriptionInfo = {
+  cycle: 'monthly' | 'yearly' | null;
+  expirationDate: string | null;
+  willRenew: boolean;
+};
 
 export function ManageSubscriptionScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const { upgradeToPro } = usePlanStore();
 
-  const [cycle, setCycle] = useState<Cycle | null>(null);
-  const [packages, setPackages] = useState<any[]>([]);
+  const [info, setInfo] = useState<SubscriptionInfo | null>(null);
   const [loading, setLoading] = useState(true);
-  const [switching, setSwitching] = useState(false);
   const [restoring, setRestoring] = useState(false);
 
   const load = useCallback(async () => {
@@ -44,14 +43,9 @@ export function ManageSubscriptionScreen() {
       return;
     }
     try {
-      const [activeCycle, offering] = await Promise.all([
-        getActiveSubscriptionCycle(),
-        getOfferings(),
-      ]);
-      setCycle(activeCycle);
-      if (offering?.availablePackages) setPackages(offering.availablePackages);
+      setInfo(await getActiveSubscriptionInfo());
     } catch (error) {
-      console.error('Failed to load subscription details:', error);
+      console.error('Failed to load subscription info:', error);
     } finally {
       setLoading(false);
     }
@@ -61,48 +55,9 @@ export function ManageSubscriptionScreen() {
     load();
   }, [load]);
 
-  // The plan the user can switch TO (opposite of the active cycle).
-  const targetCycle: Cycle | null =
-    cycle === 'monthly' ? 'yearly' : cycle === 'yearly' ? 'monthly' : null;
-  const switchPkg = targetCycle
-    ? packages.find((p) => getPackageType(p) === targetCycle)
-    : undefined;
-  const switchPrice = switchPkg ? formatPackagePrice(switchPkg) : '';
-
-  const doSwitch = async () => {
-    if (!targetCycle || !switchPkg) {
-      Alert.alert(t('paywall.purchaseError'), t('paywall.productNotAvailable'));
-      return;
-    }
-    setSwitching(true);
-    const result = await purchasePackage(switchPkg);
-    setSwitching(false);
-    if (result.success) {
-      // Already Premium; the cross-grade keeps the entitlement. Just reflect the
-      // new cycle and re-confirm Pro in the local store.
-      upgradeToPro();
-      setCycle(targetCycle);
-      Alert.alert(t('settings.switchSuccess'), t('settings.switchSuccessMessage'));
-    } else if (result.errorType === 'cancelled') {
-      // User cancelled — no alert.
-    } else {
-      Alert.alert(t('paywall.purchaseError'), result.error || t('settings.switchError'));
-    }
-  };
-
-  const handleSwitch = () => {
-    if (!targetCycle) return;
-    const toYearly = targetCycle === 'yearly';
-    Alert.alert(
-      t('settings.switchConfirmTitle'),
-      toYearly ? t('settings.switchToYearlyConfirm') : t('settings.switchToMonthlyConfirm'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        { text: t('settings.switchAction'), onPress: doSwitch },
-      ]
-    );
-  };
-
+  // Plan changes + cancellation both go through the native sheet — Apple shows the
+  // renewal date and the exact billing (immediate proration vs. at next renewal)
+  // for whichever change the user makes.
   const handleManage = async () => {
     const ok = await openManageSubscriptions();
     if (!ok) {
@@ -130,11 +85,24 @@ export function ManageSubscriptionScreen() {
   };
 
   const planLabel =
-    cycle === 'monthly'
+    info?.cycle === 'monthly'
       ? t('settings.premiumMonthly')
-      : cycle === 'yearly'
+      : info?.cycle === 'yearly'
         ? t('settings.premiumYearly')
         : t('settings.premiumActive');
+
+  // "Renews on <date>" when auto-renew is on, "Access until <date>" once cancelled.
+  const dateLabel = (() => {
+    if (!info?.expirationDate) return null;
+    const formatted = new Date(info.expirationDate).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+    return info.willRenew
+      ? t('settings.renewsOn', { date: formatted })
+      : t('settings.accessUntil', { date: formatted });
+  })();
 
   return (
     <View style={styles.container}>
@@ -158,57 +126,21 @@ export function ManageSubscriptionScreen() {
                   <Text style={styles.planBadgeText}>{t('common.pro')}</Text>
                 </View>
                 <Text style={styles.planTitle}>{planLabel}</Text>
+                {dateLabel && <Text style={styles.planDate}>{dateLabel}</Text>}
                 <Text style={styles.planInfo}>{t('settings.subscriptionRenewInfo')}</Text>
               </View>
             </View>
 
-            {/* Change plan (only when the opposite cycle is available) */}
-            {targetCycle && switchPkg && (
-              <>
-                <Text style={styles.sectionTitle}>{t('settings.changePlan')}</Text>
-                <View style={styles.card}>
-                  <TouchableOpacity
-                    style={styles.row}
-                    onPress={handleSwitch}
-                    disabled={switching}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.rowIcon, { backgroundColor: `${colors.emerald}14` }]}>
-                      <Ionicons name="swap-horizontal" size={20} color={colors.emerald} />
-                    </View>
-                    <View style={styles.rowContent}>
-                      <Text style={styles.rowTitle}>
-                        {targetCycle === 'yearly'
-                          ? t('settings.switchToYearly')
-                          : t('settings.switchToMonthly')}
-                      </Text>
-                      <Text style={styles.rowSubtitle}>
-                        {targetCycle === 'yearly'
-                          ? t('settings.switchToYearlySubtitle')
-                          : t('settings.switchToMonthlySubtitle')}
-                        {switchPrice ? ` · ${switchPrice}` : ''}
-                      </Text>
-                    </View>
-                    {switching ? (
-                      <ActivityIndicator color={colors.textMuted} />
-                    ) : (
-                      <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
-                    )}
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-
-            {/* Manage / cancel / restore */}
+            {/* Change plan / cancel / restore */}
             <Text style={styles.sectionTitle}>{t('settings.manageTitle')}</Text>
             <View style={styles.card}>
               <TouchableOpacity style={styles.row} onPress={handleManage} activeOpacity={0.7}>
-                <View style={[styles.rowIcon, { backgroundColor: `${colors.text}08` }]}>
-                  <Ionicons name="open-outline" size={20} color={colors.primary} />
+                <View style={[styles.rowIcon, { backgroundColor: `${colors.primary}14` }]}>
+                  <Ionicons name="swap-horizontal" size={20} color={colors.primary} />
                 </View>
                 <View style={styles.rowContent}>
-                  <Text style={styles.rowTitle}>{t('settings.cancelSubscription')}</Text>
-                  <Text style={styles.rowSubtitle}>{t('settings.cancelSubscriptionSubtitle')}</Text>
+                  <Text style={styles.rowTitle}>{t('settings.changeOrCancelPlan')}</Text>
+                  <Text style={styles.rowSubtitle}>{t('settings.changeOrCancelSubtitle')}</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
               </TouchableOpacity>
@@ -325,6 +257,12 @@ const createStyles = (colors: ThemeColors) =>
     planTitle: {
       fontSize: 20,
       fontWeight: '700',
+      color: colors.text,
+      marginBottom: 8,
+    },
+    planDate: {
+      fontSize: 14,
+      fontWeight: '600',
       color: colors.text,
       marginBottom: 8,
     },

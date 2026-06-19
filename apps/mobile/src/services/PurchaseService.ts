@@ -327,24 +327,33 @@ export async function openManageSubscriptions(): Promise<boolean> {
 }
 
 /**
- * Billing cycle of the user's ACTIVE Premium subscription, or null if there is no
- * active subscription / it can't be determined. Used to offer the opposite plan
- * (monthly <-> yearly) for an in-app switch.
+ * Active Premium subscription info for display: billing cycle, expiration/renewal
+ * date (ISO), and whether it will auto-renew. Returns null if there is no active
+ * subscription or it can't be determined. Plan CHANGES and cancellation go through
+ * the native manage-subscriptions sheet (openManageSubscriptions), which discloses
+ * the exact billing (immediate proration vs. effective at next renewal) per change.
  */
-export async function getActiveSubscriptionCycle(): Promise<'monthly' | 'yearly' | null> {
+export async function getActiveSubscriptionInfo(): Promise<{
+  cycle: 'monthly' | 'yearly' | null;
+  expirationDate: string | null;
+  willRenew: boolean;
+} | null> {
   if (!purchasesAvailable || !Purchases) return null;
   try {
     const customerInfo = await Purchases.getCustomerInfo();
-    const productId: string =
-      customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID]?.productIdentifier || '';
-    if (productId === PRODUCT_IDS.MONTHLY) return 'monthly';
-    if (productId === PRODUCT_IDS.YEARLY) return 'yearly';
-    // Fallback to substring matching in case the store product id differs.
-    if (productId.includes('month')) return 'monthly';
-    if (productId.includes('year') || productId.includes('annual')) return 'yearly';
-    return null;
+    const ent = customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
+    if (!ent) return null;
+    const productId: string = ent.productIdentifier || '';
+    let cycle: 'monthly' | 'yearly' | null = null;
+    if (productId === PRODUCT_IDS.MONTHLY || productId.includes('month')) cycle = 'monthly';
+    else if (productId === PRODUCT_IDS.YEARLY || productId.includes('year') || productId.includes('annual')) cycle = 'yearly';
+    return {
+      cycle,
+      expirationDate: ent.expirationDate || null,
+      willRenew: ent.willRenew !== false,
+    };
   } catch (error) {
-    console.error('Failed to get active subscription cycle:', error);
+    console.error('Failed to get active subscription info:', error);
     return null;
   }
 }
