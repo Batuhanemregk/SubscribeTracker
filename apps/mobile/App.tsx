@@ -41,6 +41,7 @@ import {
   AddSubscriptionScreen,
   SubscriptionDetailsScreen,
   PaywallScreen,
+  ManageSubscriptionScreen,
   OnboardingScreen,
   ServicePickerScreen,
   PlanPickerScreen,
@@ -416,6 +417,11 @@ function AppContent() {
           <Stack.Screen
             name="TermsOfService"
             component={TermsOfServiceScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="ManageSubscription"
+            component={ManageSubscriptionScreen}
             options={{ animation: 'slide_from_right' }}
           />
         </Stack.Navigator>

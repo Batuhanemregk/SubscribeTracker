@@ -5,7 +5,7 @@
  * Provides a unified API for both iOS and Android.
  * Gracefully no-ops in Expo Go where native modules are unavailable.
  */
-import { Platform } from 'react-native';
+import { Platform, Linking } from 'react-native';
 
 // Dynamic import to avoid crash in Expo Go
 let Purchases: any = null;
@@ -302,6 +302,51 @@ export function addProStatusListener(onChange: (isPro: boolean) => void): () => 
  */
 export function getManagementURL(customerInfo: any): string | null {
   return customerInfo?.managementURL || null;
+}
+
+/**
+ * Open the OS-native subscription management sheet (App Store / Play Store) so the
+ * user can cancel or change their plan. Prefers RevenueCat's managementURL and
+ * falls back to the platform subscriptions deep link. Returns false if nothing
+ * could be opened (caller can then point the user at device Settings).
+ */
+export async function openManageSubscriptions(): Promise<boolean> {
+  try {
+    const customerInfo = await getCustomerInfo();
+    const url =
+      getManagementURL(customerInfo) ||
+      (Platform.OS === 'ios'
+        ? 'itms-apps://apps.apple.com/account/subscriptions'
+        : 'https://play.google.com/store/account/subscriptions');
+    await Linking.openURL(url);
+    return true;
+  } catch (error) {
+    console.error('Failed to open subscription management:', error);
+    return false;
+  }
+}
+
+/**
+ * Billing cycle of the user's ACTIVE Premium subscription, or null if there is no
+ * active subscription / it can't be determined. Used to offer the opposite plan
+ * (monthly <-> yearly) for an in-app switch.
+ */
+export async function getActiveSubscriptionCycle(): Promise<'monthly' | 'yearly' | null> {
+  if (!purchasesAvailable || !Purchases) return null;
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+    const productId: string =
+      customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID]?.productIdentifier || '';
+    if (productId === PRODUCT_IDS.MONTHLY) return 'monthly';
+    if (productId === PRODUCT_IDS.YEARLY) return 'yearly';
+    // Fallback to substring matching in case the store product id differs.
+    if (productId.includes('month')) return 'monthly';
+    if (productId.includes('year') || productId.includes('annual')) return 'yearly';
+    return null;
+  } catch (error) {
+    console.error('Failed to get active subscription cycle:', error);
+    return null;
+  }
 }
 
 /**

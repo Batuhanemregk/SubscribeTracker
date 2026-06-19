@@ -167,22 +167,6 @@ export function SettingsScreen({ navigation }: any) {
     setThemeModalVisible(false);
   };
 
-  const handleOpenPolicy = () => {
-    Alert.alert(
-      'Privacy Policy',
-      'Finify respects your privacy.\n\n• We do not store raw document content\n• Only subscription metadata is saved locally\n• No data is sent to external servers\n• You can delete all data anytime\n\nFor full policy, visit our website.',
-      [{ text: 'OK' }]
-    );
-  };
-
-  const handleOpenTerms = () => {
-    Alert.alert(
-      'Terms of Service',
-      'By using SubscribeTracker you agree to:\n\n• Use the app for personal purposes\n• Not reverse engineer the app\n• Accept that Pro features require payment\n• Understand we are not liable for missed payments\n\nFor full terms, visit our website.',
-      [{ text: 'OK' }]
-    );
-  };
-
   const handleResetPlan = () => {
     Alert.alert(
       t('settings.resetPlanTitle'),
@@ -248,6 +232,18 @@ export function SettingsScreen({ navigation }: any) {
               </TouchableOpacity>
             )}
           </View>
+          {isPro() && (
+            <>
+              <View style={styles.divider} />
+              <SettingsRow
+                icon="card"
+                iconColor={colors.primary}
+                title={t('settings.manageSubscription')}
+                subtitle={t('settings.manageSubscriptionSubtitle')}
+                onPress={() => navigation.navigate('ManageSubscription')}
+              />
+            </>
+          )}
         </View>
 
 

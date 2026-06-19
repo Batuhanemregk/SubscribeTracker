@@ -72,6 +72,8 @@ export {
   addProStatusListener,
   formatPackagePrice,
   getPackageType,
+  openManageSubscriptions,
+  getActiveSubscriptionCycle,
   PRODUCT_IDS,
 } from './PurchaseService';
 

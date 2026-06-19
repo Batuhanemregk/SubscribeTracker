@@ -9,6 +9,7 @@ export { BudgetScreen } from './BudgetScreen';
 export { CalendarScreen } from './CalendarScreen';
 export { SettingsScreen } from './SettingsScreen';
 export { PaywallScreen } from './PaywallScreen';
+export { ManageSubscriptionScreen } from './ManageSubscriptionScreen';
 export { OnboardingScreen } from './OnboardingScreen';
 export { ServicePickerScreen } from './ServicePickerScreen';
 export { PlanPickerScreen } from './PlanPickerScreen';

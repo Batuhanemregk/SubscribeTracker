@@ -7,6 +7,30 @@
 
 ## 🔴 HIGH PRIORITY
 
+### In-app subscription management — manage/cancel + monthly↔yearly switch (Guideline 3.1.2) — [IMPLEMENTED, pending build #36] (2026-06-19)
+
+- **Date:** 2026-06-19
+- **Area:** Mobile / IAP — new `src/screens/ManageSubscriptionScreen.tsx`, `src/services/PurchaseService.ts`, `src/screens/SettingsScreen.tsx`, `App.tsx`, barrels, `src/i18n/locales/{en,tr}.json`
+- **Status:** code complete, **tsc green + 118 tests pass**; NOT yet built/committed. Caught during ASC submission: an active subscriber had **no in-app way to cancel or change plan** (UX gap + App Store Guideline 3.1.2 expectation).
+- **Shipped (code):**
+  - `ManageSubscriptionScreen` (pushed via `slide_from_right`): shows current plan (monthly/yearly), **Switch to Yearly/Monthly** (in-app cross-grade via `purchasePackage()`), **Cancel or Manage** (native App Store/Play sheet), **Restore Purchases**.
+  - `PurchaseService.openManageSubscriptions()` (uses existing `getManagementURL(customerInfo)` → `Linking.openURL`, platform fallback `itms-apps://apps.apple.com/account/subscriptions`) + `getActiveSubscriptionCycle()` (reads active entitlement `productIdentifier`).
+  - Settings: Pro-only "Manage Subscription" row in the Plan card → `navigation.navigate('ManageSubscription')`.
+- **Key fact:** both products (`finify_premium_monthly`, `finify_premium_yearly`) live in ONE ASC subscription group ("RevenueCat-finify"), so StoreKit/Play handle monthly↔yearly as a prorated cross-grade — **no double-billing**, no new billing logic needed.
+- **Why it matters:** removes a real UX gap + likely 3.1.2 review friction. Paywall already had auto-renew disclosure + Privacy/Terms links + Restore (those were fine).
+- **Next action:** EAS build **#36** (production, auto-submit) → in ASC swap attached build **35 → 36** on version 1.0 → **Add for Review** → submit. (Build 35 is currently attached + saved but NOT submitted.)
+
+### AdMob ATT + MobileAds init fix (build #35) — [DONE] (2026-06-19)
+
+- **Date:** 2026-06-19
+- **Area:** Mobile / ads — `src/services/AdMobService.ts`, `App.tsx`, `app.json`
+- **Status:** [DONE] — committed `98e5b85`; shipping in EAS build **#35** (auto-submit to ASC). tsc green, 118 tests pass.
+- **Shipped:**
+  - New `initializeAds()` requests **App Tracking Transparency** (`expo-tracking-transparency`) then calls `mobileAds().initialize()` at startup (App.tsx, before `loadInterstitialAd`). Previously the ATT prompt was **never** requested → iOS served only non-personalized ads AND the App Privacy "tracking: Yes" declaration was inconsistent with actual behavior. Now consistent.
+  - Removed the ignored duplicate root-level `react-native-google-mobile-ads` key in `app.json` (the Expo config plugin already injects the iOS/Android app IDs; this silences the Metro "Ignoring extra key" warning).
+- **Why it matters:** personalized ads on iOS (ad revenue) + removes a likely "declares tracking but shows no ATT prompt" review-rejection risk.
+- **Next action:** when build #35 finishes processing in ASC, attach it to version 1.0 (replacing build 34) and submit (Add for Review).
+
 ### Privacy / Terms / Support pages hosted (App Store 5.1.1 blocker) — [DONE] (2026-06-19)
 
 - **Date:** 2026-06-19
