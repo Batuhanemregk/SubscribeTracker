@@ -11,6 +11,12 @@ import {
   formatCurrency,
   getDaysUntilBilling,
   advanceToNextBillingDate,
+  addBillingCycles,
+  getSubscriptionBillingDatesInMonth,
+  getTopSubscriptions,
+  getSubscriptionOverlaps,
+  getCategoryBudgetStatus,
+  filterAndSortSubscriptions,
 } from '../calculations';
 
 // ---------------------------------------------------------------------------
@@ -432,5 +438,303 @@ describe('advanceToNextBillingDate', () => {
     expect(result.getFullYear()).toBe(2026);
     expect(result.getMonth()).toBe(5); // June
     expect(result.getDate()).toBe(15);
+  });
+
+  it('preserves a 31st-of-month anchor when advancing (no drift)', () => {
+    // Jan 31 -> Feb 28 (clamped) -> Mar 31 (anchor restored, not Mar 28).
+    // First occurrence >= Mar 18 is Mar 31.
+    const result = advanceToNextBillingDate('2026-01-31', 'monthly');
+    expect(result.getFullYear()).toBe(2026);
+    expect(result.getMonth()).toBe(2); // March
+    expect(result.getDate()).toBe(31);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// addBillingCycles (month-end clamping, anchor-preserving)
+// ---------------------------------------------------------------------------
+
+describe('addBillingCycles', () => {
+  it('clamps a 31st anchor to the last day of a shorter month', () => {
+    // Jan 31 + 1 monthly cycle -> Feb 28 (2026 is not a leap year)
+    const r = addBillingCycles(new Date(2026, 0, 31), 'monthly', 1);
+    expect(r.getMonth()).toBe(1);
+    expect(r.getDate()).toBe(28);
+  });
+
+  it('preserves the original anchor day across multiple cycles', () => {
+    // Jan 31 + 2 monthly cycles -> Mar 31 (NOT Mar 28 — anchor not lost)
+    const r = addBillingCycles(new Date(2026, 0, 31), 'monthly', 2);
+    expect(r.getMonth()).toBe(2);
+    expect(r.getDate()).toBe(31);
+  });
+
+  it('handles the June (30-day) case for a 31st anchor', () => {
+    // Jan 31 + 5 monthly cycles -> Jun 30 (the original disappearing-payment bug)
+    const r = addBillingCycles(new Date(2026, 0, 31), 'monthly', 5);
+    expect(r.getMonth()).toBe(5); // June
+    expect(r.getDate()).toBe(30);
+  });
+
+  it('advances weekly by 7 days per cycle', () => {
+    const r = addBillingCycles(new Date(2026, 0, 15), 'weekly', 1);
+    expect(r.getMonth()).toBe(0);
+    expect(r.getDate()).toBe(22);
+  });
+
+  it('clamps a Feb-29 yearly anchor to Feb 28 in a non-leap year', () => {
+    const r = addBillingCycles(new Date(2024, 1, 29), 'yearly', 1);
+    expect(r.getFullYear()).toBe(2025);
+    expect(r.getMonth()).toBe(1);
+    expect(r.getDate()).toBe(28);
+  });
+
+  it('advances quarterly by 3 months with clamping', () => {
+    // Jan 31 + 1 quarterly cycle -> Apr 30 (April has 30 days)
+    const r = addBillingCycles(new Date(2026, 0, 31), 'quarterly', 1);
+    expect(r.getMonth()).toBe(3);
+    expect(r.getDate()).toBe(30);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getSubscriptionBillingDatesInMonth (month-end clamp, in-phase projection)
+// ---------------------------------------------------------------------------
+
+describe('getSubscriptionBillingDatesInMonth', () => {
+  it('shows a 31st-of-month subscription on June 30 (the disappearing-payment bug)', () => {
+    const sub = makeSub({ cycle: 'monthly', nextBillingDate: '2026-01-31' });
+    const dates = getSubscriptionBillingDatesInMonth(sub, 2026, 5); // June
+    expect(dates).toHaveLength(1);
+    expect(dates[0].getDate()).toBe(30);
+  });
+
+  it('clamps a 31st anchor to Feb 28 but keeps 31 in 31-day months', () => {
+    const sub = makeSub({ cycle: 'monthly', nextBillingDate: '2026-01-31' });
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 1)[0].getDate()).toBe(28); // Feb
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 2)[0].getDate()).toBe(31); // March
+  });
+
+  it('returns exactly one date per month for a normal monthly sub', () => {
+    const sub = makeSub({ cycle: 'monthly', nextBillingDate: '2026-04-15' });
+    const dates = getSubscriptionBillingDatesInMonth(sub, 2026, 8); // September
+    expect(dates).toHaveLength(1);
+    expect(dates[0].getDate()).toBe(15);
+  });
+
+  it('emits a quarterly sub only in in-phase months', () => {
+    const sub = makeSub({ cycle: 'quarterly', nextBillingDate: '2026-01-20' });
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 3)).toHaveLength(1); // April (in phase)
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 1)).toHaveLength(0); // Feb (off phase)
+  });
+
+  it('emits a yearly sub only in its anniversary month', () => {
+    const sub = makeSub({ cycle: 'yearly', nextBillingDate: '2026-03-10' });
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 2)).toHaveLength(1); // March
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 3)).toHaveLength(0); // April
+  });
+
+  it('emits all weekly occurrences within the month', () => {
+    const sub = makeSub({ cycle: 'weekly', nextBillingDate: '2026-06-01' });
+    const dates = getSubscriptionBillingDatesInMonth(sub, 2026, 5); // June
+    expect(dates.length).toBeGreaterThanOrEqual(4);
+    expect(dates.every(d => d.getMonth() === 5)).toBe(true);
+  });
+
+  it('returns nothing for inactive subscriptions', () => {
+    const sub = makeSub({ cycle: 'monthly', nextBillingDate: '2026-01-31', status: 'cancelled' });
+    expect(getSubscriptionBillingDatesInMonth(sub, 2026, 5)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getTopSubscriptions
+// ---------------------------------------------------------------------------
+
+describe('getTopSubscriptions', () => {
+  it('ranks active subs by monthly-equivalent cost and limits the count', () => {
+    const subs: Subscription[] = [
+      makeSub({ id: '1', amount: 120, cycle: 'yearly' }),  // 10/mo
+      makeSub({ id: '2', amount: 15, cycle: 'monthly' }),  // 15/mo
+      makeSub({ id: '3', amount: 5, cycle: 'monthly' }),   // 5/mo
+      makeSub({ id: '4', amount: 30, cycle: 'monthly', status: 'cancelled' }),
+    ];
+    const top = getTopSubscriptions(subs, 2);
+    expect(top).toHaveLength(2);
+    expect(top[0].subscription.id).toBe('2');
+    expect(top[0].monthlyAmount).toBeCloseTo(15, 2);
+    expect(top[1].subscription.id).toBe('1');
+    expect(top[1].monthlyAmount).toBeCloseTo(10, 2);
+  });
+
+  it('excludes inactive subscriptions', () => {
+    const subs: Subscription[] = [
+      makeSub({ id: '1', amount: 10, cycle: 'monthly', status: 'paused' }),
+      makeSub({ id: '2', amount: 20, cycle: 'monthly', status: 'cancelled' }),
+    ];
+    expect(getTopSubscriptions(subs)).toEqual([]);
+  });
+
+  it('applies the convert fn to amounts when provided (currency consistency)', () => {
+    const subs: Subscription[] = [makeSub({ id: '1', amount: 10, cycle: 'monthly', currency: 'USD' })];
+    const convert = (amount: number) => amount * 2; // pretend 1 USD -> 2 target units
+    const top = getTopSubscriptions(subs, 5, convert, 'TRY');
+    expect(top[0].monthlyAmount).toBeCloseTo(20, 2);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getSubscriptionOverlaps
+// ---------------------------------------------------------------------------
+
+describe('getSubscriptionOverlaps', () => {
+  it('flags categories with 2+ active subscriptions, sorted by count', () => {
+    const subs: Subscription[] = [
+      makeSub({ id: '1', amount: 10, cycle: 'monthly', category: 'Entertainment' }),
+      makeSub({ id: '2', amount: 12, cycle: 'monthly', category: 'Entertainment' }),
+      makeSub({ id: '3', amount: 8, cycle: 'monthly', category: 'Entertainment' }),
+      makeSub({ id: '4', amount: 5, cycle: 'monthly', category: 'Music' }),
+      makeSub({ id: '5', amount: 6, cycle: 'monthly', category: 'Music' }),
+      makeSub({ id: '6', amount: 9, cycle: 'monthly', category: 'Productivity' }),
+    ];
+    const overlaps = getSubscriptionOverlaps(subs);
+    expect(overlaps).toHaveLength(2);
+    expect(overlaps[0].category).toBe('Entertainment');
+    expect(overlaps[0].count).toBe(3);
+    expect(overlaps[0].monthlyTotal).toBeCloseTo(30, 2);
+    expect(overlaps[1].category).toBe('Music');
+    expect(overlaps[1].count).toBe(2);
+  });
+
+  it('returns empty when no category has 2+ active subs', () => {
+    const subs: Subscription[] = [
+      makeSub({ id: '1', category: 'A', status: 'active' }),
+      makeSub({ id: '2', category: 'B', status: 'active' }),
+      makeSub({ id: '3', category: 'A', status: 'cancelled' }),
+    ];
+    expect(getSubscriptionOverlaps(subs)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getCategoryBudgetStatus
+// ---------------------------------------------------------------------------
+
+describe('getCategoryBudgetStatus', () => {
+  const spending = [
+    { name: 'Entertainment', amount: 22, color: '#EC4899', percentage: 55 },
+    { name: 'Music', amount: 10, color: '#06B6D4', percentage: 25 },
+    { name: 'Productivity', amount: 8, color: '#10B981', percentage: 20 },
+  ];
+
+  it('computes per-category status for budgeted categories', () => {
+    const rows = getCategoryBudgetStatus(spending, { Entertainment: 30, Music: 10 });
+
+    const ent = rows.find(r => r.name === 'Entertainment')!;
+    expect(ent.limit).toBe(30);
+    expect(ent.spent).toBe(22);
+    expect(ent.percentage).toBeCloseTo(73.3, 1);
+    expect(ent.remaining).toBeCloseTo(8, 2);
+    expect(ent.status).toBe('safe');
+    expect(ent.color).toBe('#EC4899');
+
+    const music = rows.find(r => r.name === 'Music')!;
+    expect(music.percentage).toBe(100);
+    expect(music.remaining).toBe(0);
+    expect(music.status).toBe('danger');
+  });
+
+  it('marks categories without a limit as status "none"', () => {
+    const rows = getCategoryBudgetStatus(spending, { Entertainment: 30 });
+    const prod = rows.find(r => r.name === 'Productivity')!;
+    expect(prod.limit).toBeNull();
+    expect(prod.status).toBe('none');
+    expect(prod.percentage).toBe(0);
+    expect(prod.spent).toBe(8);
+  });
+
+  it('includes budgeted categories with no current spending (spent 0)', () => {
+    const rows = getCategoryBudgetStatus(spending, { Health: 50 });
+    const health = rows.find(r => r.name === 'Health')!;
+    expect(health).toBeDefined();
+    expect(health.spent).toBe(0);
+    expect(health.limit).toBe(50);
+    expect(health.status).toBe('safe');
+  });
+
+  it('ignores zero or negative budgets (treated as no limit)', () => {
+    const rows = getCategoryBudgetStatus(spending, { Entertainment: 0, Music: -5 });
+    expect(rows.find(r => r.name === 'Entertainment')!.limit).toBeNull();
+    expect(rows.find(r => r.name === 'Music')!.limit).toBeNull();
+  });
+
+  it('sorts budgeted categories first (by percentage desc), then unbudgeted by spend', () => {
+    const rows = getCategoryBudgetStatus(spending, { Entertainment: 30, Music: 10 });
+    expect(rows[0].name).toBe('Music');          // 100% (budgeted)
+    expect(rows[1].name).toBe('Entertainment');  // 73% (budgeted)
+    expect(rows[2].name).toBe('Productivity');   // unbudgeted, last
+  });
+
+  it('returns empty for empty inputs', () => {
+    expect(getCategoryBudgetStatus([], {})).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// filterAndSortSubscriptions
+// ---------------------------------------------------------------------------
+
+describe('filterAndSortSubscriptions', () => {
+  // Far-future billing dates so advanceToNextBillingDate returns them unchanged.
+  const netflix = makeSub({ id: 'a', name: 'Netflix', category: 'Entertainment', cycle: 'monthly', amount: 20, nextBillingDate: '2999-01-10' });
+  const spotify = makeSub({ id: 'b', name: 'Spotify', category: 'Music', cycle: 'monthly', amount: 10, nextBillingDate: '2999-01-05' });
+  const figma = makeSub({ id: 'c', name: 'Figma', category: 'Design', cycle: 'yearly', amount: 120, nextBillingDate: '2999-01-20' });
+  const subs = [netflix, spotify, figma];
+
+  it('returns all sorted by soonest billing date when no filters are set', () => {
+    expect(filterAndSortSubscriptions(subs, {}).map((s) => s.id)).toEqual(['b', 'a', 'c']);
+  });
+
+  it('filters by case-insensitive name query', () => {
+    expect(filterAndSortSubscriptions(subs, { query: 'fig' }).map((s) => s.id)).toEqual(['c']);
+    expect(filterAndSortSubscriptions(subs, { query: 'NET' }).map((s) => s.id)).toEqual(['a']);
+  });
+
+  it('filters by category (multi-select)', () => {
+    expect(filterAndSortSubscriptions(subs, { categories: ['Music', 'Design'] }).map((s) => s.id).sort()).toEqual(['b', 'c']);
+  });
+
+  it('filters by billing cycle', () => {
+    expect(filterAndSortSubscriptions(subs, { cycles: ['yearly'] }).map((s) => s.id)).toEqual(['c']);
+  });
+
+  it('combines query + category + cycle with AND semantics', () => {
+    expect(
+      filterAndSortSubscriptions(subs, { query: 's', categories: ['Music'], cycles: ['monthly'] }).map((s) => s.id),
+    ).toEqual(['b']);
+  });
+
+  it('sorts by name A→Z', () => {
+    expect(filterAndSortSubscriptions(subs, { sortBy: 'name' }).map((s) => s.name)).toEqual(['Figma', 'Netflix', 'Spotify']);
+  });
+
+  it('sorts by monthly-equivalent price (high → low)', () => {
+    // Netflix 20/mo is highest; Figma 120/yr and Spotify 10/mo both ~10/mo.
+    expect(filterAndSortSubscriptions(subs, { sortBy: 'priceDesc' }).map((s) => s.id)[0]).toBe('a');
+  });
+
+  it('uses the currency converter for the price sort when provided', () => {
+    const convert = (amount: number) => amount * 30;
+    expect(filterAndSortSubscriptions(subs, { sortBy: 'priceDesc' }, convert, 'TRY').map((s) => s.id)[0]).toBe('a');
+  });
+
+  it('returns empty when nothing matches', () => {
+    expect(filterAndSortSubscriptions(subs, { query: 'zzz' })).toEqual([]);
+  });
+
+  it('does not mutate the input array', () => {
+    const original = [...subs];
+    filterAndSortSubscriptions(subs, { sortBy: 'name' });
+    expect(subs).toEqual(original);
   });
 });

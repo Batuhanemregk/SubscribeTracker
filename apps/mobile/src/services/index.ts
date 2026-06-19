@@ -28,6 +28,7 @@ export {
 } from './NotificationService';
 
 export {
+  initializeAds,
   loadInterstitialAd,
   showInterstitialAd,
   isInterstitialReady,
@@ -67,11 +68,12 @@ export {
   getOfferings,
   purchasePackage,
   restorePurchases,
-  identifyUser,
   logoutUser,
   addProStatusListener,
   formatPackagePrice,
   getPackageType,
+  openManageSubscriptions,
+  getActiveSubscriptionInfo,
   PRODUCT_IDS,
 } from './PurchaseService';
 

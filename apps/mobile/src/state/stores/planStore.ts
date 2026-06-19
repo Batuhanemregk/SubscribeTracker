@@ -7,16 +7,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { UserPlan, PlanTier } from '../../types';
 import { DEFAULT_STANDARD_PLAN, DEFAULT_PRO_PLAN } from '../../types';
 
+/** Standard (free) plan can track up to this many subscriptions; Premium is unlimited. */
+export const FREE_SUBSCRIPTION_LIMIT = 10;
+
 interface PlanState {
   plan: UserPlan;
   
   // Getters
   isPro: () => boolean;
   isTrialActive: () => boolean;
-  canUseBankStatementScan: () => boolean;
-  canUseCloudSync: () => boolean;
-  canUseDataExport: () => boolean;
-  canUseBiometricLock: () => boolean;
   shouldShowAds: () => boolean;
   
   // Actions
@@ -44,10 +43,6 @@ export const usePlanStore = create<PlanState>()(
         return new Date(trialEndsAt) > new Date();
       },
 
-      canUseBankStatementScan: () => get().plan.entitlements.bankStatementScan,
-      canUseCloudSync: () => get().plan.entitlements.cloudSync,
-      canUseDataExport: () => get().plan.entitlements.dataExport,
-      canUseBiometricLock: () => get().plan.entitlements.biometricLock,
       shouldShowAds: () => !get().plan.entitlements.noAds,
 
       // Actions

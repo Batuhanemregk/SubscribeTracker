@@ -13,6 +13,7 @@ import {
   FlatList,
   Alert,
   Dimensions,
+  ScrollView,
 } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -180,7 +181,10 @@ function FloatingDocument({ colors, step }: { colors: ThemeColors; step: ScanSte
 }
 
 const docStyles = StyleSheet.create({
-  container: { alignItems: 'center', justifyContent: 'center', height: DOC_HEIGHT + 40, marginBottom: 16 },
+  // Extra vertical reserve + margins so the floating/3D-tilting card (and its
+  // drop shadow) stay within this block and never paint over the title below
+  // or the header above as it animates.
+  container: { alignItems: 'center', justifyContent: 'center', height: DOC_HEIGHT + 72, marginTop: 16, marginBottom: 28 },
   glow: { position: 'absolute', width: DOC_WIDTH * 0.8, height: 20, borderRadius: 100, bottom: 0 },
   document: {
     width: DOC_WIDTH, height: DOC_HEIGHT, borderRadius: 12, borderWidth: 1,
@@ -456,7 +460,11 @@ export function BankStatementScanScreen({ navigation }: any) {
 
   // ─── Upload Step ───────────────────────────────────────
   const renderUploadStep = () => (
-    <View style={styles.stepContainer}>
+    <ScrollView
+      style={styles.stepScroll}
+      contentContainerStyle={styles.uploadScrollContent}
+      showsVerticalScrollIndicator={false}
+    >
       <FloatingDocument colors={colors} step={step} />
 
       <Animated.Text entering={FadeInDown.delay(200)} style={styles.mainTitle}>
@@ -464,6 +472,12 @@ export function BankStatementScanScreen({ navigation }: any) {
       </Animated.Text>
       <Animated.Text entering={FadeInDown.delay(300)} style={styles.mainSubtitle}>
         {t('bankScan.uploadSubtitle')}
+      </Animated.Text>
+      <Animated.Text
+        entering={FadeInDown.delay(350)}
+        style={{ fontSize: 12, color: colors.textMuted, textAlign: 'center', marginBottom: 16, paddingHorizontal: 12, fontStyle: 'italic' }}
+      >
+        {t('bankScan.accuracyNote')}
       </Animated.Text>
 
       {/* Format badges */}
@@ -522,9 +536,9 @@ export function BankStatementScanScreen({ navigation }: any) {
 
       {/* Remaining scans counter */}
       <Animated.Text entering={FadeIn.delay(700)} style={[styles.remainingText, { color: colors.textMuted }]}>
-        {t('bankScan.remainingScans', { count: remaining.today })}
+        {t('bankScan.remainingScans', { count: remaining.month })}
       </Animated.Text>
-    </View>
+    </ScrollView>
   );
 
   // ─── Scanning Step ─────────────────────────────────────
@@ -699,12 +713,20 @@ function getStatusLabel(item: AnalyzedSubscription): string {
 
 function calculateNextBillingDate(lastDate: string, cycle: string): string {
   const date = new Date(lastDate);
-  switch (cycle) {
-    case 'weekly': date.setDate(date.getDate() + 7); break;
-    case 'monthly': date.setMonth(date.getMonth() + 1); break;
-    case 'quarterly': date.setMonth(date.getMonth() + 3); break;
-    case 'yearly': date.setFullYear(date.getFullYear() + 1); break;
+  if (cycle === 'weekly') {
+    date.setDate(date.getDate() + 7);
+    return date.toISOString();
   }
+  // Anchor on the original day-of-month and clamp to the target month length so
+  // a 31st-of-month charge doesn't roll over (e.g. Jan 31 -> Mar 3) and land in
+  // the wrong month. Mirrors addBillingCycles() in utils/calculations.
+  const monthsPerCycle = cycle === 'quarterly' ? 3 : cycle === 'yearly' ? 12 : 1;
+  const anchorDay = date.getDate();
+  const totalMonths = date.getMonth() + monthsPerCycle;
+  const targetYear = date.getFullYear() + Math.floor(totalMonths / 12);
+  const targetMonth = ((totalMonths % 12) + 12) % 12;
+  const daysInTargetMonth = new Date(targetYear, targetMonth + 1, 0).getDate();
+  date.setFullYear(targetYear, targetMonth, Math.min(anchorDay, daysInTargetMonth));
   return date.toISOString();
 }
 
@@ -723,8 +745,12 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
 
   // Steps
   stepContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  stepScroll: { flex: 1 },
+  // flexGrow centers the content when it fits and lets it scroll (clipped below
+  // the header) when it doesn't — so the floating document never overlaps the title.
+  uploadScrollContent: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24, paddingTop: 24, paddingBottom: 24 },
   mainTitle: { fontSize: 26, fontWeight: '800', color: colors.text, textAlign: 'center', letterSpacing: -0.5 },
-  mainSubtitle: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', marginTop: 8, marginBottom: 20, lineHeight: 22 },
+  mainSubtitle: { fontSize: 15, color: colors.textSecondary, textAlign: 'center', marginTop: 8, marginBottom: 10, lineHeight: 22 },
 
   // Format badges
   formatRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },

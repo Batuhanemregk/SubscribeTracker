@@ -8,7 +8,7 @@
  * - Swipe to reveal actions (fixed gesture handling)
  */
 import React, { useRef, useCallback, useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Pressable, Platform, Image } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Pressable, Platform, Image, Animated as RNAnimated } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -22,6 +22,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
 import { useSettingsStore, useCurrencyStore } from '../state';
 import { formatCurrency, advanceToNextBillingDate } from '../utils';
+import { cyclePeriodShort } from '../utils/cycle';
 import type { Subscription } from '../types';
 import { t, getLocale } from '../i18n';
 
@@ -35,7 +36,10 @@ interface PremiumSubscriptionCardProps {
   swipeableRef?: (ref: Swipeable | null) => void;
 }
 
-export function PremiumSubscriptionCard({ 
+// Total horizontal footprint of the swipe actions (marginLeft 8 + two 70px buttons).
+const ACTIONS_WIDTH = 148;
+
+export function PremiumSubscriptionCard({
   item, 
   index, 
   onPress, 
@@ -85,31 +89,39 @@ export function PremiumSubscriptionCard({
     day: 'numeric',
   });
 
-  // Swipe action buttons
-  const renderRightActions = () => (
-    <View style={styles.actionsContainer}>
-      <TouchableOpacity 
-        style={[styles.actionButton, styles.editButton]} 
-        onPress={() => {
-          swipeableRef.current?.close();
-          onEdit();
-        }}
-      >
-        <Ionicons name="pencil" size={20} color="#FFF" />
-        <Text style={styles.actionText}>{t('common.edit')}</Text>
-      </TouchableOpacity>
-      <TouchableOpacity 
-        style={[styles.actionButton, styles.deleteButton]} 
-        onPress={() => {
-          swipeableRef.current?.close();
-          onDelete();
-        }}
-      >
-        <Ionicons name="trash" size={20} color="#FFF" />
-        <Text style={styles.actionText}>{t('common.delete')}</Text>
-      </TouchableOpacity>
-    </View>
-  );
+  // Swipe action buttons. Track the swipe progress (0 closed -> 1 open) so the
+  // actions slide in with the finger instead of popping/flashing in statically.
+  const renderRightActions = (progress: any) => {
+    const translateX = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [ACTIONS_WIDTH, 0],
+      extrapolate: 'clamp',
+    });
+    return (
+      <RNAnimated.View style={[styles.actionsContainer, { transform: [{ translateX }] }]}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.editButton]}
+          onPress={() => {
+            swipeableRef.current?.close();
+            onEdit();
+          }}
+        >
+          <Ionicons name="pencil" size={20} color="#FFF" />
+          <Text style={styles.actionText}>{t('common.edit')}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.deleteButton]}
+          onPress={() => {
+            swipeableRef.current?.close();
+            onDelete();
+          }}
+        >
+          <Ionicons name="trash" size={20} color="#FFF" />
+          <Text style={styles.actionText}>{t('common.delete')}</Text>
+        </TouchableOpacity>
+      </RNAnimated.View>
+    );
+  };
 
   // Combined ref callback - register with parent + internal ref
   const handleRef = useCallback((ref: Swipeable | null) => {
@@ -123,10 +135,11 @@ export function PremiumSubscriptionCard({
         ref={handleRef}
         renderRightActions={renderRightActions}
         overshootRight={false}
-        friction={2}
+        friction={2.5}
+        rightThreshold={48}
         onSwipeableOpen={onSwipeOpen}
-        activeOffsetX={[-20, 20]}
-        failOffsetY={[-15, 15]}
+        activeOffsetX={[-28, 28]}
+        failOffsetY={[-12, 12]}
         onSwipeableWillOpen={() => { isSwiping.current = true; }}
         onSwipeableClose={() => { setTimeout(() => { isSwiping.current = false; }, 100); }}
       >
@@ -197,7 +210,7 @@ export function PremiumSubscriptionCard({
                 <View style={styles.priceRow}>
                   <View style={styles.priceContainer}>
                     <Text style={[styles.price, { color: colors.text }]}>{formattedPrice}</Text>
-                    <Text style={[styles.period, { color: colors.textMuted }]}>{item.cycle === 'monthly' ? t('common.perMonth') : t('common.perYear')}</Text>
+                    <Text style={[styles.period, { color: colors.textMuted }]}>{cyclePeriodShort(item.cycle)}</Text>
                   </View>
 
                   {/* Next billing date */}
@@ -224,6 +237,9 @@ const styles = StyleSheet.create({
   actionsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 8,
+    borderRadius: 20,
+    overflow: 'hidden',
   },
   actionButton: {
     width: 70,
@@ -236,8 +252,6 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: '#EF4444', // red - same in both themes
-    borderTopRightRadius: 20,
-    borderBottomRightRadius: 20,
   },
   actionText: {
     color: '#FFF',

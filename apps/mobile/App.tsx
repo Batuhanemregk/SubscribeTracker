@@ -17,12 +17,13 @@ import * as Haptics from 'expo-haptics';
 import { ThemeProvider, useTheme } from './src/theme';
 import { AnimatedTabScreen } from './src/components';
 import { initData } from './src/data/repository';
-import { useSettingsStore, useSubscriptionStore, useCurrencyStore, usePlanStore, migrateSubscriptionIds } from './src/state';
+import { useSettingsStore, useSubscriptionStore, useCurrencyStore, usePlanStore, useAccountStore, migrateSubscriptionIds } from './src/state';
 import { t, initLocaleFromSettings } from './src/i18n';
 import {
   requestNotificationPermission,
   scheduleAllReminders,
   addNotificationResponseListener,
+  initializeAds,
   loadInterstitialAd,
   initAdManager,
   authenticateWithBiometrics,
@@ -40,12 +41,14 @@ import {
   AddSubscriptionScreen,
   SubscriptionDetailsScreen,
   PaywallScreen,
+  ManageSubscriptionScreen,
   OnboardingScreen,
   ServicePickerScreen,
   PlanPickerScreen,
   BankStatementScanScreen,
   PrivacyPolicyScreen,
   TermsOfServiceScreen,
+  BackupSignInScreen,
 } from './src/screens';
 
 // Navigation setup
@@ -61,16 +64,21 @@ const TAB_CONFIG: Record<string, { icon: keyof typeof Ionicons.glyphMap; labelKe
   Settings: { icon: 'settings', labelKey: 'tabs.settings' },
 };
 
+// Tab screen wrappers — MODULE scope so their identity is stable across renders.
+// If they live inside MainTabs, every re-render gives them new identities, which
+// makes React Navigation REMOUNT each tab screen (resetting scroll position,
+// replaying the fade, re-running mount effects). That is why the Settings list
+// snapped to the top on every toggle: a toggle re-renders the app via the settings
+// store, which re-rendered MainTabs and remounted the screen.
+const AnimatedHome = (props: any) => (<AnimatedTabScreen><HomeScreen {...props} /></AnimatedTabScreen>);
+const AnimatedInsights = (props: any) => (<AnimatedTabScreen><InsightsScreen {...props} /></AnimatedTabScreen>);
+const AnimatedBudget = (props: any) => (<AnimatedTabScreen><BudgetScreen {...props} /></AnimatedTabScreen>);
+const AnimatedCalendar = (props: any) => (<AnimatedTabScreen><CalendarScreen {...props} /></AnimatedTabScreen>);
+const AnimatedSettings = (props: any) => (<AnimatedTabScreen><SettingsScreen {...props} /></AnimatedTabScreen>);
+
 // Premium floating glass tab bar
 function MainTabs() {
   const { colors, isDark } = useTheme();
-
-  // Wrap screens with fade animation
-  const AnimatedHome = (props: any) => (<AnimatedTabScreen><HomeScreen {...props} /></AnimatedTabScreen>);
-  const AnimatedInsights = (props: any) => (<AnimatedTabScreen><InsightsScreen {...props} /></AnimatedTabScreen>);
-  const AnimatedBudget = (props: any) => (<AnimatedTabScreen><BudgetScreen {...props} /></AnimatedTabScreen>);
-  const AnimatedCalendar = (props: any) => (<AnimatedTabScreen><CalendarScreen {...props} /></AnimatedTabScreen>);
-  const AnimatedSettings = (props: any) => (<AnimatedTabScreen><SettingsScreen {...props} /></AnimatedTabScreen>);
 
   return (
     <Tab.Navigator
@@ -82,12 +90,12 @@ function MainTabs() {
           tabBarStyle: {
             position: 'absolute' as const,
             bottom: Platform.OS === 'ios' ? 24 : 16,
-            left: 20,
-            right: 20,
+            left: 48,
+            right: 48,
             height: 64,
             borderRadius: 24,
             borderTopWidth: 0,
-            backgroundColor: isDark ? 'rgba(26, 26, 36, 0.85)' : 'rgba(255, 255, 255, 0.85)',
+            backgroundColor: isDark ? 'rgba(26, 26, 36, 0.7)' : 'rgba(255, 255, 255, 0.72)',
             borderWidth: 1,
             borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
             paddingBottom: 0,
@@ -107,7 +115,7 @@ function MainTabs() {
           tabBarBackground: () => (
             Platform.OS === 'ios' ? (
               <BlurView
-                intensity={isDark ? 60 : 80}
+                intensity={isDark ? 70 : 95}
                 tint={isDark ? 'dark' : 'light'}
                 style={{
                   ...StyleSheet.absoluteFillObject,
@@ -234,6 +242,7 @@ function AppContent() {
       }
 
       try {
+        await initializeAds();
         loadInterstitialAd();
         await initAdManager();
       } catch (e) {
@@ -266,6 +275,17 @@ function AppContent() {
         }
       } catch (e) {
         console.warn('[App] Purchases/pro sync failed:', e);
+      }
+
+      // One-shot cloud sync on launch so a signed-in Premium user gets the latest
+      // data (and pushes anything changed offline) without tapping "Sync to Cloud".
+      try {
+        const plan = usePlanStore.getState();
+        if (useAccountStore.getState().isSignedIn() && (plan.isPro() || plan.isTrialActive())) {
+          await useSubscriptionStore.getState().performFullSync();
+        }
+      } catch (e) {
+        console.warn('[App] Launch sync failed:', e);
       }
 
       // Fetch exchange rates + service catalog updates in background
@@ -370,6 +390,11 @@ function AppContent() {
             options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
           />
           <Stack.Screen
+            name="BackupSignIn"
+            component={BackupSignInScreen}
+            options={{ animation: 'slide_from_bottom', gestureEnabled: false }}
+          />
+          <Stack.Screen
             name="ServicePicker"
             component={ServicePickerScreen}
             options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
@@ -392,6 +417,11 @@ function AppContent() {
           <Stack.Screen
             name="TermsOfService"
             component={TermsOfServiceScreen}
+            options={{ animation: 'slide_from_right' }}
+          />
+          <Stack.Screen
+            name="ManageSubscription"
+            component={ManageSubscriptionScreen}
             options={{ animation: 'slide_from_right' }}
           />
         </Stack.Navigator>

@@ -6,6 +6,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { Ionicons } from '@expo/vector-icons';
+import { DonutChart } from '../DonutChart';
 import { useTheme, borderRadius, type ThemeColors } from '../../theme';
 import { useSettingsStore } from '../../state';
 import { getCurrencySymbol } from '../../utils';
@@ -27,7 +28,10 @@ export function CategoryBarChart({ data, title }: CategoryBarChartProps) {
   // Transform data for gifted-charts
   const barData = data.slice(0, 5).map((item) => ({
     value: item.amount,
-    label: item.name.slice(0, 5),
+    // Category names are shown in full in the legend below; truncating them to
+    // fit under a 40px bar produced unreadable labels ("Desig", "Enter"), so the
+    // x-axis label is intentionally omitted and the legend carries the names.
+    label: '',
     frontColor: item.color,
     gradientColor: `${item.color}80`,
     topLabelComponent: () => (
@@ -43,7 +47,7 @@ export function CategoryBarChart({ data, title }: CategoryBarChartProps) {
           <Text style={styles.title}>{title || t('insights.spendingByCategory')}</Text>
         </View>
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>No data to display</Text>
+          <Text style={styles.emptyText}>{t('insights.noDataToDisplay')}</Text>
         </View>
       </View>
     );
@@ -55,7 +59,12 @@ export function CategoryBarChart({ data, title }: CategoryBarChartProps) {
         <Ionicons name="pie-chart" size={18} color={colors.primary} />
         <Text style={styles.title}>{title || t('insights.spendingByCategory')}</Text>
       </View>
-      
+
+      {/* Proportional share (complements the absolute-value bars below) */}
+      <View style={styles.donutWrap}>
+        <DonutChart data={data.slice(0, 5)} size={120} />
+      </View>
+
       <BarChart
         data={barData}
         width={chartWidth}
@@ -80,7 +89,7 @@ export function CategoryBarChart({ data, title }: CategoryBarChartProps) {
         {data.slice(0, 5).map((item) => (
           <View key={item.name} style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: item.color }]} />
-            <Text style={styles.legendText}>{item.name}</Text>
+            <Text style={styles.legendText}>{t(`categories.${item.name}`, { defaultValue: item.name })}</Text>
           </View>
         ))}
       </View>
@@ -107,6 +116,10 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.text,
+  },
+  donutWrap: {
+    alignItems: 'center',
+    marginBottom: 20,
   },
   emptyState: {
     height: 150,

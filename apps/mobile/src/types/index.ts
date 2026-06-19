@@ -172,8 +172,7 @@ export type ThemeMode = 'dark' | 'light' | 'system';
 export interface BudgetSettings {
   monthlyLimit: number;
   currency: string;
-  alertThreshold: number;           // 0.8 = alert at 80%
-  isEnabled: boolean;
+  categoryBudgets: Record<string, number>;  // per-category monthly limits (Premium)
 }
 
 export interface AppSettings {
@@ -192,12 +191,11 @@ export interface AppSettings {
 export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
   monthlyLimit: 100,
   currency: 'USD',
-  alertThreshold: 0.8,
-  isEnabled: false,
+  categoryBudgets: {},
 };
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  theme: 'dark',
+  theme: 'light',
   currency: 'USD',
   language: 'system',
   notificationsEnabled: true,

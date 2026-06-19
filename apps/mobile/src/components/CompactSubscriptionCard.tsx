@@ -7,6 +7,7 @@ import { StyleSheet, View, Text, TouchableOpacity, Image, Platform } from 'react
 import { useTheme } from '../theme';
 import { useSettingsStore, useCurrencyStore } from '../state';
 import { formatCurrency } from '../utils';
+import { cyclePeriodShort } from '../utils/cycle';
 import type { Subscription } from '../types';
 import { t } from '../i18n';
 
@@ -24,7 +25,7 @@ export function CompactSubscriptionCard({ item, onPress }: CompactSubscriptionCa
   const displayAmount = convert(item.amount, item.currency, displayCurrency);
   const formattedPrice = formatCurrency(displayAmount, displayCurrency);
 
-  const cycleLabel = item.cycle === 'monthly' ? t('common.perMonth') : t('common.perYear');
+  const cycleLabel = cyclePeriodShort(item.cycle);
 
   return (
     <TouchableOpacity

@@ -9,6 +9,7 @@ import * as Crypto from 'expo-crypto';
 import type { Subscription, PaymentHistoryItem } from '../../types';
 import { pushToCloud, pullFromCloud, deleteFromCloud, fullSync } from '../../services/syncService';
 import { supabase, isSupabaseConfigured } from '../../lib/supabase';
+import { usePlanStore } from './planStore';
 
 interface SubscriptionState {
   subscriptions: Subscription[];
@@ -68,6 +69,26 @@ async function getAuthUserId(): Promise<string | null> {
   }
 }
 
+// Debounce window for automatic cloud sync after a local change (ms).
+let autoSyncTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * Schedule a debounced push to the cloud after local changes. Premium + signed-in
+ * only; no-ops otherwise. Coalesces rapid edits into a single push so the cloud
+ * stays current without the user tapping "Sync to Cloud".
+ */
+function scheduleAutoSync(get: () => SubscriptionState) {
+  if (!isSupabaseConfigured()) return;
+  if (autoSyncTimer) clearTimeout(autoSyncTimer);
+  autoSyncTimer = setTimeout(() => {
+    autoSyncTimer = null;
+    const plan = usePlanStore.getState();
+    if (!plan.isPro() && !plan.isTrialActive()) return;
+    // syncToCloud returns false (no-op) if not signed in.
+    get().syncToCloud().catch(() => {});
+  }, 2500);
+}
+
 export const useSubscriptionStore = create<SubscriptionState>()(
   persist(
     (set, get) => ({
@@ -80,17 +101,21 @@ export const useSubscriptionStore = create<SubscriptionState>()(
 
       setSubscriptions: (subscriptions) => set({ subscriptions }),
 
-      addSubscription: (sub) =>
+      addSubscription: (sub) => {
         set((state) => ({
           subscriptions: [...state.subscriptions, sub],
-        })),
+        }));
+        scheduleAutoSync(get);
+      },
 
-      updateSubscription: (id, updates) =>
+      updateSubscription: (id, updates) => {
         set((state) => ({
           subscriptions: state.subscriptions.map((sub) =>
             sub.id === id ? { ...sub, ...updates, updatedAt: new Date().toISOString() } : sub
           ),
-        })),
+        }));
+        scheduleAutoSync(get);
+      },
 
       deleteSubscription: (id) => {
         // Also delete from cloud if configured
@@ -101,6 +126,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
           subscriptions: state.subscriptions.filter((sub) => sub.id !== id),
           paymentHistory: state.paymentHistory.filter((p) => p.subscriptionId !== id),
         }));
+        scheduleAutoSync(get);
       },
 
       addPaymentHistory: (payment) =>

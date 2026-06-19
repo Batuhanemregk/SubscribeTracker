@@ -8,7 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header, GradientStatCard } from '../components';
 import { useTheme, borderRadius, type ThemeColors } from '../theme';
 import { useSubscriptionStore, useSettingsStore, useCurrencyStore } from '../state';
-import { getUpcomingPayments, getDaysUntilBilling, getMonthSubscriptionMap, formatCurrency, getCurrencySymbol } from '../utils';
+import { getUpcomingPayments, getDaysUntilBilling, getMonthSubscriptionMap, formatCurrency, getCurrencySymbol, advanceToNextBillingDate } from '../utils';
 import type { Subscription } from '../types';
 import { t, getLocale } from '../i18n';
 
@@ -36,6 +36,18 @@ function Calendar({ subscriptions, onDayPress }: { subscriptions: Subscription[]
     [subscriptions, year, month]
   );
 
+  // Heatmap: tint each billing day by its total amount relative to the busiest day.
+  const { dayTotals, maxDayTotal } = React.useMemo(() => {
+    const totals = new Map<number, number>();
+    let max = 0;
+    daySubsMap.forEach((daySubs, day) => {
+      const total = daySubs.reduce((sum, s) => sum + s.amount, 0);
+      totals.set(day, total);
+      if (total > max) max = total;
+    });
+    return { dayTotals: totals, maxDayTotal: max };
+  }, [daySubsMap]);
+
   const isToday = (day: number) => {
     const today = new Date();
     return day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
@@ -50,45 +62,47 @@ function Calendar({ subscriptions, onDayPress }: { subscriptions: Subscription[]
     const hasBilling = daySubs.length > 0;
     const today = isToday(day);
 
-    const cellStyles: any[] = [styles.dayCell];
+    const innerStyles: any[] = [styles.dayInner];
     const textStyleList: any[] = [styles.dayText];
 
     if (today) {
-      cellStyles.push(styles.todayCell);
+      innerStyles.push(styles.todayInner);
       textStyleList.push(styles.todayText);
     } else if (hasBilling) {
-      cellStyles.push(styles.billingDayCell);
+      innerStyles.push(styles.billingInner);
       textStyleList.push(styles.billingDayText);
+      // Hotter background tint for higher-spend days.
+      const intensity = maxDayTotal > 0 ? (dayTotals.get(day) || 0) / maxDayTotal : 0;
+      const alphaHex = Math.round((0.1 + 0.35 * intensity) * 255).toString(16).padStart(2, '0');
+      innerStyles.push({ backgroundColor: `${colors.primary}${alphaHex}` });
     }
 
-    // Show first subscription's icon and a "+N" badge if multiple
-    const firstSub = daySubs[0];
-    const extraCount = daySubs.length - 1;
+    // Up to 3 dots signal how many subscriptions bill that day (logos live in
+    // the day-detail list + Upcoming Payments, which stay readable at this size).
+    const dotCount = Math.min(daySubs.length, 3);
 
     days.push(
       <TouchableOpacity
         key={day}
-        style={cellStyles}
+        style={styles.dayCell}
         activeOpacity={hasBilling ? 0.6 : 1}
         onPress={() => {
           if (hasBilling && onDayPress) onDayPress(day, daySubs);
         }}
       >
-        <Text style={textStyleList}>{day}</Text>
-        {hasBilling && (
-          <View style={styles.dayIconRow}>
-            {firstSub.logoUrl ? (
-              <Image source={{ uri: firstSub.logoUrl }} style={styles.daySubLogo} />
-            ) : (
-              <Text style={styles.daySubEmoji}>{firstSub.iconKey}</Text>
-            )}
-            {extraCount > 0 && (
-              <View style={[styles.dayExtraBadge, { backgroundColor: colors.primary }]}>
-                <Text style={styles.dayExtraBadgeText}>+{extraCount}</Text>
-              </View>
-            )}
-          </View>
-        )}
+        <View style={innerStyles}>
+          <Text style={textStyleList}>{day}</Text>
+          {hasBilling && (
+            <View style={styles.dayDotRow}>
+              {Array.from({ length: dotCount }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[styles.dayDot, { backgroundColor: today ? '#FFFFFF' : colors.primary }]}
+                />
+              ))}
+            </View>
+          )}
+        </View>
       </TouchableOpacity>
     );
   }
@@ -123,6 +137,9 @@ function PaymentItem({ sub, index }: { sub: Subscription; index: number }) {
   const { app } = useSettingsStore();
   const currency = app.currency;
   const daysUntil = getDaysUntilBilling(sub.nextBillingDate, sub.cycle);
+  // Show the projected NEXT billing date (advanced past any stale stored date)
+  // so it matches the "due in N days" label below it.
+  const nextDate = advanceToNextBillingDate(sub.nextBillingDate, sub.cycle);
 
   return (
     <View style={styles.paymentItem}>
@@ -139,7 +156,7 @@ function PaymentItem({ sub, index }: { sub: Subscription; index: number }) {
       <View style={styles.paymentInfo}>
         <Text style={styles.paymentName}>{sub.name}</Text>
         <Text style={styles.paymentDate}>
-          {new Date(sub.nextBillingDate).toLocaleDateString(getLocale() === 'tr' ? 'tr-TR' : 'en-US', {
+          {nextDate.toLocaleDateString(getLocale() === 'tr' ? 'tr-TR' : 'en-US', {
             month: 'short',
             day: 'numeric',
           })}
@@ -322,18 +339,21 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
   dayCell: {
     width: '14.28%',
     aspectRatio: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
+    padding: 2,
   },
-  todayCell: {
-    backgroundColor: colors.primary,
+  dayInner: {
+    flex: 1,
+    width: '100%',
     borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  billingDayCell: {
+  todayInner: {
+    backgroundColor: colors.primary,
+  },
+  billingInner: {
     borderWidth: 1,
     borderColor: colors.primary,
-    borderRadius: 10,
   },
   dayText: {
     fontSize: 14,
@@ -347,33 +367,17 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  dayIconRow: {
-    position: 'absolute',
-    bottom: 2,
+  dayDotRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 1,
-  },
-  daySubLogo: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
-  },
-  daySubEmoji: {
-    fontSize: 9,
-    lineHeight: 12,
-  },
-  dayExtraBadge: {
-    paddingHorizontal: 3,
-    paddingVertical: 0,
-    borderRadius: 5,
-    minWidth: 14,
+    gap: 2,
+    marginTop: 3,
+    height: 4,
     alignItems: 'center',
   },
-  dayExtraBadgeText: {
-    fontSize: 7,
-    fontWeight: '700',
-    color: '#FFFFFF',
+  dayDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
   },
   sectionTitle: {
     fontSize: 18,

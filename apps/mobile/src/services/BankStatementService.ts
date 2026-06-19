@@ -291,10 +291,28 @@ export async function pickFromGallery(): Promise<{
   mimeType?: string;
   error?: string;
 }> {
+  // Lazy native-module load: expo-image-picker is a native module that may be
+  // absent on an older/stale client build. Requiring it here (instead of a
+  // top-level import) means a missing module only disables this one action
+  // rather than crashing the entire app at startup.
+  let ImagePicker: typeof import('expo-image-picker');
   try {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ['image/*'],
-      copyToCacheDirectory: true,
+    ImagePicker = require('expo-image-picker');
+  } catch {
+    return { success: false, error: t('bankScan.galleryUnavailable') };
+  }
+
+  try {
+    // Open the actual Photos library (so users can pick a screenshot of their
+    // statement), not the Files document picker.
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) {
+      return { success: false, error: t('bankScan.galleryPermission') };
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 1,
     });
 
     if (result.canceled) {
@@ -305,7 +323,7 @@ export async function pickFromGallery(): Promise<{
     return {
       success: true,
       uri: asset.uri,
-      name: asset.name,
+      name: asset.fileName || 'statement.jpg',
       mimeType: asset.mimeType || 'image/jpeg',
     };
   } catch (error: any) {
@@ -414,12 +432,12 @@ export async function extractSubscriptionsFromStatement(
     }
     if (!data || typeof data !== 'object') return serviceError();
 
-    // Business failure envelope
+    // Business failure envelope — a failed scan never counts against the user's
+    // quota (the cooldown still prevents rapid retries). Only successful
+    // extractions below decrement the limit.
     if (data.ok === false) {
       const code = String(data.errorCode || 'UPSTREAM_ERROR');
       const errorKey = ERROR_CODE_KEYS[code] ?? 'bankScan.errors.serviceError';
-      // A "busy" signal means OpenAI was overloaded — let the user retry for free.
-      if (code !== 'UPSTREAM_BUSY') await recordScan();
       return { success: false, subscriptions: [], error: t(errorKey), errorKey };
     }
 

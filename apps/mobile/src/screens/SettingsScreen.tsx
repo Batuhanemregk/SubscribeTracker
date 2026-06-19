@@ -8,19 +8,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { Header } from '../components';
 import { borderRadius, useTheme, type ThemeColors } from '../theme';
 import { useSettingsStore, usePlanStore, useSubscriptionStore, useAccountStore } from '../state';
-import { sendTestNotification, scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signInWithApple, isAppleSignInAvailable, deleteAccount, signOut as authSignOut, identifyUser, logoutUser, type AuthResult } from '../services';
+import { scheduleAllReminders, requestBiometricEnrollment, signInWithGoogle, signInWithApple, isAppleSignInAvailable, deleteAccount, signOut as authSignOut, logoutUser, type AuthResult } from '../services';
 import { t } from '../i18n';
 
-
-export function SettingsScreen({ navigation }: any) {
-  const { colors, canUseLight, isDark } = useTheme();
+// Defined at module scope (NOT inside SettingsScreen) so their component identity
+// stays stable across re-renders. When these lived inside the component, every
+// state change (e.g. toggling a switch) re-created them as new component types,
+// remounting the whole list and snapping the ScrollView back to the top.
+function SettingsRow({ icon, iconColor, title, subtitle, onPress, rightElement, destructive }: {
+  icon: string; iconColor: string; title: string; subtitle?: string;
+  onPress?: () => void; rightElement?: React.ReactNode; destructive?: boolean;
+}) {
+  const { colors } = useTheme();
   const styles = createStyles(colors);
-
-  // --- Sub-components with access to dynamic styles/colors ---
-  const SettingsRow = ({ icon, iconColor, title, subtitle, onPress, rightElement, destructive }: {
-    icon: string; iconColor: string; title: string; subtitle?: string;
-    onPress?: () => void; rightElement?: React.ReactNode; destructive?: boolean;
-  }) => (
+  return (
     <TouchableOpacity style={styles.row} onPress={onPress} disabled={!onPress} activeOpacity={0.7}>
       <View style={[styles.rowIcon, { backgroundColor: `${colors.text}08` }]}>
         <Ionicons name={icon as any} size={20} color={iconColor} />
@@ -34,12 +35,21 @@ export function SettingsScreen({ navigation }: any) {
       )}
     </TouchableOpacity>
   );
+}
 
-  const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  const { colors } = useTheme();
+  const styles = createStyles(colors);
+  return (
     <TouchableOpacity style={[styles.toggle, value && styles.toggleActive]} onPress={() => onChange(!value)}>
       <View style={[styles.toggleDot, value && styles.toggleDotActive]} />
     </TouchableOpacity>
   );
+}
+
+export function SettingsScreen({ navigation }: any) {
+  const { colors, canUseLight, isDark } = useTheme();
+  const styles = createStyles(colors);
 
   const { app, setNotifications, setBiometricLock, resetToDefaults, setCurrency, setTheme, setLanguage } = useSettingsStore();
   const { plan, isPro, downgradeToStandard } = usePlanStore();
@@ -91,7 +101,11 @@ export function SettingsScreen({ navigation }: any) {
       const result: AuthResult =
         provider === 'apple' ? await signInWithApple() : await signInWithGoogle();
       if (result.success && result.user) {
-        await identifyUser(result.user.id);
+        // Do NOT call Purchases.logIn() here. Premium is tied to the Apple ID
+        // (App Store), not this app-account login; identifying RevenueCat with
+        // the app user switches away from the anonymous user that holds the
+        // entitlement and drops Premium (twin of the sign-out logOut bug).
+        // RevenueCat stays anonymous; restore handles new devices.
         useAccountStore.getState().setAccount({
           id: result.user.id,
           email: result.user.email,
@@ -109,27 +123,6 @@ export function SettingsScreen({ navigation }: any) {
     } finally {
       setIsSigningIn(false);
     }
-  };
-
-  // Disconnect: revoke access + stop sync, but KEEP local data.
-  const handleDisconnectAccount = () => {
-    Alert.alert(
-      t('settings.disconnectAlertTitle'),
-      t('settings.disconnectAlertMessage'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settings.disconnectAlertButton'),
-          style: 'destructive',
-          onPress: async () => {
-            await authSignOut();
-            await logoutUser();
-            useAccountStore.getState().clearAccount();
-            Alert.alert(t('settings.disconnected'), t('settings.disconnectedMessage'));
-          },
-        },
-      ]
-    );
   };
 
   // Delete account: server-side deletion (if signed in) + wipe all local data.
@@ -172,22 +165,6 @@ export function SettingsScreen({ navigation }: any) {
   const handleThemeSelect = (theme: 'dark' | 'light' | 'system') => {
     setTheme(theme);
     setThemeModalVisible(false);
-  };
-
-  const handleOpenPolicy = () => {
-    Alert.alert(
-      'Privacy Policy',
-      'Finify respects your privacy.\n\n• We do not store raw document content\n• Only subscription metadata is saved locally\n• No data is sent to external servers\n• You can delete all data anytime\n\nFor full policy, visit our website.',
-      [{ text: 'OK' }]
-    );
-  };
-
-  const handleOpenTerms = () => {
-    Alert.alert(
-      'Terms of Service',
-      'By using SubscribeTracker you agree to:\n\n• Use the app for personal purposes\n• Not reverse engineer the app\n• Accept that Pro features require payment\n• Understand we are not liable for missed payments\n\nFor full terms, visit our website.',
-      [{ text: 'OK' }]
-    );
   };
 
   const handleResetPlan = () => {
@@ -246,8 +223,8 @@ export function SettingsScreen({ navigation }: any) {
                 <Text style={styles.upgradeText}>{t('settings.upgradeToPro')}</Text>
               </TouchableOpacity>
             )}
-            {isPro() && (
-              <TouchableOpacity 
+            {isPro() && __DEV__ && (
+              <TouchableOpacity
                 style={styles.debugButton}
                 onPress={handleResetPlan}
               >
@@ -255,6 +232,18 @@ export function SettingsScreen({ navigation }: any) {
               </TouchableOpacity>
             )}
           </View>
+          {isPro() && (
+            <>
+              <View style={styles.divider} />
+              <SettingsRow
+                icon="card"
+                iconColor={colors.primary}
+                title={t('settings.manageSubscription')}
+                subtitle={t('settings.manageSubscriptionSubtitle')}
+                onPress={() => navigation.navigate('ManageSubscription')}
+              />
+            </>
+          )}
         </View>
 
 
@@ -275,8 +264,10 @@ export function SettingsScreen({ navigation }: any) {
               rightElement={
                 <TouchableOpacity
                   onPress={async () => {
+                    // Sign out of cloud sync only. Do NOT call Purchases.logOut():
+                    // Premium is tied to the Apple ID (App Store), not this login,
+                    // so logging out of RevenueCat would wrongly drop the entitlement.
                     await authSignOut();
-                    await logoutUser();
                     useAccountStore.getState().clearAccount();
                   }}
                   style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: `${colors.red}15` }}
@@ -461,17 +452,6 @@ export function SettingsScreen({ navigation }: any) {
           />
           <View style={styles.divider} />
           <SettingsRow
-            icon="send"
-            iconColor={colors.emerald}
-            title={t('settings.testNotification')}
-            subtitle={t('settings.testNotifSubtitle')}
-            onPress={() => {
-              sendTestNotification();
-              Alert.alert(t('settings.notifSent'), t('settings.notifSentMessage'));
-            }}
-          />
-          <View style={styles.divider} />
-          <SettingsRow
             icon="finger-print"
             iconColor={colors.pink}
             title={t('settings.biometricLock')}
@@ -540,22 +520,6 @@ export function SettingsScreen({ navigation }: any) {
         {/* Data Section */}
         <Text style={styles.sectionTitle}>{t('settings.data')}</Text>
         <View style={styles.card}>
-          <SettingsRow
-            icon="download"
-            iconColor={colors.cyan}
-            title={t('settings.exportData')}
-            subtitle={t('settings.exportDataSubtitle')}
-            onPress={() => {/* TODO: Export */}}
-          />
-          <View style={styles.divider} />
-          <SettingsRow
-            icon="unlink"
-            iconColor={colors.amber}
-            title={t('settings.disconnectAccount')}
-            subtitle={t('settings.disconnectSubtitle')}
-            onPress={handleDisconnectAccount}
-          />
-          <View style={styles.divider} />
           <SettingsRow
             icon="trash"
             iconColor={colors.red}

@@ -3,6 +3,7 @@
  * Gracefully no-ops in Expo Go where native modules are unavailable.
  */
 import { Platform } from 'react-native';
+import { requestTrackingPermissionsAsync } from 'expo-tracking-transparency';
 
 // Dynamic import to avoid crash in Expo Go
 let InterstitialAd: any = null;
@@ -32,6 +33,27 @@ try {
 import { getAdMobIds } from '../config';
 
 const adIds = getAdMobIds();
+
+/**
+ * Initialize the Google Mobile Ads SDK and request App Tracking Transparency.
+ * ATT is requested first (iOS) so AdMob can serve personalized ads when the user
+ * consents; without consent it falls back to non-personalized ads. Safe no-op
+ * when the native ad module is unavailable (e.g. Expo Go).
+ */
+export async function initializeAds(): Promise<void> {
+  if (!adsAvailable) return;
+  try {
+    await requestTrackingPermissionsAsync();
+  } catch (e) {
+    console.log('ATT permission request failed:', e);
+  }
+  try {
+    const adModule = require('react-native-google-mobile-ads');
+    await adModule.default().initialize();
+  } catch (e) {
+    console.log('MobileAds initialize failed:', e);
+  }
+}
 
 // Interstitial ad instance
 let interstitialAd: any = null;

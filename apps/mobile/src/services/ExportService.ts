@@ -4,7 +4,9 @@
  * Generates subscription data exports in CSV and PDF formats.
  * Uses expo-file-system for file handling and expo-sharing for sharing.
  */
-import * as FileSystem from 'expo-file-system';
+// SDK 54 moved the classic file API (writeAsStringAsync / EncodingType / cacheDirectory)
+// to the /legacy entry point; the new top-level module no longer exports EncodingType.
+import * as FileSystem from 'expo-file-system/legacy';
 const { cacheDirectory, writeAsStringAsync, EncodingType } = FileSystem as any;
 import * as Sharing from 'expo-sharing';
 import type { Subscription } from '../types';

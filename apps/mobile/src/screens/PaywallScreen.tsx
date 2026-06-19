@@ -18,12 +18,13 @@ import Animated, {
 // PurchasesPackage type - use any for Expo Go compatibility
 import { Header, PrimaryButton, SecondaryButton } from '../components';
 import { useTheme, borderRadius, type ThemeColors } from '../theme';
-import { usePlanStore } from '../state';
-import { 
+import { usePlanStore, useAccountStore } from '../state';
+import {
   showPaywallDismissAd,
   getOfferings,
   purchasePackage,
   restorePurchases,
+  getProStatus,
   formatPackagePrice,
   getPackageType,
   isPurchasesConfigured,
@@ -32,14 +33,13 @@ import { t } from '../i18n';
 
 interface FeatureRowProps {
   icon: string;
-  iconColor: string;
   title: string;
   standardValue: string | boolean;
   proValue: string | boolean;
   index: number;
 }
 
-function FeatureRow({ icon, iconColor, title, standardValue, proValue, index }: FeatureRowProps) {
+function FeatureRow({ icon, title, standardValue, proValue, index }: FeatureRowProps) {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const renderValue = (value: string | boolean, isPro: boolean) => {
@@ -57,8 +57,8 @@ function FeatureRow({ icon, iconColor, title, standardValue, proValue, index }: 
 
   return (
     <View style={styles.featureRow}>
-      <View style={[styles.featureIcon, { backgroundColor: `${iconColor}20` }]}>
-        <Ionicons name={icon as any} size={18} color={iconColor} />
+      <View style={styles.featureIcon}>
+        <Ionicons name={icon as any} size={18} color={colors.primary} />
       </View>
       <Text style={styles.featureTitle}>{title}</Text>
       <View style={styles.featureValues}>
@@ -79,13 +79,13 @@ export function PaywallScreen({ navigation, route }: any) {
   const fromOnboarding = route?.params?.fromOnboarding === true;
 
   const FEATURES = [
-    { icon: 'document-text', iconColor: colors.amber, title: t('paywall.features.bankScan'), standard: false, pro: true },
-    { icon: 'cloud', iconColor: colors.primary, title: t('paywall.features.cloudSync'), standard: false, pro: true },
-    { icon: 'download', iconColor: colors.emerald, title: t('paywall.features.dataExport'), standard: false, pro: 'CSV/PDF' },
-    { icon: 'color-palette', iconColor: colors.pink, title: t('paywall.features.biometricLock'), standard: false, pro: true },
-    { icon: 'lock-closed', iconColor: colors.primary, title: t('paywall.features.biometricLock'), standard: false, pro: true },
-    { icon: 'infinite', iconColor: colors.cyan, title: t('paywall.features.unlimitedSubs'), standard: '10', pro: t('common.upgrade') },
-    { icon: 'remove-circle', iconColor: colors.red, title: t('paywall.features.noAds'), standard: false, pro: true },
+    { icon: 'document-text', title: t('paywall.features.bankScan'), standard: false, pro: true },
+    { icon: 'cloud', title: t('paywall.features.cloudSync'), standard: false, pro: true },
+    { icon: 'download', title: t('paywall.features.dataExport'), standard: false, pro: 'CSV/PDF' },
+    { icon: 'pricetags', title: t('paywall.features.customCategories'), standard: false, pro: true },
+    { icon: 'lock-closed', title: t('paywall.features.biometricLock'), standard: false, pro: true },
+    { icon: 'infinite', title: t('paywall.features.unlimitedSubs'), standard: '10', pro: t('common.upgrade') },
+    { icon: 'remove-circle', title: t('paywall.features.noAds'), standard: false, pro: true },
   ];
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const [isLoading, setIsLoading] = useState(false);
@@ -108,6 +108,56 @@ export function PaywallScreen({ navigation, route }: any) {
       navigation.goBack();
     }
   };
+
+  // After a real purchase, nudge optional cloud backup (sign-in) — unless the
+  // user is already signed in, in which case just finish.
+  const finishAfterPurchase = () => {
+    if (!useAccountStore.getState().isSignedIn()) {
+      navigation.replace('BackupSignIn');
+    } else {
+      handleSuccess();
+    }
+  };
+
+  // Reactive Premium status — re-renders when the plan store flips to Pro.
+  const isProNow = usePlanStore((s) => s.isPro());
+
+  // Resolve Premium for a returning user when the paywall opens. On a fresh
+  // install RevenueCat starts a NEW anonymous user, so getCustomerInfo() reports
+  // "not Premium" until the StoreKit receipt is re-synced — restorePurchases()
+  // forces that sync (silent on StoreKit 2). The reactive effect below then
+  // leaves the paywall the instant the entitlement resolves.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if ((await getProStatus()) === true) { upgradeToPro(); return; }
+      // Fresh install / reinstall: RevenueCat may still be initializing right
+      // after onboarding and the StoreKit receipt sync lags, so a single check
+      // returns "not Premium". Force one restore, then poll a few times while it
+      // settles — the reactive effect dismisses the instant Premium resolves.
+      if (fromOnboarding) {
+        const restored = await restorePurchases();
+        if (!cancelled && restored.isPro) { upgradeToPro(); return; }
+        for (let i = 0; i < 4 && !cancelled; i++) {
+          await new Promise((r) => setTimeout(r, 1500));
+          if (cancelled) return;
+          if ((await getProStatus()) === true) { upgradeToPro(); return; }
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-leave the paywall the moment Premium resolves (already-owned, the Apple
+  // receipt syncing, or the app-wide listener firing) — unless the user is
+  // mid-purchase, where the success handler already manages navigation.
+  useEffect(() => {
+    if (isProNow && !isLoading) {
+      handleSuccess();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isProNow]);
 
   // Fallback prices (TRY) - used when RevenueCat not configured
   const [monthlyPrice, setMonthlyPrice] = useState('₺99');
@@ -160,7 +210,7 @@ export function PaywallScreen({ navigation, route }: any) {
           Alert.alert(
             t('paywall.welcomePro'),
             t('paywall.welcomeProMessage'),
-            [{ text: t('common.continue') || 'Continue', onPress: handleSuccess }]
+            [{ text: t('common.continue') || 'Continue', onPress: finishAfterPurchase }]
           );
         } else if (result.errorType === 'cancelled') {
           // User cancelled - do nothing, no alert
@@ -172,7 +222,7 @@ export function PaywallScreen({ navigation, route }: any) {
             Alert.alert(
               t('paywall.welcomePro'),
               t('paywall.welcomeProMessage'),
-              [{ text: t('common.continue') || 'Continue', onPress: handleSuccess }]
+              [{ text: t('common.continue') || 'Continue', onPress: finishAfterPurchase }]
             );
           } else {
             Alert.alert(
@@ -323,7 +373,6 @@ export function PaywallScreen({ navigation, route }: any) {
           <FeatureRow
             key={feature.title}
             icon={feature.icon}
-            iconColor={feature.iconColor}
             title={feature.title}
             standardValue={feature.standard}
             proValue={feature.pro}
@@ -359,11 +408,11 @@ export function PaywallScreen({ navigation, route }: any) {
         </Text>
 
         <View style={styles.legalLinks}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('PrivacyPolicy')}>
             <Text style={styles.legalLink}>{t('settings.privacyPolicy')}</Text>
           </TouchableOpacity>
           <Text style={styles.legalDivider}>•</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('TermsOfService')}>
             <Text style={styles.legalLink}>{t('settings.termsOfService')}</Text>
           </TouchableOpacity>
         </View>
@@ -529,6 +578,7 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
+    backgroundColor: `${colors.primary}14`,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,

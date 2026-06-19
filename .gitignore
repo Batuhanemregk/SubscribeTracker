@@ -47,3 +47,5 @@ coverage/
 # Claude Code (personal, machine-local)
 CLAUDE.local.md
 .claude/settings.local.json
+.playwright-mcp/
+.asc-shots/

@@ -5,7 +5,7 @@
  * Provides a unified API for both iOS and Android.
  * Gracefully no-ops in Expo Go where native modules are unavailable.
  */
-import { Platform } from 'react-native';
+import { Platform, Linking } from 'react-native';
 
 // Dynamic import to avoid crash in Expo Go
 let Purchases: any = null;
@@ -259,19 +259,6 @@ export async function restorePurchases(): Promise<{
 }
 
 /**
- * Identify user (call after login)
- */
-export async function identifyUser(userId: string): Promise<void> {
-  if (!purchasesAvailable || !Purchases) return;
-  try {
-    await Purchases.logIn(userId);
-    console.log('User identified:', userId);
-  } catch (error) {
-    console.error('Failed to identify user:', error);
-  }
-}
-
-/**
  * Logout user (call after logout)
  */
 export async function logoutUser(): Promise<void> {
@@ -315,6 +302,60 @@ export function addProStatusListener(onChange: (isPro: boolean) => void): () => 
  */
 export function getManagementURL(customerInfo: any): string | null {
   return customerInfo?.managementURL || null;
+}
+
+/**
+ * Open the OS-native subscription management sheet (App Store / Play Store) so the
+ * user can cancel or change their plan. Prefers RevenueCat's managementURL and
+ * falls back to the platform subscriptions deep link. Returns false if nothing
+ * could be opened (caller can then point the user at device Settings).
+ */
+export async function openManageSubscriptions(): Promise<boolean> {
+  try {
+    const customerInfo = await getCustomerInfo();
+    const url =
+      getManagementURL(customerInfo) ||
+      (Platform.OS === 'ios'
+        ? 'itms-apps://apps.apple.com/account/subscriptions'
+        : 'https://play.google.com/store/account/subscriptions');
+    await Linking.openURL(url);
+    return true;
+  } catch (error) {
+    console.error('Failed to open subscription management:', error);
+    return false;
+  }
+}
+
+/**
+ * Active Premium subscription info for display: billing cycle, expiration/renewal
+ * date (ISO), and whether it will auto-renew. Returns null if there is no active
+ * subscription or it can't be determined. Plan CHANGES and cancellation go through
+ * the native manage-subscriptions sheet (openManageSubscriptions), which discloses
+ * the exact billing (immediate proration vs. effective at next renewal) per change.
+ */
+export async function getActiveSubscriptionInfo(): Promise<{
+  cycle: 'monthly' | 'yearly' | null;
+  expirationDate: string | null;
+  willRenew: boolean;
+} | null> {
+  if (!purchasesAvailable || !Purchases) return null;
+  try {
+    const customerInfo = await Purchases.getCustomerInfo();
+    const ent = customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
+    if (!ent) return null;
+    const productId: string = ent.productIdentifier || '';
+    let cycle: 'monthly' | 'yearly' | null = null;
+    if (productId === PRODUCT_IDS.MONTHLY || productId.includes('month')) cycle = 'monthly';
+    else if (productId === PRODUCT_IDS.YEARLY || productId.includes('year') || productId.includes('annual')) cycle = 'yearly';
+    return {
+      cycle,
+      expirationDate: ent.expirationDate || null,
+      willRenew: ent.willRenew !== false,
+    };
+  } catch (error) {
+    console.error('Failed to get active subscription info:', error);
+    return null;
+  }
 }
 
 /**

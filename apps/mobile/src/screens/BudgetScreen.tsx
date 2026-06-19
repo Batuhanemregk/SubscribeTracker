@@ -5,23 +5,34 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, TextInput, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Header, SecondaryButton, BudgetCircularProgress } from '../components';
 import { useTheme, borderRadius, type ThemeColors } from '../theme';
-import { useSubscriptionStore, useSettingsStore, useCurrencyStore } from '../state';
-import { toMonthlyAmount, getBudgetStatus, getCurrencySymbol, formatCurrency } from '../utils';
+import { useSubscriptionStore, useSettingsStore, useCurrencyStore, usePlanStore } from '../state';
+import { toMonthlyAmount, getBudgetStatus, getCurrencySymbol, formatCurrency, getSpendingByCategory, getCategoryBudgetStatus, type CategoryBudgetRow } from '../utils';
 import { t } from '../i18n';
 
 export function BudgetScreen() {
   const { colors } = useTheme();
   const styles = createStyles(colors);
   const { subscriptions, getActiveSubscriptions, calculateMonthlyTotalConverted } = useSubscriptionStore();
-  const { budget, setBudgetLimit, setBudgetEnabled, app } = useSettingsStore();
+  const { budget, setBudgetLimit, setCategoryBudget, removeCategoryBudget, app } = useSettingsStore();
   const { convert } = useCurrencyStore();
+  const { isPro, isTrialActive } = usePlanStore();
+  const navigation = useNavigation<any>();
   const currency = app.currency;
+  const hasPremium = isPro() || isTrialActive();
 
   const subs = getActiveSubscriptions();
   const monthlySpending = calculateMonthlyTotalConverted(convert, currency);
   const budgetStatus = getBudgetStatus(monthlySpending, budget.monthlyLimit);
+
+  const categoryBudgets = budget.categoryBudgets ?? {};
+  const categoryRows = getCategoryBudgetStatus(
+    getSpendingByCategory(subs, convert, currency),
+    categoryBudgets
+  );
 
   // Sort by monthly equivalent
   const sortedSubs = [...subs]
@@ -33,6 +44,8 @@ export function BudgetScreen() {
 
   const [budgetModalVisible, setBudgetModalVisible] = React.useState(false);
   const [budgetInput, setBudgetInput] = React.useState(budget.monthlyLimit.toString());
+  const [catModalCategory, setCatModalCategory] = React.useState<string | null>(null);
+  const [catBudgetInput, setCatBudgetInput] = React.useState('');
 
   const handleEditBudget = () => {
     setBudgetInput(budget.monthlyLimit.toString());
@@ -45,6 +58,29 @@ export function BudgetScreen() {
       setBudgetLimit(limit);
     }
     setBudgetModalVisible(false);
+  };
+
+  const handleEditCategory = (row: CategoryBudgetRow) => {
+    setCatModalCategory(row.name);
+    setCatBudgetInput(row.limit ? row.limit.toString() : '');
+  };
+
+  const closeCatModal = () => setCatModalCategory(null);
+
+  const handleSaveCategoryBudget = () => {
+    if (catModalCategory === null) return;
+    const limit = parseFloat(catBudgetInput || '0');
+    if (limit > 0) {
+      setCategoryBudget(catModalCategory, limit);
+    } else {
+      removeCategoryBudget(catModalCategory);
+    }
+    closeCatModal();
+  };
+
+  const handleClearCategoryBudget = () => {
+    if (catModalCategory !== null) removeCategoryBudget(catModalCategory);
+    closeCatModal();
   };
 
   const getStatusColor = () => {
@@ -66,8 +102,8 @@ export function BudgetScreen() {
         />
       </View>
 
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
@@ -168,22 +204,90 @@ export function BudgetScreen() {
           </View>
         )}
 
-        {/* Alert Settings */}
-        <View style={styles.settingsCard}>
-          <View style={styles.settingsHeader}>
-            <Ionicons name="notifications-outline" size={20} color={colors.primary} />
-            <Text style={styles.settingsTitle}>{t('budget.alertsTitle')}</Text>
-          </View>
-          <Text style={styles.settingsDescription}>
-            {t('budget.alertsDescription', { percent: (budget.alertThreshold * 100).toFixed(0) })}
-          </Text>
-          <TouchableOpacity 
-            style={[styles.toggle, budget.isEnabled && styles.toggleActive]}
-            onPress={() => setBudgetEnabled(!budget.isEnabled)}
+        {/* Category Budgets (Premium) */}
+        <Text style={[styles.sectionTitle, styles.categorySectionTitle]}>{t('budget.categoryBudgets')}</Text>
+
+        {hasPremium ? (
+          categoryRows.length > 0 ? (
+            categoryRows.map((row) => {
+              const isOver = row.limit !== null && row.spent > row.limit;
+              const fillColor =
+                row.status === 'danger' ? colors.red : row.status === 'warning' ? colors.amber : colors.emerald;
+              return (
+                <TouchableOpacity
+                  key={row.name}
+                  style={styles.catItem}
+                  onPress={() => handleEditCategory(row)}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.catDot, { backgroundColor: row.color }]} />
+                  <View style={styles.catInfo}>
+                    <View style={styles.catTopRow}>
+                      <Text style={styles.catName}>{t(`categories.${row.name}`, { defaultValue: row.name })}</Text>
+                      {row.limit !== null ? (
+                        <Text style={styles.catAmount}>
+                          {formatCurrency(row.spent, currency)} / {formatCurrency(row.limit, currency)}
+                        </Text>
+                      ) : (
+                        <View style={styles.setLimitPill}>
+                          <Ionicons name="add" size={12} color={colors.primary} />
+                          <Text style={styles.setLimitText}>{t('budget.setLimit')}</Text>
+                        </View>
+                      )}
+                    </View>
+                    {row.limit !== null && (
+                      <View style={styles.catProgressBar}>
+                        <View
+                          style={[styles.catProgressFill, { width: `${Math.min(row.percentage, 100)}%`, backgroundColor: fillColor }]}
+                        />
+                      </View>
+                    )}
+                    {row.limit !== null && row.percentage >= 75 && (
+                      <View style={styles.catWarnRow}>
+                        <Ionicons
+                          name={isOver ? 'warning' : 'alert-circle'}
+                          size={12}
+                          color={isOver ? colors.red : colors.amber}
+                        />
+                        <Text style={[styles.catWarnText, { color: isOver ? colors.red : colors.amber }]}>
+                          {isOver ? t('budget.overBudget') : t('budget.nearLimit')}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.textMuted} style={styles.catChevron} />
+                </TouchableOpacity>
+              );
+            })
+          ) : (
+            <View style={styles.empty}>
+              <Ionicons name="pie-chart-outline" size={48} color={colors.textMuted} />
+              <Text style={styles.emptyText}>{t('insights.noSubscriptions')}</Text>
+            </View>
+          )
+        ) : (
+          <TouchableOpacity
+            style={styles.lockedCard}
+            onPress={() => navigation.navigate('Paywall')}
+            activeOpacity={0.85}
           >
-            <View style={[styles.toggleDot, budget.isEnabled && styles.toggleDotActive]} />
+            <LinearGradient colors={[`${colors.primary}20`, `${colors.primary}05`]} style={styles.lockedGradient}>
+              <View style={styles.lockedBadge}>
+                <Ionicons name="lock-closed" size={12} color={colors.amber} />
+                <Text style={styles.lockedBadgeText}>{t('common.pro')}</Text>
+              </View>
+              <View style={styles.lockedIcon}>
+                <Ionicons name="pie-chart" size={26} color={colors.primary} />
+              </View>
+              <Text style={styles.lockedTitle}>{t('budget.categoryBudgets')}</Text>
+              <Text style={styles.lockedDesc}>{t('budget.categoryBudgetsDesc')}</Text>
+              <View style={styles.lockedCta}>
+                <Text style={styles.lockedCtaText}>{t('budget.unlockPremium')}</Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+              </View>
+            </LinearGradient>
           </TouchableOpacity>
-        </View>
+        )}
       </ScrollView>
 
       {/* Budget Edit Modal */}
@@ -213,19 +317,65 @@ export function BudgetScreen() {
               />
             </View>
             <View style={styles.modalButtons}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.cancelButton}
                 onPress={() => setBudgetModalVisible(false)}
               >
                 <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.saveButton}
                 onPress={handleSaveBudget}
               >
                 <Text style={styles.saveButtonText}>{t('common.save')}</Text>
               </TouchableOpacity>
             </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Category Budget Edit Modal */}
+      <Modal
+        visible={catModalCategory !== null}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={closeCatModal}
+      >
+        <Pressable style={styles.modalOverlay} onPress={closeCatModal}>
+          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>{t('budget.setCategoryLimit')}</Text>
+            <Text style={styles.modalSubtitle}>
+              {catModalCategory
+                ? t('budget.categoryLimitFor', {
+                    category: t(`categories.${catModalCategory}`, { defaultValue: catModalCategory }),
+                  })
+                : ''}
+            </Text>
+            <View style={styles.inputContainer}>
+              <Text style={styles.currencySymbol}>{getCurrencySymbol(currency)}</Text>
+              <TextInput
+                style={styles.budgetInput}
+                value={catBudgetInput}
+                onChangeText={setCatBudgetInput}
+                keyboardType="decimal-pad"
+                placeholder="0.00"
+                placeholderTextColor={colors.textMuted}
+                autoFocus
+              />
+            </View>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.cancelButton} onPress={closeCatModal}>
+                <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.saveButton} onPress={handleSaveCategoryBudget}>
+                <Text style={styles.saveButtonText}>{t('common.save')}</Text>
+              </TouchableOpacity>
+            </View>
+            {catModalCategory !== null && (categoryBudgets[catModalCategory] ?? 0) > 0 && (
+              <TouchableOpacity style={styles.removeLimitButton} onPress={handleClearCategoryBudget}>
+                <Text style={styles.removeLimitText}>{t('budget.removeLimit')}</Text>
+              </TouchableOpacity>
+            )}
           </Pressable>
         </Pressable>
       </Modal>
@@ -378,53 +528,152 @@ const createStyles = (colors: ThemeColors) => StyleSheet.create({
     color: colors.textMuted,
     marginTop: 12,
   },
-  settingsCard: {
-    backgroundColor: colors.bgCard,
-    borderRadius: borderRadius.xl,
-    padding: 20,
-    marginTop: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-    position: 'relative',
+  categorySectionTitle: {
+    marginTop: 8,
   },
-  settingsHeader: {
+  catItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 6,
+    backgroundColor: colors.bgCard,
+    borderRadius: borderRadius.xl,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
-  settingsTitle: {
-    fontSize: 16,
+  catDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 12,
+  },
+  catInfo: {
+    flex: 1,
+  },
+  catTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  catName: {
+    fontSize: 15,
     fontWeight: '600',
     color: colors.text,
+    flexShrink: 1,
   },
-  settingsDescription: {
+  catAmount: {
     fontSize: 13,
+    fontWeight: '600',
     color: colors.textSecondary,
-    paddingRight: 60,
+    marginLeft: 8,
   },
-  toggle: {
-    position: 'absolute',
-    top: 20,
-    right: 20,
-    width: 50,
-    height: 28,
-    borderRadius: 14,
+  setLimitPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    backgroundColor: `${colors.primary}15`,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginLeft: 8,
+  },
+  setLimitText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  catProgressBar: {
+    height: 4,
     backgroundColor: colors.border,
-    justifyContent: 'center',
-    paddingHorizontal: 2,
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginTop: 8,
   },
-  toggleActive: {
-    backgroundColor: colors.emerald,
+  catProgressFill: {
+    height: '100%',
+    borderRadius: 2,
   },
-  toggleDot: {
-    width: 24,
-    height: 24,
+  catWarnRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+  },
+  catWarnText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  catChevron: {
+    marginLeft: 8,
+  },
+  lockedCard: {
+    borderRadius: borderRadius['2xl'],
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: `${colors.primary}30`,
+  },
+  lockedGradient: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  lockedBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: `${colors.amber}20`,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 12,
-    backgroundColor: colors.text,
   },
-  toggleDotActive: {
-    alignSelf: 'flex-end',
+  lockedBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.amber,
+  },
+  lockedIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: `${colors.primary}20`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  lockedTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  lockedDesc: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  lockedCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  lockedCtaText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  removeLimitButton: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  removeLimitText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.red,
   },
   // Modal styles
   modalOverlay: {
