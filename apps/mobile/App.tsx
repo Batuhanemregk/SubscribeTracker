@@ -23,6 +23,7 @@ import {
   requestNotificationPermission,
   scheduleAllReminders,
   addNotificationResponseListener,
+  initializeAds,
   loadInterstitialAd,
   initAdManager,
   authenticateWithBiometrics,
@@ -240,6 +241,7 @@ function AppContent() {
       }
 
       try {
+        await initializeAds();
         loadInterstitialAd();
         await initAdManager();
       } catch (e) {

@@ -11,12 +11,12 @@
 
 - **Date:** 2026-06-19
 - **Area:** App Store / legal & support URLs / hosting
-- **Status:** [DONE] — static pages live on GitHub Pages from a new public repo `Batuhanemregk/finify-site` (source: `/Users/batuhanegk/Developer/finify-site`).
+- **Status:** [DONE] — static pages live on **Vercel** (clean URL, no personal username; GitHub Pages was the first attempt but `batuhanemregk.github.io/...` exposed the username). Source dir: `/Users/batuhanegk/Developer/finify-site` (also pushed to `github.com/Batuhanemregk/finify-site`; Vercel deploys from the local dir via `vercel deploy --prod`). **Privacy Policy URL already entered + saved in ASC → App Privacy.**
 - **URLs (for App Store Connect):**
-  - Privacy Policy: `https://batuhanemregk.github.io/finify-site/privacy.html`
-  - Terms of Service: `https://batuhanemregk.github.io/finify-site/terms.html`
-  - Support: `https://batuhanemregk.github.io/finify-site/support.html`
-  - Landing/Marketing (optional): `https://batuhanemregk.github.io/finify-site/`
+  - Privacy Policy: `https://finify-site.vercel.app/privacy.html` ✅ entered in ASC
+  - Terms of Service: `https://finify-site.vercel.app/terms.html`
+  - Support: `https://finify-site.vercel.app/support.html`
+  - Landing/Marketing (optional): `https://finify-site.vercel.app/`
 - **Content source:** transcribed verbatim from the in-app `PrivacyPolicyScreen` / `TermsOfServiceScreen` (kept in sync); support page is new (FAQ + `support@finify.app`).
 - **Why it matters:** Apple requires a Privacy Policy URL + functional Support URL (and subscriptions require Terms/EULA + Privacy links); this was the hard go-live blocker.
 - **Next action:** Paste these URLs into ASC (App Information → Privacy Policy URL; version → Support/Marketing URL). If `finify.app` is owned, add a `CNAME` file to the `finify-site` repo + DNS so URLs become `finify.app/privacy.html` (the in-app email already uses `support@finify.app`). Optionally rename the path later.

@@ -28,6 +28,7 @@ export {
 } from './NotificationService';
 
 export {
+  initializeAds,
   loadInterstitialAd,
   showInterstitialAd,
   isInterstitialReady,
